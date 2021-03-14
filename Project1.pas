@@ -355,12 +355,11 @@ if SerialOpen(1920000,SERIAL_DATA_8BIT,SERIAL_STOP_1BIT,SERIAL_PARITY_NONE,SERIA
        begin
        report[0]:=$35; report[1]:=1; report[2]:=0; report[3]:=$FF;
        sendreport(report);
-       sleep(20);
-       mouseclick:=0;
+       mouseclick:=2;
        end;
     if mousedblclick=1 then
        begin
-       mousedblclick:=0;
+       mousedblclick:=2;
        report[0]:=$36; report[1]:=1; report[2]:=0; report[3]:=$FF;
        sendreport(report);
        end;

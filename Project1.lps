@@ -10,8 +10,8 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="SerialConnection"/>
         <IsVisibleTab Value="True"/>
-        <TopLine Value="345"/>
-        <CursorPos X="18" Y="358"/>
+        <TopLine Value="351"/>
+        <CursorPos X="24" Y="362"/>
         <UsageCount Value="27"/>
         <Loaded Value="True"/>
       </Unit0>
