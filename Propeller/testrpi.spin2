@@ -34,18 +34,21 @@ word mousex
 word mousey
 byte dummy
 
-pub start(mode)   |iii, jjj , kkk
+pub start(mode)   |iii
 
 mode :=256
 
 waitms(100)
+iii:=0
 vgacog:=v.start(mode)
 v.cls(v.c_green,v.c_black)
 serial_start(rxpin, txpin, baudrate)
+
 cogspin(16,serialcog(),@serialstack)
 
 v.setwritecolors(v.c_green,v.c_black)
 v.writeln(string("P2 started"))
+iii:=fileopen(string("C:\kernel.img"))
 repeat
   rr:=serialblockingread()
   if rr==$31    'mousex
@@ -129,8 +132,18 @@ repeat
         v.writeln(string(" pressed"))
       else
         v.writeln(string("Modifiers released"))
-'    v.write(v.inttohex(rr,2))
- '   v.write(string(" "))
+
+
+
+pub fileopen(filename) :r       |q ,i
+
+q:=strsize(filename)
+tx($40)
+repeat i from 0 to q-1
+  tx(byte[filename+i])
+tx(255)
+return q
+
 
 pub serialcog()|q
 
@@ -169,18 +182,21 @@ pub serial_start(rxpin2, txpin2, baud) | bitmode
 
 '' Start simple serial coms on rxpin and txpin at baud
 
-  longmove(@rxp, @rxpin2, 2)                                     ' save pins
+'  longmove(@rxp, @rxpin2, 2)                                     ' save pins
+
+  rxp:=rxpin2
+  txp:=txpin2
 
   bitmode := muldiv64(clkfreq, $1_0000, baud) & $FFFFFC00       ' set bit timing
   bitmode |= 7                                                  ' set bits (8)
 
   org
-                fltl      rxpin                                 ' configure rx smart pin
+                fltl      rxpin2                                 ' configure rx smart pin
                 wrpin     ##P_ASYNC_RX, rxpin2
                 wxpin     bitmode, rxpin2
                 drvl      rxpin2
-                fltl      txpin2                                 ' configure tx smart pin
-                wrpin     ##(P_ASYNC_TX | P_OE), txpin
+                fltl      txpin2                                ' configure tx smart pin
+                wrpin     ##(P_ASYNC_TX | P_OE), txpin2
                 wxpin     bitmode, txpin2
                 drvl      txpin2
   end

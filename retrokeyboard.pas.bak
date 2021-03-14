@@ -874,7 +874,7 @@ begin
  ConsolePeekKeyHandler:=SysConsolePeekKey;
  ConsoleReadCharHandler:=SysConsoleReadChar;
  ConsoleReadWideCharHandler:=SysConsoleReadWideChar;
-
+ 
  KeyboardInitialized:=True;
 end;
 
@@ -2644,8 +2644,7 @@ begin
   end;
  
  {Set LEDs}
-// Status:=USBKeyboardDeviceSetLEDs(Keyboard,Keyboard.Keyboard.KeyboardLEDs);
- Status:=USBKeyboardDeviceSetLEDs(Keyboard,0);
+ Status:=USBKeyboardDeviceSetLEDs(Keyboard,Keyboard.Keyboard.KeyboardLEDs);
  if Status <> USB_STATUS_SUCCESS then
   begin
    if USB_LOG_ENABLED then USBLogError(Device,'Keyboard: Failed to set LEDs: ' + USBStatusToString(Status));
