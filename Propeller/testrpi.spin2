@@ -51,6 +51,17 @@ v.writeln(string("P2 started"))
 iii:=fileopen(string("C:\kernel.img"))
 repeat
   rr:=serialblockingread()
+{{  if rr==$38
+    scancode:=serialblockingread()
+    charcode:=serialblockingread()
+    rr:=serialblockingread()
+    if rr==255
+      if charcode<128
+        v.putchar(charcode)
+      if charcode==141
+        v.crlf  
+}}
+  
   if rr==$31    'mousex
     mousex:=serialblockingread()
     mousex+=serialblockingread()<<8
