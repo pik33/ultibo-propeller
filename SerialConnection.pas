@@ -306,7 +306,7 @@ end;
  threadsleep(1);
  for i:=0 to 7 do kbdreport[i]:=0;
  repeat
-   sleep(20);
+   threadsleep(1);
 
    if mousedblclick=2 then begin dblclick:=0; dblcnt:=0; mousedblclick:=0; end;
    if (dblclick=0) and (mousek=1) then begin dblclick:=1; dblcnt:=0; end;
@@ -314,12 +314,12 @@ end;
    if (dblclick=2) and (mousek=1) then begin dblclick:=3; dblcnt:=0; end;
    if (dblclick=3) and (mousek=0) then begin dblclick:=4; dblcnt:=0; end;
 
-   inc(dblcnt); if dblcnt>10 then begin dblcnt:=10; dblclick:=0; end;
+   inc(dblcnt); if dblcnt>100 then begin dblcnt:=100; dblclick:=0; end;
    if dblclick=4 then mousedblclick:=1 {else mousedblclick:=0};
 
-   if mouseclick=2 then begin click:=2; clickcnt:=10; end;
+   if mouseclick=2 then begin click:=2; clickcnt:=100; end;
    if (mousek=1) and (click=0) then begin click:=1; clickcnt:=0; end;
-   inc(clickcnt); if clickcnt>10 then  begin clickcnt:=10; click:=2; end;
+   inc(clickcnt); if clickcnt>100 then  begin clickcnt:=100; click:=2; end;
    if (mousek=0) then click:=0;
    if click=1 then mouseclick:=1 else mouseclick:=0;
 
@@ -365,8 +365,8 @@ end;
 
   if (c>2) then inc(rptcnt);
 
-  if rptcnt>26 then rptcnt:=24 ;
-  if (rptcnt=1) or (rptcnt=24) then
+  if rptcnt>260 then rptcnt:=240 ;
+  if (rptcnt=1) or (rptcnt=240) then
     begin
     key_charcode:=byte(c);
     key_scancode:=activekey mod 256;
@@ -456,6 +456,7 @@ if SerialOpen(1920000,SERIAL_DATA_8BIT,SERIAL_STOP_1BIT,SERIAL_PARITY_NONE,SERIA
        report[0]:=$38; report[1]:=key_scancode; report[2]:=key_charcode; report[3]:=$FF;
        sendreport(report);
        key_scancode:=0;
+       key_charcode:=0;
        end;
     if key_modifiers<>oldkm then
        begin

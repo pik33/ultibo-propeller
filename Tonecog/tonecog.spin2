@@ -1,0 +1,290 @@
+'' v. 0.01 - initial                                                            '
+'' pik33@o2.pl                                                                  '
+''------------------------------------------------------------------------------'
+
+con
+
+hdmi_base       = 48            'must be a multiple of 8
+'_clkfreq        = 354_689_500   '200x Atari 8-bit PAL,  50x Amiga PAL
+'_clkfreq       = 357_954_500     '200x Atari 8-bit NTSC, 50x Amiga NTSC
+_clkfreq                 = 200000000
+rxpin           = 32
+txpin           = 33
+baudrate        = 1920000
+
+pinbase         =       16
+
+left            =       pinbase+6
+right           =       pinbase+7
+
+freql           =       440.0           'left frequency
+freqr           =       440.0           'right frequency
+
+volume          =       $7fff           '$0000..$7FFF volume
+fconst			=       1230017           ' 0.0832519726 Hz per #1, 12.01172738 #1 per Hz * 2048= 24 600.01768
+obj
+
+v:    "hn007-20210302"
+
+var
+
+long vgacog
+long sdcog
+long rxp
+long txp
+long mrxp
+long mtxp
+long midibuf[64]
+long miditail,midifront
+long midistack[64]
+long rr
+long audiocog
+
+long kwas
+long freq
+
+
+pub start(mode)   |iii,caps
+
+mode :=256
+caps:=0
+freq:=(1000*1230017)>>11
+waitms(100)
+iii:=0
+vgacog:=v.start(mode)
+kwas:=@sinus
+audiocog:=coginit(16,@audiostart,@kwas)
+
+
+
+v.cls(v.c_green,v.c_black)
+midi_start(9,8)
+
+cogspin(16,midicog(),@midistack)
+
+v.setwritecolors(v.c_green,v.c_black)
+v.writeln(string("P2 started"))
+v.write(string("sinewave pointer"))
+
+v.writeln(v.inttostr(@sinus))
+repeat iii from 8 to 1031
+  v.write(v.inttohex(word[@sinus+2*iii],4))
+  v.write(string(" "))
+repeat
+  rr:=midiblockingread()
+  pinwrite(15,0)
+  v.write(v.inttohex(rr,2))
+  v.write(string(", "))
+  pinwrite(15,1)
+
+pub midicog()|q
+
+midifront:=0
+miditail:=0
+
+repeat
+  if midifront<>((miditail-1) //32)
+    q:=mrxcheck()
+    if q>=0
+     midibuf[midifront]:=q
+     midifront+=1
+     midifront:=midifront // 32
+
+pub midiread():r
+
+if midifront<>miditail
+  r:=midibuf[miditail]
+  miditail:=(miditail+1)//32
+else
+  r:=-1
+return r
+
+pub midiblockingread(): r
+
+repeat
+  r:=midiread()
+until r<>-1
+return r
+
+
+
+
+pub midi_start(mrxpin2, mtxpin2) | bitmode
+
+'' Start simple serial coms on rxpin and txpin at baud
+
+'  longmove(@rxp, @rxpin2, 2)                                     ' save pins
+
+  mrxp:=mrxpin2
+  mtxp:=mtxpin2
+
+  bitmode := muldiv64(clkfreq, $1_0000, 31250) & $FFFFFC00       ' set bit timing
+  bitmode |= 7                                                  ' set bits (8)
+
+  org
+                fltl      mrxpin2                                 ' configure rx smart pin
+                wrpin     ##P_ASYNC_RX, mrxpin2
+                wxpin     bitmode, mrxpin2
+                drvl      mrxpin2
+                fltl      mtxpin2                                ' configure tx smart pin
+                wrpin     ##(P_ASYNC_TX | P_OE), mtxpin2
+                wxpin     bitmode, mtxpin2
+                drvl      mtxpin2
+  end
+
+
+pub mrxflush()
+
+'' Clear serial input
+
+  repeat
+  while (mrxcheck() >= 0)
+
+
+pub mrxcheck() : rxbyte | check
+
+'' Check for serial input
+'' -- returns -1 if nothing available
+
+  rxbyte := -1
+  check := pinr(mrxp)
+  if (check)
+    rxbyte := rdpin(mrxp) >> 24
+
+
+pub mrxtime(ms) : b | mstix, t
+
+'' Wait ms milliseconds for a byte to be received
+'' -- returns -1 if no byte received, $00..$FF if byte
+
+  mstix := clkfreq / 1000
+
+  t := getct()
+  repeat
+  until ((b := mrxcheck()) >= 0) or (((getct() - t) / mstix) > ms)
+
+
+pub mrx() : rxbyte
+
+'' Wait for serial input
+'' -- blocks!
+
+  repeat
+    rxbyte := mrxcheck()
+  until (rxbyte >= 0)
+
+
+pub mtx(b)
+
+'' Emit byte
+
+  wypin(mtxp, b)
+  mtxflush()
+
+pub mtxflush() | check
+
+'' Wait until last byte has finished
+
+  repeat
+    check := pinr(mtxp)
+  while (check == 0)
+
+
+dat
+bass1         file  "bass1.s2"
+beben         file  "beben.s2"
+booster       file  "booster.s2"
+charly        file  "charly.s2"
+d12           file  "d12.s2"
+dreieck       file  "dreieck.s2"
+geige         file  "geige.s2"
+geige2        file  "geige2.s2"
+glocke        file  "glocke.s2"
+groehl        file  "groehl.s2"
+harmon        file  "harmon.s2"
+hat2          file  "hat2.s2"
+lauta         file  "lauta.s2"
+laute         file  "laute.s2"
+lauti         file  "lauti.s2"
+lauto         file  "lauto.s2"
+lautu         file  "lautu.s2"
+mm            file  "mm.s2"
+np01          file  "np01.s2"
+np02          file  "np02.s2"
+nptest        file  "nptest.s2"
+odd           file  "odd.s2"
+orgel         file  "orgel.s2"
+otto1         file  "otto1.s2"
+pila          file  "pila.s2"
+pila1         file  "pila1.s2"
+prim          file  "prim.s2"
+ra            file  "ra.s2"
+random        file  "random.s2"
+rechteck      file  "rechteck.s2"
+rect1         file  "rect1.s2"
+rect5         file  "rect5.s2"
+rect10        file  "rect10.s2"
+rect25        file  "rect25.s2"
+rect50        file  "rect50.s2"
+rehi          file  "rehi.s2"
+saege         file  "saege.s2"
+saw0          file  "saw0.s2"
+saw10         file  "saw10.s2"
+saw25         file  "saw25.s2"
+saw50         file  "saw50.s2"
+sinran2       file  "sinran2.s2"
+sinran3       file  "sinran3.s2"
+sinus         file  "sinus.s2"
+s_r_s         file  "s-r-s.s2"
+s_r_s_n       file  "s-r-s-n.s2"
+subb          file  "sub.s2"
+violin        file  "violin.s2"
+zacke         file  "zacke.s2"
+zacke2        file  "zacke2.s2"
+
+dat     org
+
+audiostart   	rdlong    wave,ptra++
+				rdlong  f1,ptra
+                add     wave,#16
+                wrpin   dac,#left
+        		wxpin   #50,#left
+
+        		wrpin   dac,#right
+        		wxpin   #50,#right
+
+        	    dirh    #left addpins 1
+
+        	 	setse1  #%001<<6 + left
+
+loop   			add     p1,f1          'calculate right sample
+				mov     p1a,p1
+				shr     p1a,#21
+				and     p1a,a2046
+				add     p1a,wave
+				rdword  p2,p1a
+				bitnot  p2,#15
+        		wypin   p2,#left
+                wypin   p2,#right
+
+
+        		waitse1                 'wait for new period
+
+        jmp     #loop          'loop
+
+
+
+x       long    0
+
+p1      long    0
+p1a long 0
+p2      long    0
+
+f1      long    round(freql * 65536.0 * 65536.0 * 256.0 / float(clkfreq_))
+f2      long    round(freqr * 65536.0 * 65536.0 * 256.0 / float(clkfreq_))
+a2046   long    2046
+affff    long $7FFFf
+amp     long    volume
+wave	long 0
+dac    long    %10111_00000000_01_00010_0      'random dither (noisier, needs no period)
+'dac     long    %10111_00000000_01_00011_0      'pwm (quieter, needs 256N period)

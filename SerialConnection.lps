@@ -9,9 +9,9 @@
         <Filename Value="SerialConnection.pas"/>
         <IsPartOfProject Value="True"/>
         <IsVisibleTab Value="True"/>
-        <TopLine Value="455"/>
-        <CursorPos X="36" Y="481"/>
-        <UsageCount Value="27"/>
+        <TopLine Value="345"/>
+        <CursorPos X="31" Y="369"/>
+        <UsageCount Value="28"/>
         <Loaded Value="True"/>
       </Unit0>
       <Unit1>
@@ -19,7 +19,7 @@
         <EditorIndex Value="3"/>
         <TopLine Value="2631"/>
         <CursorPos X="45" Y="2648"/>
-        <UsageCount Value="14"/>
+        <UsageCount Value="15"/>
         <Loaded Value="True"/>
       </Unit1>
       <Unit2>
@@ -27,7 +27,7 @@
         <EditorIndex Value="2"/>
         <TopLine Value="966"/>
         <CursorPos X="9" Y="986"/>
-        <UsageCount Value="14"/>
+        <UsageCount Value="15"/>
         <Loaded Value="True"/>
       </Unit2>
       <Unit3>
@@ -36,7 +36,7 @@
         <EditorIndex Value="1"/>
         <TopLine Value="7668"/>
         <CursorPos X="2" Y="7717"/>
-        <UsageCount Value="14"/>
+        <UsageCount Value="15"/>
         <Loaded Value="True"/>
       </Unit3>
       <Unit4>
