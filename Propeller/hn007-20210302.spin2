@@ -53,6 +53,7 @@ long cursor_ptr
 long mode_ptr
 long palette_ptr
 long command_ptr
+long fontnum_ptr
 long cog
 long bordercolor[32]
 long buf[3000]
@@ -68,7 +69,8 @@ byte n_string[12]  ' string buffer for inttostr and hextostr
 long timings[10]
 long cmd1
 long cmd2
-byte teststring[65]
+long fontnum
+byte teststring[101]
 {{
 m_bs        - before sync,             16      80
 m_sn        - sync                     80     160
@@ -97,47 +99,70 @@ s8:=string("1234567890")
 
 start(258)
 
-cls(0,117)
-setwritecolors(14,1)
-teststring[0]:=32
-teststring[1]:=32
-repeat i from 1 to 31
-  teststring[2*i]:=i
-  teststring[2*i+1]:=32
+cls(c_lightcyan,c_blue)
 
-teststring[64]:=0
+teststring[100]:=0
+repeat i from 0 to 99
+  teststring[i]:=32
+outtextxyc(0,28,@teststring,c_white,c_black)
+outtextxyc(0,29,@teststring,c_white,c_black)
 
-writeln(@teststring)
-writeln(" ")
+setwritecolors(c_lightcyan,c_blue)
 
-repeat i from 0 to 31
-  teststring[2*i]:=i+32
-  teststring[2*i+1]:=32
+repeat i from 1 to 98
+  teststring[i]:=$CD
+teststring[0]:=$C9
+teststring[50]:=$C9
 
-teststring[64]:=0
+teststring[49]:=$BB  
+teststring[99]:=$BB  
+teststring[100]:=0
 
-writeln(@teststring)
-writeln(" ")
+outtextxy(0,0,@teststring)
+outtextxyc(73,0,string(" D:\ "),c_lightcyan, c_blue)
+outtextxyc(23,0,string(" C:\ "),c_blue, c_lightcyan)
+repeat i from 1 to 98
+  teststring[i]:=32
+teststring[0]:=$BA
+teststring[49]:=$BA
+teststring[50]:=$BA
+teststring[99]:=$BA
+repeat i from 1 to 26
+  outtextxy(0,i,@teststring)
+repeat i from 1 to 98
+  teststring[i]:=$CD
+teststring[0]:=$C8
+teststring[50]:=$C8
 
-repeat i from 0 to 31
-  teststring[2*i]:=i+64
-  teststring[2*i+1]:=32
+teststring[49]:=$BC  
+teststring[99]:=$BC  
+teststring[100]:=0
 
-teststring[64]:=0
-
-writeln(@teststring)
-writeln(" ")
-
-repeat i from 0 to 31
-  teststring[2*i]:=i+96
-  teststring[2*i+1]:=32
-
-teststring[64]:=0
-
-writeln(@teststring)
-writeln(" ")
-
+outtextxy(0,27,@teststring)  
+  
+  
+setcursorpos(0,28)
+setwritecolors(c_white,c_black)
+write(string("C:\>"))
 waitvbl(12000)
+
+
+write(string(" "))
+repeat j from 0 to 15
+  repeat i from 0 to 15
+    teststring[0]:=16*j+i
+    teststring[1]:=0
+    write(inttohex(16*j+i,2))
+    write(string(" "))
+    write(@teststring)
+    write(string(","))
+  writeln(string(" "))
+
+
+waitvbl(1200)
+
+
+
 
 j:=0
 
@@ -257,35 +282,35 @@ repeat
   cursoron()
   cls(15,0)
   setcursorpos(0,0)
-  setwritecolors(1,0)
+  setwritecolors(c_blue,0)
   writeln(string("blue"))
-  setwritecolors(2,0)
+  setwritecolors(c_green,0)
   writeln(string("green"))
-  setwritecolors(3,0)
+  setwritecolors(c_cyan,0)
   writeln(string("cyan"))
-  setwritecolors(4,0)
+  setwritecolors(c_red,0)
   writeln(string("red"))
-  setwritecolors(5,0)
+  setwritecolors(c_magenta,0)
   writeln(string("magenta"))
-  setwritecolors(6,0)
+  setwritecolors(c_brown,0)
   writeln(string("brown"))
-  setwritecolors(7,0)
+  setwritecolors(c_lightgray,0)
   writeln(string("light gray"))
-  setwritecolors(8,0)
+  setwritecolors(c_darkgray,0)
   writeln(string("dark gray"))
-  setwritecolors(9,0)
+  setwritecolors(c_lightblue,0)
   writeln(string("light blue"))
-  setwritecolors(10,0)
+  setwritecolors(c_lightgreen,0)
   writeln(string("light green"))
-  setwritecolors(11,0)
+  setwritecolors(c_lightcyan,0)
   writeln(string("light cyan"))
-  setwritecolors(12,0)
+  setwritecolors(c_lightred,0)
   writeln(string("light red"))
-  setwritecolors(13,0)
+  setwritecolors(c_lightmagenta,0)
   writeln(string("light magenta"))
-  setwritecolors(14,0)
+  setwritecolors(c_yellow,0)
   writeln(string("yellow"))
-  setwritecolors(15,0)
+  setwritecolors(c_white,0)
   writeln(string("white"))
   writeln(inttostr(clkfreq))
 
@@ -453,6 +478,15 @@ pub outtextxy(x,y,text) | iii
 repeat iii from 0 to strsize(text)-1
   buf[100*y+x+iii]:=(buf[100*y+x+iii] & $FFFFFF00)  | byte[text+iii]
 
+pub outtextxyc(x,y,text,f,b) | iii,c
+
+''--------- Output a string at position x,y and colors b,f
+
+c:=f<<24+b<<16
+repeat iii from 0 to strsize(text)-1
+  buf[100*y+x+iii]:=(buf[100*y+x+iii] & $FFFFFF00)  | byte[text+iii]
+  buf[100*y+x+iii]:=(buf[100*y+x+iii] & $0000FFFF)  | c
+
 pub putchar(achar) | c
 
 ''---------- Output a char at the cursor position, move the cursor
@@ -539,6 +573,20 @@ cursor_y+=1
 if cursor_y>29
   scrollup()
   cursor_y:=29
+  
+''---------- Backspace  
+
+pub bksp()
+
+cursor_x-=1
+if cursor_x==255
+  cursor_x:=99
+  cursor_y-=1
+  if cursor_y==255
+    cursor_y:=0
+    scrollup()
+    
+outtextxy(cursor_x,cursor_y,string(" "))
 
 
 pub inttostr(i):result |q,pos,k,j
@@ -623,6 +671,9 @@ cursor_ptr:=@cursor_x
 mode_ptr:=@timings
 palette_ptr:=@ataripalette
 command_ptr:=@cmd1
+fontnum_ptr:=@fontnum
+
+fontnum:=2048  ' ST type font
 
 ' initialize a cursor
 
@@ -804,7 +855,8 @@ return cmd2a
 
 
 dat
-st_font                 file "vgafont.def"
+st_font                 file "st4font.def"
+vga_font				file "vgafont.def"
 
 dat
 
@@ -819,7 +871,7 @@ hdmi            setcmod #$100                           'enable HDMI mode
                 wrpin   ##%10110_1111_0111_10_00000_0, #7<<6 + hdmi_base      ' a '123 ohm BITDAC for pins
                 setxfrq ##$0CCCCCCC+1                   'set streamer freq to 1/10th clk (25 MHz)
 
-                setq    #7
+                setq    #8
                 rdlong  framebuf,  ptra++               'read pointers
                 setq    #9
                 rdlong  m_bs,modeptr                    'read timings
@@ -829,6 +881,8 @@ hdmi            setcmod #$100                           'enable HDMI mode
 '' Blank lines before the frame
 
 p101            add     frames,#1
+				rdlong  fontstart,fontnumptr
+				add     fontstart,fontbuf
                 rdlong  cursorx, cursorptr
                 getbyte cursory, cursorx,#1
                 getbyte cursorsh,cursorx,#2
@@ -892,7 +946,7 @@ p102            xcont   m_border,border                 'display a left border
          if_c   mov     cursorpos,#101
         if_nc   mov     cursorpos,cursorpos2
                 add     cursorpos,#1
-                mov     t2,fontbuf
+                mov     t2,fontstart
                 add     t2,fontline
 
                 rep     @p103,#100                      'display 100 chars
@@ -987,6 +1041,7 @@ cursorx         long    0
 cursory         long    0
 cursorpos       long    0
 cursorpos2      long    0
+fontstart	    long 	0
 
 framebuf        res     1
 fontbuf         res     1
@@ -996,7 +1051,7 @@ cursorptr       res     1
 modeptr         res     1
 paletteptr      res     1
 commandptr      res     1
-
+fontnumptr  	res 	1
 borderptr2      res     1
 ii              res     1
 framebuf2       res     1

@@ -1,0 +1,57 @@
+Wstępnie omawiany plan był taki, że montujemy małego robota z kamerami, malinami/jetsonami i wyświetlaczami i robimy eksperymenty aby wypracować autonomię, po czym efekty przenosimy na dużą platformę.
+
+Potrzebne by były więc:
+
+- maliny: na początek trzeba przetestować Raspberry Pi 3B+, mamy sporo gotowego kodu, gdyby okazało się że wystarczy, byłoby to najlepsze rozwiązanie. 
+
+Raspberry Pi 3B+ https://kamami.pl/raspberry-pi-3-model-b/569726-raspberry-pi-3-model-b-plus-z-wifi-24-i-5ghz-oraz-bluetooth-42.html - 185 PLN/szt, 
+
+Możnaby też zamówic czwórki, https://kamami.pl/raspberry-pi-4-model-b/579161-raspberry-pi-4-model-b-z-8gb-ram-dual-band-wifi-bluetooth-50-15ghz.html - 389 PLN/szt, 
+
+i przetestować Jetsona Nano: https://kamami.pl/komputery-nvidia-jetson/574587-zestaw-deweloperski-nvidia-jetson-nano.html?search_query=jetson+nano&results=106 - 589 PLN/szt.
+
+Czy możemy kupować sprzęt w Mouserze Polska? Jeśli tak, możnaby dołączyć do testów moduły P2 Edge https://pl.mouser.com/ProductDetail/Parallax/P2-EC?qs=T94vaHKWudRrJpXDe6UP1w%3D%3D - 186.75 PLN, Mouser ma do nich także złącza i płytki przejściowe. P2 nie obsłuży samodzielnie kamery, ale mógłby współpracować z RPi 3 przy obróbce obrazu, a przede wszystkim sterowaniu robotem, ogarnie wszelkie wejścia z lidarów i sonarów, wyjścia PWM itd, itp.
+
+------
+
+Kamery: potrzebne będą kamery RPi - https://kamami.pl/kamery/578650-raspberry-pi-hq-camera-kamera-z-sensorem-sony-imx477r-123mp-dla-raspberry-pi.html            279 PLN/szt. 
+
+i obiektywy do nich: https://kamami.pl/obiektywy-do-kamer/579418-pt361060m3mp12-cs-mount-obiektyw-szerokokatny-6mm-do-kamery-raspberry-pi-hq.html        139 PLN/szt. 
+
+Gdyby było za drogo, takie też powinny wystarczyc i nie trzeba do nich obiektywów:
+
+https://kamami.pl/kamery-do-raspberry-pi/561738-kamera-raspberry-pi-hd-v2-8mp-rpi-camera-board-v2.html    135 PLN/szt.
+
+Te kamery powinny współpracować także z Jetsonem Nano
+
+-------
+
+Potrzebne będzie też podwozie robota z silnikami  https://kamami.pl/podwozia-inne/582990-aluminiowa-platforma-z-kolami-mecanum-do-budowy-robota-mobilnego.html,                             69 PLN/szt. 
+i sterowniki do silników, np. https://kamami.pl/sterowniki-silnikow/560092-sterownik-silnikow-dc-motor-explore-dwukanalowy.html?search_query=silnik+tt&results=157 - za mało o nich wiem,   37.50 pln/szt.
+
+
+--------
+
+Wyświetlacze, zgodnie z omawianą już ideą, że podpinamy wyświetlacz i widzimy to, co robot:
+
+ - ten ma wejście HDMI (powinien dac się podpiąc do Jetsona)     https://kamami.pl/wyswietlacze-do-raspberry-pi/580489-wyswietlacz-lcd-7-hdmi-z-ekranem-dotykowym-dla-raspberry-pi-u6104.html                  219 pln
+ - ten jest czysto malinowy: https://kamami.pl/wyswietlacze-do-raspberry-pi/559731-rpi-raspberry-pi-display-wyswietlacz-dotykowy-7-800x480-do-raspberry.html                                                   329 pln
+
+
+-----------
+
+Sonary, lidary  - te czujniki ultradżwiękowe całkiem przyzwoicie działają w tym dużym robocie, można by było użyć takich jak tamte, nie wiem, skąd oni je brali i ile kosztują
+        
+Zasilanie: Maliny trójki potrzebują do 2 A, czwórki 2.5, Jetsony 4..6 A Zakładając 3 maliny trójki, 3 kamery, 1 wyświetlacz, 3 moduły P2, mamy pobór rzędu 8A w porywach i 2..4A średni przy napięciu 5V. Do tego dojdzie prąd pobierany przez slniki napędu. 6 akumulatorków 18650 da napięcie ok.21V, czyli ~10 Ah przy 5V - powinno wystarczyć na godzinę jazdy. Potrzebne będa takie akumulatorki, ładowarka do nich, pojemnik i przetwornice. 
+
+----------
+
+Nie wiem ile mamy pieniędzy na takie wydatki. Na bogato trzeba by kupic 3 maliny trójki, 3 maliny czwórki, 3 jetsony, 4 kamery HQ z obiektywami, co najmniej 2, a lepiej 4 wyświetlacze, 2 platformy robota, 4 sterowniki silnika, 3 komplety baterii 18650, pojemniki i ładowarkę do nich, 4 przetwornice step-down, 4 moduły P2 Edge + płytki przejściowe do nich, 12 czujników ultradźwiękowych, lidar? Wyjdzie około 10000 złotych
+
+Na oszczędnie trzeba kupic 1 platformę robota, trzy maliny trójki, jednego jetsona nano, 3 kamery 8 MPx, 1 podwozie+sterowniki, 1 komplet baterii, 2 przetwornice, 3..6 czujników ultradźwiękowych. W tej wersji zapłacimy ok. 3000 zł.
+
+Do tego z kilogram filamentu, bo wszelkie mocowania trzeba będzie wydrukować.
+
+Przetwornic i ładowarek jeszcze poszukam.  
+
+Daj znać, pod jakie koszty przygotowac listę elementów "na gotowo".

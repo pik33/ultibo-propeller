@@ -57,12 +57,11 @@ v.writeln(string("P2 started"))
 iii:=fileopen(string("C:\kernel.img"))
 
 repeat
-  rr:=mrx()
+ {{ rr:=mrx()
   v.write(v.inttohex(rr,2))
   v.write(string(", "))
 
-  {{
-
+  }}
 
 
   rr:=serialblockingread()
@@ -79,7 +78,7 @@ repeat
         else
           caps:=0
       if charcode==136 'bksp
-
+        v.bksp()
 
 
 
@@ -88,7 +87,7 @@ repeat
       if charcode==141
         v.crlf()
 
-    }}
+   
 
  {
   if rr==$31    'mousex
