@@ -1,0 +1,7080 @@
+dat
+	nop
+	cogid	pa
+	coginit	pa,##$400
+	orgh	$10
+	long	0	'reserved
+	long	0 ' clock frequency: will default to 160000000
+	long	0 ' clock mode: will default to $10007fb
+	orgh	$400
+	org	0
+entry
+	cmp	ptra, #0 wz
+ if_ne	jmp	#spininit
+	mov	ptra, objptr
+	add	ptra, #0
+	rdlong	pa, #20 wz
+ if_ne	jmp	#skip_clock_set_
+	hubset	#0
+	hubset	##16779256
+	waitx	##200000
+	mov	pa, ##16779259
+	hubset	pa
+	wrlong	pa, #24
+	wrlong	##160000000, #20
+	jmp	#skip_clock_set_
+	orgf	32
+skip_clock_set_
+	locknew	__lockreg
+	wrlong	__lockreg, ptr___lockreg_
+	call	#_main
+cogexit
+	waitx	##160000
+	cogid	arg01
+	cogstop	arg01
+spininit
+	rdlong	objptr, ptra
+	add	ptra, #4
+	rdlong	result1, ptra
+	add	ptra, #4
+	rdlong	arg01, ptra
+	add	ptra, #4
+	rdlong	arg02, ptra
+	add	ptra, #4
+	rdlong	arg03, ptra
+	add	ptra, #4
+	rdlong	arg04, ptra
+	sub	ptra, #16
+	call	result1
+	jmp	#cogexit
+FCACHE_LOAD_
+    pop	fcache_tmpb_
+    add	fcache_tmpb_, pa
+    push	fcache_tmpb_
+    sub	fcache_tmpb_, pa
+    shr	pa, #2
+    mov	fcache_tmpa_, pa
+    add	fcache_tmpa_, #$100
+    wrlut ret_instr_, fcache_tmpa_
+    sub	pa, #1
+    setq2	pa
+    rdlong	$100-0, fcache_tmpb_
+    jmp	#\$300 ' jmp to cache
+ret_instr_
+    ret
+fcache_tmpa_
+    long 0
+fcache_tmpb_
+    long 0
+COUNT_
+    long 0
+RETADDR_
+    long 0
+fp
+    long 0
+gosub_
+    mov  COUNT_, #0
+    mov  pa, arg01
+    pop  RETADDR_
+    jmp  #pushregs_done_
+pushregs_
+    pop  pa
+    pop  RETADDR_
+    tjz  COUNT_, #pushregs_done_
+    sub  COUNT_, #1
+    setq COUNT_
+    wrlong local01, ptra
+    add  COUNT_, #1
+pushregs_done_
+    shl  COUNT_, #2
+    add  ptra, COUNT_
+    shr  COUNT_, #2
+    setq #2 ' push 3 registers starting at COUNT_
+    wrlong COUNT_, ptra
+    add    ptra, #12
+    mov    fp, ptra
+    jmp  pa
+ popregs_
+    pop    pa
+    sub    ptra, #12
+    setq   #2
+    rdlong COUNT_, ptra
+    tjz    COUNT_, #popregs__ret
+    shl    COUNT_, #2
+    sub    ptra, COUNT_
+    shr    COUNT_, #2
+    sub    COUNT_, #1
+    setq   COUNT_
+    rdlong local01, ptra
+popregs__ret
+    push   RETADDR_
+    jmp    pa
+
+unsdivide_
+       setq    #0
+       qdiv    muldiva_, muldivb_
+       getqx   muldivb_
+ _ret_ getqy   muldiva_
+
+divide_
+       abs     muldiva_,muldiva_     wc       'abs(x)
+       muxc    itmp2_,#%11                    'store sign of x
+       abs     muldivb_,muldivb_     wcz      'abs(y)
+ if_c  xor     itmp2_,#%10                    'store sign of y
+ if_z  ret
+       call    #unsdivide_
+       test    itmp2_,#1        wc       'restore sign, remainder
+       negc    muldiva_,muldiva_ 
+       test    itmp2_,#%10      wc       'restore sign, division result
+ _ret_ negc    muldivb_,muldivb_
+
+__heap_ptr
+	long	@__heap_base
+__lockreg
+	long	0
+itmp1_
+	long	0
+itmp2_
+	long	0
+objptr
+	long	@objmem
+ptr____struct__fmtfile_putchar_
+	long	@___struct__fmtfile_putchar
+ptr___lockreg_
+	long	@__lockreg
+ptr___system__dat__
+	long	@__system__dat_
+ptr__dat__
+	long	@_dat_
+ptr__hn008_spin2_dat__
+	long	@_hn008_spin2_dat_
+ptr__hn008_spin2_putchar_
+	long	@_hn008_spin2_putchar
+result1
+	long	0
+result2
+	long	0
+result3
+	long	0
+COG_BSS_START
+	fit	480
+	orgh
+hubentry
+
+_write
+	mov	COUNT_, #3
+	call	#pushregs_
+	mov	local01, arg01
+	mov	local02, arg02
+	mov	local03, arg03
+	cmp	local01, #10 wcz
+ if_b	jmp	#LR__0001
+'         return _seterror( 5 );
+	mov	arg01, #5
+	call	#__system___seterror
+	jmp	#LR__0002
+LR__0001
+	qmul	local01, #44
+	getqx	arg01
+	add	ptr__dat__, ##12368
+	add	arg01, ptr__dat__
+'     }
+'     f = &__filetab[fd];
+'     return _vfswrite(f, vbuf, count);
+	mov	arg02, local02
+	mov	arg03, local03
+	sub	ptr__dat__, ##12368
+	call	#__vfswrite
+LR__0002
+	mov	ptra, fp
+	call	#popregs_
+_write_ret
+	ret
+
+_read
+	mov	COUNT_, #3
+	call	#pushregs_
+	mov	local01, arg01
+	mov	local02, arg02
+	mov	local03, arg03
+	cmp	local01, #10 wcz
+ if_b	jmp	#LR__0003
+'         return _seterror( 5 );
+	mov	arg01, #5
+	call	#__system___seterror
+	jmp	#LR__0004
+LR__0003
+	qmul	local01, #44
+	getqx	arg01
+	add	ptr__dat__, ##12368
+	add	arg01, ptr__dat__
+'     }
+'     f = &__filetab[fd];
+'     return _vfsread(f, vbuf, count);
+	mov	arg02, local02
+	mov	arg03, local03
+	sub	ptr__dat__, ##12368
+	call	#__vfsread
+LR__0004
+	mov	ptra, fp
+	call	#popregs_
+_read_ret
+	ret
+
+_lseek
+	mov	COUNT_, #9
+	call	#pushregs_
+	mov	local01, arg01
+	mov	local02, arg02
+	mov	local03, arg03
+	cmp	local01, #10 wcz
+ if_b	jmp	#LR__0005
+'         return _seterror( 5 );
+	mov	arg01, #5
+	call	#__system___seterror
+	jmp	#LR__0009
+LR__0005
+	qmul	local01, #44
+	getqx	local04
+	add	ptr__dat__, ##12368
+	add	local04, ptr__dat__
+	add	local04, #40
+	rdlong	local05, local04 wz
+	sub	local04, #40
+	sub	ptr__dat__, ##12368
+ if_ne	jmp	#LR__0006
+'         return _seterror( 16 );
+	mov	arg01, #16
+	call	#__system___seterror
+	jmp	#LR__0009
+LR__0006
+	add	local04, #8
+	rdlong	local05, local04
+	sub	local04, #8
+	test	local05, #64 wz
+ if_e	jmp	#LR__0007
+	add	local04, #8
+	rdlong	local05, local04
+	or	local05, #128
+	wrlong	local05, local04
+	sub	local04, #8
+LR__0007
+	add	local04, #40
+	rdlong	local05, local04
+	sub	local04, #40
+	rdlong	local06, local05
+	add	local05, #4
+	rdlong	local07, local05
+	mov	arg01, local04
+	mov	arg02, local02
+	mov	arg03, local03
+	mov	local08, objptr
+	mov	objptr, local06
+	call	local07
+	mov	objptr, local08
+	mov	local09, result1
+	cmps	local09, #0 wcz
+ if_ae	jmp	#LR__0008
+'         return _seterror(-r);
+	neg	arg01, local09
+	call	#__system___seterror
+	jmp	#LR__0009
+LR__0008
+'     }
+'     return r;
+	mov	result1, local09
+LR__0009
+	mov	ptra, fp
+	call	#popregs_
+_lseek_ret
+	ret
+
+___getftab
+	cmp	arg01, #10 wcz
+'         return 0;
+ if_ae	mov	result1, #0
+ if_ae	jmp	#___getftab_ret
+	qmul	arg01, #44
+	getqx	result1
+	add	ptr__dat__, ##12368
+	add	result1, ptr__dat__
+'     }
+'     return &__filetab[i];
+	sub	ptr__dat__, ##12368
+___getftab_ret
+	ret
+
+_printf
+	mov	COUNT_, #2
+	call	#pushregs_
+	add	ptra, #36
+	add	fp, #4
+	wrlong	arg01, fp
+	add	fp, #4
+	wrlong	arg02, fp
+	sub	fp, #8
+	mov	arg01, #1
+	call	#___getftab
+	add	fp, #16
+	wrlong	result1, fp
+	sub	fp, #8
+	rdlong	local01, fp
+	wrlong	local01, fp
+	add	fp, #8
+	mov	arg01, fp
+	mov	arg02, ptr____struct__fmtfile_putchar_
+	sub	fp, #8
+	mov	local02, fp
+	sub	fp, #8
+	call	#__system___make_methodptr
+	mov	arg01, result1
+	add	fp, #4
+	rdlong	arg02, fp
+	sub	fp, #4
+	mov	arg03, local02
+	call	#__dofmt
+	add	fp, #12
+	wrlong	result1, fp
+'     r = _dofmt( &ff.putchar, fmt, &args);
+'     ;
+'     return r;
+	sub	fp, #12
+	mov	ptra, fp
+	call	#popregs_
+_printf_ret
+	ret
+
+_main
+	mov	COUNT_, #16
+	call	#pushregs_
+	mov	local01, ptr__dat__
+	mov	local02, ptr__hn008_spin2_putchar_
+	mov	arg01, #1
+	call	#___getftab
+	mov	local03, result1
+	mov	arg01, local01
+	mov	arg02, local02
+	call	#__system___make_methodptr
+	mov	local04, result1
+	add	local03, #20
+	wrlong	local04, local03
+	mov	local05, ptr__dat__
+	mov	arg01, #256
+	mov	local06, objptr
+	mov	objptr, local05
+	add	objptr, #40
+	mov	local07, objptr
+' 
+' ' mode=0 - start at PAL timings, 624 lines
+' ' mode=256 - start at NTSC timings, 524 lines
+' 
+' '**********************************************************************************
+' '
+' '           Starts the driver
+' '
+' '**********************************************************************************
+' 
+' ' initialize pointers
+' 
+' border_ptr:=@bordercolor
+	sub	objptr, #32
+	wrlong	local07, objptr
+' font_ptr:=@st_font
+	sub	objptr, #4
+	wrlong	ptr__hn008_spin2_dat__, objptr
+	add	objptr, #164
+	mov	local08, objptr
+' buf_ptr:=@buf
+	sub	objptr, #168
+	wrlong	local08, objptr
+	add	objptr, ##12196
+	mov	local09, objptr
+' vblank_ptr:=@vblank
+	sub	objptr, ##12184
+	wrlong	local09, objptr
+	add	objptr, ##12156
+	mov	local10, objptr
+' cursor_ptr:=@cursor_x
+	sub	objptr, ##12152
+	wrlong	local10, objptr
+	add	objptr, ##12196
+	mov	local11, objptr
+' mode_ptr:=@timings
+	sub	objptr, ##12192
+	wrlong	local11, objptr
+	add	ptr__hn008_spin2_dat__, ##6144
+' palette_ptr:=@ataripalette
+	add	objptr, #4
+	wrlong	ptr__hn008_spin2_dat__, objptr
+	add	objptr, ##12228
+	mov	local12, objptr
+' command_ptr:=@cmd1
+	sub	objptr, ##12224
+	wrlong	local12, objptr
+	add	objptr, ##12232
+	mov	local13, objptr
+' fontnum_ptr:=@fontnum
+	sub	objptr, ##12228
+	wrlong	local13, objptr
+' 
+' fontnum:=2048  ' ST type font
+	add	objptr, ##12228
+	wrlong	##2048, objptr
+' 
+' ' initialize a cursor
+' 
+' cursor_x:=0
+	sub	objptr, #92
+	wrbyte	#0, objptr
+' cursor_y:=0
+	add	objptr, #1
+	wrbyte	#0, objptr
+' cursor_sh:=14
+	add	objptr, #1
+	wrbyte	#14, objptr
+' 
+' ' set 16 VGA DOS like colors
+' 
+' colors[0] := c_black
+	add	objptr, #10
+	wrbyte	#0, objptr
+' colors[1] := c_blue
+	add	objptr, #1
+	wrbyte	#117, objptr
+' colors[2] := c_green
+	add	objptr, #1
+	wrbyte	#199, objptr
+' colors[3] := c_cyan
+	add	objptr, #1
+	wrbyte	#151, objptr
+' colors[4] := c_red
+	add	objptr, #1
+	wrbyte	#39, objptr
+' colors[5] := c_magenta
+	add	objptr, #1
+	wrbyte	#71, objptr
+' colors[6] := c_brown
+	add	objptr, #1
+	wrbyte	#246, objptr
+' colors[7] := c_lightgray
+	add	objptr, #1
+	wrbyte	#10, objptr
+' colors[8] := c_darkgray
+	add	objptr, #1
+	wrbyte	#5, objptr
+' colors[9] := c_lightblue
+	add	objptr, #1
+	wrbyte	#123, objptr
+' colors[$A]:= c_lightgreen
+	add	objptr, #1
+	wrbyte	#203, objptr
+' colors[$B]:= c_lightcyan
+	add	objptr, #1
+	wrbyte	#155, objptr
+' colors[$C]:= c_lightred
+	add	objptr, #1
+	wrbyte	#43, objptr
+' colors[$D]:= c_lightmagenta
+	add	objptr, #1
+	wrbyte	#75, objptr
+' colors[$E]:= c_yellow
+	add	objptr, #1
+	wrbyte	#234, objptr
+' colors[$F]:= c_white
+	add	objptr, #1
+	wrbyte	#15, objptr
+	sub	objptr, ##12195
+' 
+' ' set timings
+' ' We can have 1140,1026 or 912 pixes per line
+' 
+' setmode(mode)
+	sub	ptr__hn008_spin2_dat__, ##6144
+	call	#_hn008_spin2_setmode
+' 
+' 
+' 
+'   {{
+'     }}
+' 
+' cmd1:=257 ' set idle
+	add	objptr, ##12252
+	wrlong	#257, objptr
+	sub	objptr, ##12252
+' cog:=coginit(16,@hdmi, @buf_ptr)
+	add	ptr__hn008_spin2_dat__, ##7168
+	mov	arg02, ptr__hn008_spin2_dat__
+	sub	ptr__hn008_spin2_dat__, ##7168
+	mov	arg01, #16
+	setq	objptr
+	coginit	arg01, arg02 wc
+ if_b	neg	arg01, #1
+	mov	result1, arg01
+	mov	local14, result1
+	add	objptr, #36
+	wrlong	local14, objptr
+	sub	objptr, #36
+' waitms(20)
+	mov	local15, #20
+	rdlong	local16, #20
+	loc	pa,	#(@LR__0011-@LR__0010)
+	call	#FCACHE_LOAD_
+LR__0010
+	cmps	local15, ##1000 wcz
+ if_a	waitx	local16
+ if_a	sub	local15, ##1000
+ if_a	jmp	#LR__0010
+LR__0011
+	cmps	local15, #0 wcz
+ if_be	jmp	#LR__0012
+	mov	muldiva_, local16
+	mov	muldivb_, ##1000
+	call	#divide_
+	qmul	local15, muldivb_
+	getqx	arg01
+	waitx	arg01
+LR__0012
+' cls(c_green,c_black)
+	neg	arg02, ##956301280
+' 
+' ''---------- Clear the screen, set its foreground/background color
+' 
+' c:=fc<<24+bc<<16+$20
+	add	objptr, #168
+	mov	arg01, objptr
+	sub	objptr, #168
+' longfill(@buf,c,3000)
+	mov	arg03, ##3000
+	loc	pa,	#(@LR__0015-@LR__0013)
+	call	#FCACHE_LOAD_
+LR__0013
+	rep	@LR__0016, ##3000
+LR__0014
+	wrlong	arg02, arg01
+	add	arg01, #4
+LR__0015
+LR__0016
+'  setwritecolors(fc,bc)
+	mov	arg02, #0
+' 
+' ''---------- Set colors for write and writeln
+' 
+' write_color:=ff
+	add	objptr, ##12172
+	wrlong	#199, objptr
+' write_background:=bb
+	add	objptr, #4
+	wrlong	#0, objptr
+' setwritecolors(c_green,c_black)
+' 
+' ''---------- Set colors for write and writeln
+' 
+' write_color:=ff
+	sub	objptr, #4
+	wrlong	#199, objptr
+' write_background:=bb
+	add	objptr, #4
+	wrlong	#0, objptr
+' 
+' return cog
+	sub	objptr, ##12140
+	rdlong	result1, objptr
+	mov	objptr, local06
+	mov	arg01, ##@LR__0420
+	call	#_printf
+	mov	arg01, ##@LR__0421
+	call	#_printf
+' 
+'     printf("hello\n");
+'     printf("HELLO\n");
+'     return 0;
+	mov	result1, #0
+	mov	ptra, fp
+	call	#popregs_
+_main_ret
+	ret
+
+___default_getc
+	mov	COUNT_, #10
+	call	#pushregs_
+	rdlong	local01, arg01
+	rdlong	local02, local01 wz
+ if_ne	jmp	#LR__0018
+	rdlong	local03, arg01
+	add	local03, #12
+	mov	arg02, local03
+	sub	local03, #12
+	add	arg01, #12
+	rdlong	local04, arg01
+	sub	arg01, #12
+	rdlong	local05, local04
+	add	local04, #4
+	rdlong	local06, local04
+	decod	arg03, #10
+	mov	local07, objptr
+	mov	objptr, local05
+	call	local06
+	mov	objptr, local07
+	mov	local08, result1
+	cmps	local08, #0 wcz
+'         return -1;
+ if_b	neg	result1, #1
+ if_b	jmp	#LR__0017
+	wrlong	local08, local03
+	add	local03, #12
+	mov	local09, local03
+	sub	local03, #8
+	wrlong	local09, local03
+'     }
+'     b->cnt = r;
+'     b->ptr = &b->buf[0];
+'     return r;
+	mov	result1, local08
+LR__0017
+	mov	local02, result1
+LR__0018
+	cmps	local02, #0 wcz
+'         return -1;
+ if_be	neg	result1, #1
+ if_be	jmp	#LR__0019
+	sub	local02, #1
+	wrlong	local02, local01
+	add	local01, #4
+	rdlong	local10, local01
+	rdbyte	result1, local10
+	add	local10, #1
+	wrlong	local10, local01
+'     }
+'     b->cnt = i-1;
+'     ptr = b->ptr;
+'     i = *ptr++;
+'     b->ptr = ptr;
+'     return i;
+LR__0019
+	mov	ptra, fp
+	call	#popregs_
+___default_getc_ret
+	ret
+
+___default_putc
+	mov	COUNT_, #4
+	call	#pushregs_
+	rdlong	local01, arg02
+	mov	local02, arg01
+	rdlong	local03, local01
+	mov	local04, local03
+	add	local01, #12
+	add	local04, local01
+	wrbyte	local02, local04
+	and	local02, #255
+	add	local03, #1
+	sub	local01, #12
+	wrlong	local03, local01
+	cmp	local03, ##1024 wz
+ if_ne	jmp	#LR__0020
+	mov	arg01, arg02
+	call	#___default_flush
+	cmp	result1, #0 wz
+ if_ne	neg	local02, #1
+LR__0020
+'             c = -1;
+'         }
+'     }
+'     return c;
+	mov	result1, local02
+	mov	ptra, fp
+	call	#popregs_
+___default_putc_ret
+	ret
+
+___default_putc_terminal
+	mov	COUNT_, #5
+	call	#pushregs_
+	mov	local01, arg02
+	rdlong	local02, local01
+	rdlong	local03, local02
+	mov	local04, local03
+	add	local02, #12
+	add	local04, local02
+	wrbyte	arg01, local04
+	mov	local05, arg01
+	and	local05, #255
+	sub	local02, #12
+	add	local03, #1
+	wrlong	local03, local02
+	cmp	local05, #10 wz
+ if_e	jmp	#LR__0021
+	cmp	local03, ##1024 wz
+ if_ne	jmp	#LR__0022
+LR__0021
+	mov	arg01, local01
+	call	#___default_flush
+	cmp	result1, #0 wz
+ if_ne	neg	local05, #1
+LR__0022
+'             c = -1;
+'         }
+'     }
+'     return c;
+	mov	result1, local05
+	mov	ptra, fp
+	call	#popregs_
+___default_putc_terminal_ret
+	ret
+
+___default_flush
+	mov	COUNT_, #8
+	call	#pushregs_
+	mov	local01, arg01
+	rdlong	local02, local01
+	rdlong	local03, local02
+	cmps	local03, #0 wcz
+ if_be	jmp	#LR__0025
+	add	local01, #8
+	rdlong	local04, local01
+	sub	local01, #8
+	test	local04, #64 wz
+ if_e	jmp	#LR__0024
+	add	local01, #8
+	rdlong	local04, local01
+	sub	local01, #8
+	test	local04, #128 wz
+ if_e	jmp	#LR__0023
+	add	local01, #40
+	rdlong	local04, local01
+	sub	local01, #40
+	rdlong	local05, local04
+	add	local04, #4
+	rdlong	local06, local04
+	mov	arg01, local01
+	mov	arg02, #0
+	mov	arg03, #2
+	mov	local07, objptr
+	mov	objptr, local05
+	call	local06
+	mov	objptr, local07
+	add	local01, #8
+	rdlong	local04, local01
+	andn	local04, #128
+	wrlong	local04, local01
+	sub	local01, #8
+LR__0023
+LR__0024
+	add	local02, #12
+	mov	arg02, local02
+	sub	local02, #12
+	add	local01, #16
+	rdlong	local04, local01
+	sub	local01, #16
+	rdlong	local05, local04
+	add	local04, #4
+	rdlong	local06, local04
+	mov	arg01, local01
+	mov	arg03, local03
+	mov	local07, objptr
+	mov	objptr, local05
+	call	local06
+	mov	objptr, local07
+	mov	local08, result1
+	jmp	#LR__0026
+LR__0025
+	mov	local08, #0
+LR__0026
+	wrlong	#0, local02
+	add	local02, #4
+	wrlong	#0, local02
+	cmps	local08, local03 wcz
+'         return -1;
+ if_b	neg	result1, #1
+'     }
+'     return 0;
+ if_ae	mov	result1, #0
+	mov	ptra, fp
+	call	#popregs_
+___default_flush_ret
+	ret
+
+__rxtxioctl_0011
+	mov	COUNT_, #2
+	call	#pushregs_
+	mov	local01, arg02
+	mov	local02, arg03
+'     switch (req) {
+	cmp	local01, #256 wz
+ if_e	jmp	#LR__0027
+	cmp	local01, #257 wz
+ if_e	jmp	#LR__0028
+	jmp	#LR__0029
+LR__0027
+	add	ptr___system__dat__, #8
+	rdlong	result1, ptr___system__dat__
+	sub	ptr___system__dat__, #8
+	wrlong	result1, local02
+'         *argl = _getrxtxflags();
+'         return 0;
+	mov	result1, #0
+	jmp	#LR__0030
+LR__0028
+	rdlong	arg01, local02
+	add	ptr___system__dat__, #8
+	wrlong	arg01, ptr___system__dat__
+	sub	ptr___system__dat__, #8
+'         _setrxtxflags(*argl);
+'         return 0;
+	mov	result1, #0
+	jmp	#LR__0030
+LR__0029
+'         return _seterror( 10 );
+	mov	arg01, #10
+	call	#__system___seterror
+LR__0030
+	mov	ptra, fp
+	call	#popregs_
+__rxtxioctl_0011_ret
+	ret
+
+___dummy_flush_0012
+' {
+'     return 0;
+	mov	result1, #0
+___dummy_flush_0012_ret
+	ret
+
+__vfswrite
+	mov	COUNT_, #11
+	call	#pushregs_
+	mov	local01, arg01
+	mov	local02, arg02
+	mov	local03, arg03
+	mov	local04, local02
+	add	local01, #8
+	rdlong	local05, local01
+	sub	local01, #8
+	test	local05, #2 wz
+ if_ne	jmp	#LR__0031
+'         return _seterror( 6 );
+	mov	arg01, #6
+	call	#__system___seterror
+	jmp	#LR__0039
+LR__0031
+	add	local01, #8
+	rdlong	local05, local01
+	sub	local01, #8
+	test	local05, #64 wz
+ if_e	jmp	#LR__0033
+	add	local01, #8
+	rdlong	local05, local01
+	sub	local01, #8
+	test	local05, #128 wz
+ if_e	jmp	#LR__0032
+	add	local01, #40
+	rdlong	local05, local01
+	sub	local01, #40
+	rdlong	local06, local05
+	add	local05, #4
+	rdlong	local07, local05
+	mov	arg01, local01
+	mov	arg02, #0
+	mov	arg03, #2
+	mov	local08, objptr
+	mov	objptr, local06
+	call	local07
+	mov	objptr, local08
+	add	local01, #8
+	rdlong	local05, local01
+	andn	local05, #128
+	wrlong	local05, local01
+	sub	local01, #8
+LR__0032
+LR__0033
+	add	local01, #16
+	rdlong	local05, local01 wz
+	sub	local01, #16
+ if_e	jmp	#LR__0035
+	add	local01, #16
+	rdlong	local05, local01
+	sub	local01, #16
+	rdlong	local06, local05
+	add	local05, #4
+	rdlong	local07, local05
+	mov	arg02, local02
+	mov	arg03, local03
+	mov	arg01, local01
+	mov	local08, objptr
+	mov	objptr, local06
+	call	local07
+	mov	objptr, local08
+	mov	local09, result1
+	cmps	local09, #0 wcz
+ if_ae	jmp	#LR__0034
+	add	local01, #8
+	rdlong	local05, local01
+	or	local05, #32
+	wrlong	local05, local01
+'             f->state |=  (0x20) ;
+'             return _seterror(r);
+	mov	arg01, local09
+	call	#__system___seterror
+	jmp	#LR__0039
+LR__0034
+'         }
+'         return r;
+	mov	result1, local09
+	jmp	#LR__0039
+LR__0035
+	add	local01, #20
+	rdlong	local10, local01 wz
+	sub	local01, #20
+ if_ne	jmp	#LR__0036
+'         return _seterror( 6 );
+	mov	arg01, #6
+	call	#__system___seterror
+	jmp	#LR__0039
+LR__0036
+	mov	local09, #0
+'     }
+'     r = 0;
+'     while (count > 0) {
+LR__0037
+	cmp	local03, #0 wcz
+ if_be	jmp	#LR__0038
+	mov	local05, local10
+	rdlong	local06, local05
+	add	local05, #4
+	rdlong	local07, local05
+	rdbyte	arg01, local04
+	mov	arg02, local01
+	mov	local11, objptr
+	mov	objptr, local06
+	add	local04, #1
+	call	local07
+	mov	objptr, local11
+	add	local09, result1
+	sub	local03, #1
+	jmp	#LR__0037
+LR__0038
+'         r += (*tx)(*buf++, f);
+'         --count;
+'     }
+'     return r;
+	mov	result1, local09
+LR__0039
+	mov	ptra, fp
+	call	#popregs_
+__vfswrite_ret
+	ret
+
+__vfsread
+	mov	COUNT_, #15
+	call	#pushregs_
+	add	ptra, #44
+	add	fp, #4
+	wrlong	arg01, fp
+	add	fp, #4
+	wrlong	arg02, fp
+	add	fp, #4
+	wrlong	arg03, fp
+	sub	fp, #4
+	rdlong	local01, fp
+	add	fp, #20
+	wrlong	local01, fp
+	add	fp, #4
+	wrlong	#0, fp
+	sub	fp, #28
+	rdlong	local02, fp
+	sub	fp, #4
+	add	local02, #8
+	rdlong	local01, local02
+	test	local01, #1 wz
+ if_ne	jmp	#LR__0040
+'         return _seterror( 6 );
+	mov	arg01, #6
+	call	#__system___seterror
+	jmp	#LR__0048
+LR__0040
+	add	fp, #4
+	rdlong	local01, fp
+	sub	fp, #4
+	add	local01, #12
+	rdlong	local03, local01 wz
+ if_e	jmp	#LR__0042
+	add	fp, #4
+	rdlong	local04, fp
+	add	local04, #12
+	rdlong	local01, local04
+	rdlong	local02, local01
+	add	local01, #4
+	rdlong	local03, local01
+	rdlong	arg01, fp
+	add	fp, #4
+	rdlong	arg02, fp
+	add	fp, #4
+	rdlong	arg03, fp
+	sub	fp, #12
+	mov	local05, objptr
+	mov	objptr, local02
+	call	local03
+	mov	objptr, local05
+	add	fp, #16
+	wrlong	result1, fp
+	sub	fp, #16
+	cmps	result1, #0 wcz
+ if_ae	jmp	#LR__0041
+	add	fp, #4
+	rdlong	local01, fp
+	mov	local04, local01
+	add	local04, #8
+	rdlong	local03, local04
+	or	local03, #32
+	add	local01, #8
+	wrlong	local03, local01
+'             f->state |=  (0x20) ;
+'             return _seterror(r);
+	add	fp, #12
+	rdlong	arg01, fp
+	sub	fp, #16
+	call	#__system___seterror
+	jmp	#LR__0048
+LR__0041
+'         }
+'         return r;
+	add	fp, #16
+	rdlong	result1, fp
+	sub	fp, #16
+	jmp	#LR__0048
+LR__0042
+	add	fp, #4
+	rdlong	local01, fp
+	add	local01, #24
+	rdlong	local03, local01
+	add	fp, #20
+	wrlong	local03, fp
+	mov	local01, local03 wz
+	sub	fp, #24
+ if_ne	jmp	#LR__0043
+'         return _seterror( 6 );
+	mov	arg01, #6
+	call	#__system___seterror
+	jmp	#LR__0048
+LR__0043
+	add	fp, #4
+	rdlong	local01, fp
+	sub	fp, #4
+	add	local01, #32
+	rdlong	local03, local01 wz
+ if_e	jmp	#LR__0045
+	add	fp, #36
+	mov	local06, fp
+	sub	fp, #32
+	rdlong	local07, fp
+	mov	local04, local07
+	add	local04, #32
+	rdlong	local08, local04
+	mov	local01, local08
+	rdlong	local02, local01
+	add	local01, #4
+	rdlong	local09, local01
+	mov	local03, local09
+	mov	local10, local07
+	sub	fp, #4
+	mov	local11, local10
+	mov	local12, #256
+	mov	local13, local06
+	mov	arg01, local11
+	mov	arg02, #256
+	mov	arg03, local13
+	mov	local14, objptr
+	mov	objptr, local02
+	call	local03
+	mov	objptr, local14
+	mov	local15, result1
+	add	fp, #16
+	wrlong	local15, fp
+	mov	local02, local15 wz
+	sub	fp, #16
+ if_ne	jmp	#LR__0044
+	add	fp, #36
+	rdlong	local04, fp
+	sub	fp, #36
+	mov	local03, local04
+	and	local03, #2 wz
+ if_e	jmp	#LR__0044
+	mov	local01, #1
+	add	fp, #32
+	wrlong	#1, fp
+	sub	fp, #32
+LR__0044
+LR__0045
+	add	fp, #16
+	wrlong	#0, fp
+	sub	fp, #16
+'             break_on_nl = 1;
+'         }
+'     }
+'     r = 0;
+'     while (count > 0) {
+LR__0046
+	add	fp, #12
+	rdlong	local01, fp
+	sub	fp, #12
+	cmp	local01, #0 wcz
+ if_be	jmp	#LR__0047
+	add	fp, #24
+	rdlong	local01, fp
+	rdlong	local02, local01
+	add	local01, #4
+	rdlong	local03, local01
+	sub	fp, #20
+	rdlong	arg01, fp
+	sub	fp, #4
+	mov	local11, objptr
+	mov	objptr, local02
+	call	local03
+	mov	objptr, local11
+	mov	local10, result1
+	add	fp, #20
+	wrlong	local10, fp
+	sub	fp, #20
+	cmps	local10, #0 wcz
+ if_b	jmp	#LR__0047
+	add	fp, #28
+	rdlong	local01, fp
+	mov	local03, local01
+	add	local03, #1
+	wrlong	local03, fp
+	sub	fp, #8
+	rdlong	local07, fp
+	wrbyte	local07, local01
+	sub	fp, #4
+	rdlong	local01, fp
+	add	local01, #1
+	wrlong	local01, fp
+	sub	fp, #4
+	rdlong	local01, fp
+	sub	local01, #1
+	wrlong	local01, fp
+	add	fp, #20
+	rdlong	local01, fp wz
+	sub	fp, #32
+ if_e	jmp	#LR__0046
+	add	fp, #20
+	rdlong	local03, fp
+	sub	fp, #20
+	cmp	local03, #10 wz
+'             break;
+ if_ne	jmp	#LR__0046
+LR__0047
+'         }
+'     }
+'     return r;
+	add	fp, #16
+	rdlong	result1, fp
+	sub	fp, #16
+LR__0048
+	mov	ptra, fp
+	call	#popregs_
+__vfsread_ret
+	ret
+
+__dofmt
+	mov	COUNT_, #29
+	call	#pushregs_
+	add	ptra, #192
+	add	fp, #4
+	wrlong	arg01, fp
+	add	fp, #4
+	wrlong	arg02, fp
+	add	fp, #4
+	wrlong	arg03, fp
+	mov	local01, #0
+	add	fp, #16
+	wrlong	#0, fp
+	add	fp, #8
+	wrlong	#0, fp
+	add	fp, #4
+	wrlong	#0, fp
+	add	fp, #8
+	wrlong	#0, fp
+	sub	fp, #48
+' #line 139 "C:/Users/Piotr/Downloads/flexprop(2)/flexprop/include/libsys/dofmt.c"
+'     for(;;) {
+LR__0049
+	add	fp, #8
+	rdlong	local02, fp
+	mov	local03, local02
+	add	local03, #1
+	wrlong	local03, fp
+	rdbyte	local01, local02
+	add	fp, #8
+	wrlong	local01, fp
+	mov	local01, local01 wz
+	sub	fp, #16
+ if_e	jmp	#LR__0075
+	add	fp, #16
+	rdlong	local01, fp
+	sub	fp, #16
+	cmp	local01, #37 wz
+ if_e	jmp	#LR__0051
+	add	fp, #4
+	rdlong	local01, fp
+	rdlong	local02, local01
+	add	local01, #4
+	rdlong	local04, local01
+	add	fp, #12
+	rdlong	arg01, fp
+	sub	fp, #16
+	mov	local05, objptr
+	mov	objptr, local02
+	call	local04
+	mov	objptr, local05
+	add	fp, #20
+	wrlong	result1, fp
+	sub	fp, #20
+	cmps	result1, #0 wcz
+ if_ae	jmp	#LR__0050
+	add	fp, #20
+	rdlong	result1, fp
+	sub	fp, #20
+	jmp	#LR__0076
+LR__0050
+	add	fp, #28
+	rdlong	local04, fp
+	add	local04, #1
+	wrlong	local04, fp
+	sub	fp, #28
+'             bytes_written++;
+'             continue;
+	jmp	#LR__0049
+LR__0051
+	add	fp, #32
+	mov	local06, fp
+	sub	fp, #24
+	rdlong	arg01, fp
+	sub	fp, #8
+	mov	arg02, local06
+	call	#_parseflags_0104
+	mov	local03, result1
+	add	fp, #8
+	wrlong	local03, fp
+	add	fp, #24
+	rdlong	local07, fp
+	shr	local07, #24
+	mov	local08, local07
+	and	local08, #3
+	add	fp, #16
+	wrlong	local08, fp
+	sub	fp, #40
+	mov	local09, fp
+	add	fp, #4
+	rdlong	arg02, fp
+	sub	fp, #12
+	mov	arg01, local09
+	call	#_parseint_0097
+	mov	local03, result1
+	add	fp, #36
+	wrlong	local03, fp
+	sub	fp, #28
+	rdlong	local01, fp
+	rdbyte	local10, local01
+	add	fp, #8
+	wrlong	local10, fp
+	mov	local01, local10 wz
+	sub	fp, #16
+ if_e	jmp	#LR__0075
+	add	fp, #16
+	rdlong	local01, fp
+	sub	fp, #16
+	cmp	local01, #46 wz
+ if_ne	jmp	#LR__0052
+	add	fp, #8
+	rdlong	local04, fp
+	add	local04, #1
+	wrlong	local04, fp
+	mov	local11, fp
+	add	fp, #4
+	rdlong	arg02, fp
+	sub	fp, #12
+	mov	arg01, local11
+	call	#_parseint_0097
+	mov	local01, result1
+	add	local01, #1
+	add	fp, #40
+	wrlong	local01, fp
+	sub	fp, #32
+	rdlong	local01, fp
+	rdbyte	local12, local01
+	add	fp, #8
+	wrlong	local12, fp
+	mov	local01, local12 wz
+	sub	fp, #16
+ if_e	jmp	#LR__0075
+LR__0052
+	add	fp, #44
+	mov	local13, fp
+	sub	fp, #36
+	rdlong	arg01, fp
+	sub	fp, #8
+	mov	arg02, local13
+	call	#_parsesize_0108
+	add	fp, #8
+	wrlong	result1, fp
+	mov	local02, result1
+	mov	local03, result1
+	add	local03, #1
+	wrlong	local03, fp
+	rdbyte	local01, local02
+	add	fp, #8
+	wrlong	local01, fp
+	mov	local01, local01 wz
+	sub	fp, #16
+ if_e	jmp	#LR__0075
+	add	fp, #16
+	rdlong	local01, fp
+	sub	fp, #16
+	cmp	local01, #37 wz
+ if_ne	jmp	#LR__0053
+	add	fp, #4
+	rdlong	arg01, fp
+	add	fp, #28
+	rdlong	arg02, fp
+	sub	fp, #32
+	mov	arg03, #37
+	call	#__system___fmtchar
+	mov	local14, result1
+	add	fp, #20
+	wrlong	local14, fp
+	sub	fp, #20
+'             q = _fmtchar(fn, flags, '%');
+'             continue;
+	jmp	#LR__0049
+LR__0053
+	add	fp, #20
+	wrlong	#0, fp
+	sub	fp, #8
+	rdlong	local04, fp
+	rdlong	local03, local04
+	rdlong	local01, local03
+	mov	local14, local04
+	mov	local15, local14
+	mov	local16, local04
+	mov	local05, local16
+	rdlong	local17, local05
+	add	local17, #4
+	wrlong	local17, local15
+	add	fp, #40
+	wrlong	local01, fp
+	sub	fp, #36
+	rdlong	local01, fp
+	sub	fp, #16
+	cmps	local01, #65 wcz
+ if_b	jmp	#LR__0054
+	add	fp, #16
+	rdlong	local03, fp
+	sub	fp, #16
+	mov	local04, local03
+	cmps	local04, #90 wcz
+ if_a	jmp	#LR__0054
+	add	fp, #32
+	rdlong	local01, fp
+	bith	local01, #29
+	wrlong	local01, fp
+	sub	fp, #16
+	rdlong	local02, fp
+	sub	local02, #65
+	wrlong	local02, fp
+	mov	local01, local02
+	add	local01, #97
+	wrlong	local01, fp
+	sub	fp, #16
+LR__0054
+	add	fp, #40
+	rdlong	local01, fp
+	sub	fp, #40
+	cmps	local01, #0 wcz
+ if_b	add	fp, #40
+ if_b	wrlong	#0, fp
+ if_b	sub	fp, #40
+	add	fp, #40
+	rdlong	local01, fp
+	sub	fp, #40
+	cmps	local01, #63 wcz
+ if_a	add	fp, #40
+ if_a	wrlong	#63, fp
+ if_a	sub	fp, #40
+	add	fp, #36
+	rdlong	local01, fp
+	sub	fp, #36
+	cmps	local01, #0 wcz
+ if_ae	jmp	#LR__0055
+	add	fp, #36
+	rdlong	local01, fp
+	neg	local01, local01
+	wrlong	local01, fp
+	sub	fp, #4
+	rdlong	local01, fp
+	bitl	local01, #54
+	wrlong	local01, fp
+	bith	local01, #22
+	wrlong	local01, fp
+	add	fp, #16
+	wrlong	#1, fp
+	sub	fp, #48
+LR__0055
+	add	fp, #36
+	rdlong	local18, fp
+	shl	local18, #8
+	sub	fp, #4
+	rdlong	local01, fp
+	or	local01, local18
+	wrlong	local01, fp
+	add	fp, #8
+	rdlong	local19, fp
+	shl	local19, #16
+	sub	fp, #8
+	rdlong	local01, fp
+	or	local01, local19
+	wrlong	local01, fp
+'             width = -width;
+'             flags &= ~( 0x3 << (22) );
+'             flags |= ( 1 << (22) );
+'             padchar =  1 ;
+'         }
+'         flags = flags | (width <<  (8) );
+'         flags = flags | (prec <<  (16) );
+'         switch (c) {
+	sub	fp, #16
+	rdlong	local20, fp
+	sub	fp, #16
+	cmp	local20, #99 wz
+ if_e	jmp	#LR__0056
+	cmp	local20, #115 wz
+ if_e	jmp	#LR__0057
+	cmp	local20, #100 wz
+ if_e	jmp	#LR__0059
+	cmp	local20, #105 wz
+ if_e	jmp	#LR__0060
+	cmp	local20, #117 wz
+ if_e	jmp	#LR__0061
+	cmp	local20, #111 wz
+ if_e	jmp	#LR__0064
+	cmp	local20, #120 wz
+ if_e	jmp	#LR__0066
+	cmp	local20, #97 wz
+ if_e	jmp	#LR__0068
+	cmp	local20, #101 wz
+ if_e	jmp	#LR__0069
+	cmp	local20, #102 wz
+ if_e	jmp	#LR__0070
+	cmp	local20, #103 wz
+ if_e	jmp	#LR__0071
+	jmp	#LR__0072
+LR__0056
+	add	fp, #4
+	rdlong	arg01, fp
+	add	fp, #28
+	rdlong	arg02, fp
+	add	fp, #20
+	rdlong	local14, fp
+	sub	fp, #52
+	mov	local15, local14
+	mov	arg03, local15
+	call	#__system___fmtchar
+	mov	local17, result1
+	add	fp, #20
+	wrlong	local17, fp
+	sub	fp, #20
+'             q = _fmtchar(fn, flags, val);
+'             break;
+	jmp	#LR__0073
+LR__0057
+	add	fp, #40
+	rdlong	local01, fp wz
+	sub	fp, #40
+ if_e	jmp	#LR__0058
+	add	fp, #40
+	rdlong	local21, fp
+	sub	local21, #1
+	mov	local22, local21
+	sub	fp, #8
+	rdlong	local01, fp
+	or	local01, local22
+	wrlong	local01, fp
+	sub	fp, #32
+LR__0058
+	add	fp, #4
+	rdlong	arg01, fp
+	add	fp, #28
+	rdlong	arg02, fp
+	add	fp, #20
+	rdlong	local14, fp
+	sub	fp, #52
+	mov	local15, local14
+	mov	arg03, local15
+	call	#__system___fmtstr
+	mov	local17, result1
+	add	fp, #20
+	wrlong	local17, fp
+	sub	fp, #20
+'             break;
+	jmp	#LR__0073
+LR__0059
+LR__0060
+LR__0061
+	add	fp, #16
+	rdlong	local01, fp
+	sub	fp, #16
+	cmp	local01, #117 wz
+ if_ne	jmp	#LR__0062
+	add	fp, #32
+	rdlong	local01, fp
+	bith	local01, #58
+	wrlong	local01, fp
+	sub	fp, #32
+LR__0062
+	add	fp, #40
+	rdlong	local01, fp wz
+	sub	fp, #40
+ if_ne	jmp	#LR__0063
+	add	fp, #48
+	rdlong	local03, fp
+	sub	fp, #48
+	mov	local04, local03
+	cmp	local04, #2 wz
+ if_ne	jmp	#LR__0063
+	add	fp, #36
+	rdlong	local23, fp
+	add	local23, #1
+	mov	local24, local23
+	shl	local24, #16
+	sub	fp, #4
+	rdlong	local02, fp
+	mov	local01, local02
+	or	local01, local24
+	wrlong	local01, fp
+	sub	fp, #32
+LR__0063
+	add	fp, #4
+	rdlong	arg01, fp
+	add	fp, #28
+	rdlong	arg02, fp
+	add	fp, #20
+	rdlong	local14, fp
+	sub	fp, #52
+	mov	local15, local14
+	mov	local17, #10
+	mov	arg03, local15
+	mov	arg04, #10
+	call	#__system___fmtnum
+	mov	local05, result1
+	add	fp, #20
+	wrlong	local05, fp
+	sub	fp, #20
+'                 flags |= ((width+1)<< (16) );
+'             }
+'             q = _fmtnum(fn, flags, val, 10);
+'             break;
+	jmp	#LR__0073
+LR__0064
+	add	fp, #32
+	rdlong	local01, fp
+	bith	local01, #58
+	wrlong	local01, fp
+	add	fp, #8
+	rdlong	local01, fp wz
+	sub	fp, #40
+ if_ne	jmp	#LR__0065
+	add	fp, #48
+	rdlong	local03, fp
+	sub	fp, #48
+	mov	local04, local03
+	cmp	local04, #2 wz
+ if_ne	jmp	#LR__0065
+	add	fp, #36
+	rdlong	local25, fp
+	add	local25, #1
+	mov	local26, local25
+	shl	local26, #16
+	sub	fp, #4
+	rdlong	local02, fp
+	mov	local01, local02
+	or	local01, local26
+	wrlong	local01, fp
+	sub	fp, #32
+LR__0065
+	add	fp, #4
+	rdlong	arg01, fp
+	add	fp, #28
+	rdlong	arg02, fp
+	add	fp, #20
+	rdlong	local14, fp
+	sub	fp, #52
+	mov	local15, local14
+	mov	local17, #8
+	mov	arg03, local15
+	mov	arg04, #8
+	call	#__system___fmtnum
+	mov	local05, result1
+	add	fp, #20
+	wrlong	local05, fp
+	sub	fp, #20
+'                 flags |= ((width+1)<< (16) );
+'             }
+'             q = _fmtnum(fn, flags, val, 8);
+'             break;
+	jmp	#LR__0073
+LR__0066
+	add	fp, #40
+	rdlong	local01, fp wz
+	sub	fp, #40
+ if_ne	jmp	#LR__0067
+	add	fp, #48
+	rdlong	local03, fp
+	sub	fp, #48
+	mov	local04, local03
+	cmp	local04, #2 wz
+ if_ne	jmp	#LR__0067
+	add	fp, #36
+	rdlong	local27, fp
+	add	local27, #1
+	mov	local28, local27
+	shl	local28, #16
+	sub	fp, #4
+	rdlong	local02, fp
+	mov	local01, local02
+	or	local01, local28
+	wrlong	local01, fp
+	sub	fp, #32
+LR__0067
+	add	fp, #32
+	rdlong	local01, fp
+	bith	local01, #58
+	wrlong	local01, fp
+	sub	fp, #28
+	rdlong	arg01, fp
+	add	fp, #28
+	rdlong	arg02, fp
+	add	fp, #20
+	rdlong	local14, fp
+	sub	fp, #52
+	mov	local15, local14
+	mov	local17, #16
+	mov	arg03, local15
+	mov	arg04, #16
+	call	#__system___fmtnum
+	add	fp, #20
+	wrlong	result1, fp
+	sub	fp, #20
+'                 flags |= ((width+1)<< (16) );
+'             }
+'             flags |=  3  <<  (26) ;
+'             q = _fmtnum(fn, flags, val, 16);
+'             break;
+	jmp	#LR__0073
+LR__0068
+LR__0069
+LR__0070
+LR__0071
+	add	fp, #4
+	rdlong	arg01, fp
+	add	fp, #28
+	rdlong	local04, fp
+	add	fp, #20
+	rdlong	local14, fp
+	mov	local15, local14
+'     v.i = x;
+'     return v.f;
+	mov	result1, local15
+	mov	local17, result1
+	sub	fp, #36
+	rdlong	local16, fp
+	sub	fp, #16
+	mov	local05, local16
+	mov	arg02, local04
+	mov	arg03, local17
+	mov	arg04, local05
+	call	#__system___fmtfloat
+	mov	local29, result1
+	add	fp, #20
+	wrlong	local29, fp
+	sub	fp, #20
+'             q = _fmtfloat(fn, flags, _asfloat(val), c);
+'             break;
+	jmp	#LR__0073
+LR__0072
+	add	fp, #4
+	rdlong	local02, fp
+	mov	local01, local02
+	add	fp, #28
+	rdlong	local03, fp
+	sub	fp, #32
+	mov	local04, local03
+	mov	local15, ##@LR__0422
+	mov	local14, local15
+	mov	arg01, local01
+	mov	arg02, local04
+	mov	arg03, local14
+	call	#__system___fmtstr
+	mov	local17, result1
+	add	fp, #20
+	wrlong	local17, fp
+	sub	fp, #20
+'             q = _fmtstr(fn, flags, "???");
+'             break;
+LR__0073
+	add	fp, #20
+	rdlong	local01, fp
+	sub	fp, #20
+	cmps	local01, #0 wcz
+ if_ae	jmp	#LR__0074
+'             return q;
+	add	fp, #20
+	rdlong	result1, fp
+	sub	fp, #20
+	jmp	#LR__0076
+LR__0074
+	add	fp, #28
+	rdlong	local01, fp
+	sub	fp, #8
+	rdlong	local03, fp
+	add	local01, local03
+	add	fp, #8
+	wrlong	local01, fp
+	sub	fp, #28
+	jmp	#LR__0049
+LR__0075
+'         }
+'         bytes_written += q;
+'     }
+'     return bytes_written;
+	add	fp, #28
+	rdlong	result1, fp
+	sub	fp, #28
+LR__0076
+	mov	ptra, fp
+	call	#popregs_
+__dofmt_ret
+	ret
+
+_parseint_0097
+	mov	_var01, arg01
+	mov	_var02, arg02
+	rdlong	_var03, _var01
+	mov	_var04, #0
+	rdbyte	_var05, _var03
+	cmp	_var05, #42 wz
+ if_ne	jmp	#LR__0077
+	rdlong	_var06, _var02
+	rdlong	_var04, _var06
+	add	_var06, #4
+	wrlong	_var06, _var02
+	add	_var03, #1
+	jmp	#LR__0080
+LR__0077
+'         while ( (c>='0') && (c<='9') ) {
+LR__0078
+	cmps	_var05, #48 wcz
+ if_b	jmp	#LR__0079
+	cmps	_var05, #57 wcz
+ if_a	jmp	#LR__0079
+	mov	_var07, _var04
+	shl	_var07, #2
+	add	_var07, _var04
+	shl	_var07, #1
+	sub	_var05, #48
+	add	_var07, _var05
+	mov	_var04, _var07
+	add	_var03, #1
+	rdbyte	_var05, _var03
+	jmp	#LR__0078
+LR__0079
+LR__0080
+	wrlong	_var03, _var01
+'             r = 10*r + (c-'0');
+'             c = *++fmt;
+'         }
+'     }
+'     *fmt_p = fmt;
+'     return r;
+	mov	result1, _var04
+_parseint_0097_ret
+	ret
+
+_parseflags_0104
+	mov	_var01, arg01
+	mov	_var02, arg02
+	mov	_var03, #0
+	mov	_var04, #1
+	mov	_var05, #0
+	mov	_var06, #2
+	mov	_var07, #0
+' 
+'     while (!done) {
+LR__0081
+	cmp	_var07, #0 wz
+ if_ne	jmp	#LR__0088
+	rdbyte	_var08, _var01
+'         c = *fmt++;
+'         switch (c) {
+	cmp	_var08, #45 wz
+	add	_var01, #1
+ if_e	jmp	#LR__0082
+	cmp	_var08, #35 wz
+ if_e	jmp	#LR__0083
+	cmp	_var08, #43 wz
+ if_e	jmp	#LR__0084
+	cmp	_var08, #48 wz
+ if_e	jmp	#LR__0085
+	cmp	_var08, #32 wz
+ if_e	jmp	#LR__0086
+	jmp	#LR__0087
+LR__0082
+	mov	_var06, #1
+'             justify =  1 ;
+'             break;
+	jmp	#LR__0081
+LR__0083
+	or	_var03, #28
+'             flags |=  (28) ;
+'             break;
+	jmp	#LR__0081
+LR__0084
+	mov	_var05, #1
+'             signchar =  1 ;
+'             break;
+	jmp	#LR__0081
+LR__0085
+	mov	_var04, #2
+'             padchar =  2 ;
+'             break;
+	jmp	#LR__0081
+LR__0086
+	mov	_var04, #1
+'             padchar =  1 ;
+'             break;
+	jmp	#LR__0081
+LR__0087
+	mov	_var07, #1
+'             done = 1;
+'             break;
+	jmp	#LR__0081
+LR__0088
+	shl	_var04, #24
+	or	_var03, _var04
+	shl	_var05, #26
+	or	_var03, _var05
+	shl	_var06, #22
+	or	_var03, _var06
+	wrlong	_var03, _var02
+	sub	_var01, #1
+'         }
+'     }
+'     flags |= (padchar <<  (24) );
+'     flags |= (signchar <<  (26) );
+'     flags |= (justify <<  (22) );
+'     *flag_p = flags;
+'     return fmt-1;
+	mov	result1, _var01
+_parseflags_0104_ret
+	ret
+
+_parsesize_0108
+	mov	_var01, arg02
+	mov	_var02, #4
+	mov	_var03, #0
+	mov	_var04, arg01
+	mov	_var05, arg01
+	add	_var05, #1
+	mov	_var06, _var05
+	rdbyte	_var07, _var04
+'     c = *fmt++;
+' 
+'     switch (c) {
+	mov	_var08, _var07
+	cmp	_var08, #108 wz
+ if_e	jmp	#LR__0089
+	cmp	_var08, #104 wz
+ if_e	jmp	#LR__0090
+	cmp	_var08, #106 wz
+ if_e	jmp	#LR__0091
+	cmp	_var08, #122 wz
+ if_e	jmp	#LR__0092
+	cmp	_var08, #116 wz
+ if_e	jmp	#LR__0093
+	cmp	_var08, #76 wz
+ if_e	jmp	#LR__0094
+	jmp	#LR__0095
+LR__0089
+	mov	_var02, #4
+	rdbyte	_var09, _var06
+	cmp	_var09, #108 wz
+ if_e	mov	_var02, #8
+ if_e	add	_var06, #1
+'             fmt++;
+'         }
+'         break;
+	jmp	#LR__0096
+LR__0090
+	mov	_var02, #2
+	rdbyte	_var09, _var06
+	cmp	_var09, #104 wz
+ if_e	mov	_var02, #1
+ if_e	add	_var06, #1
+'             fmt++;
+'         }
+'         break;
+	jmp	#LR__0096
+LR__0091
+	mov	_var02, #8
+'         break;
+	jmp	#LR__0096
+LR__0092
+LR__0093
+	mov	_var02, #4
+'         break;
+	jmp	#LR__0096
+LR__0094
+	mov	_var02, #4
+'         longflag = 1;
+'         break;
+	jmp	#LR__0096
+LR__0095
+	mov	_var09, _var06
+	sub	_var09, #1
+	mov	_var06, _var09
+' 
+'         --fmt;
+'         break;
+LR__0096
+	wrlong	_var02, _var01
+'     }
+'     *size_p = size;
+'     return fmt;
+	mov	result1, _var06
+_parsesize_0108_ret
+	ret
+
+' 
+' pub putchar(achar):r | c
+_hn008_spin2_putchar
+	mov	COUNT_, #10
+	call	#pushregs_
+	mov	local01, arg01
+' 
+' ''---------- Output a char at the cursor position, move the cursor
+' 
+' if achar==10 
+	cmp	local01, #10 wz
+ if_ne	jmp	#LR__0097
+'   crlf()
+' 
+' ''----------- Set cursor at the first character in a new line, scroll if needed
+' 
+' cursor_x:=0
+	add	objptr, ##12168
+	wrbyte	#0, objptr
+' cursor_y+=1
+	add	objptr, #1
+	rdbyte	local02, objptr
+	add	local02, #1
+	wrbyte	local02, objptr
+' if cursor_y>29
+	rdbyte	local02, objptr
+	sub	objptr, ##12169
+	cmps	local02, #29 wcz
+ if_be	jmp	#LR__0100
+'   scrollup()
+	call	#_hn008_spin2_scrollup
+'   cursor_y:=29
+	add	objptr, ##12169
+	wrbyte	#29, objptr
+	sub	objptr, ##12169
+' else
+	jmp	#LR__0100
+LR__0097
+	add	objptr, ##12172
+	rdlong	local03, objptr
+	shl	local03, #24
+	add	objptr, #4
+	rdlong	local04, objptr
+	shl	local04, #16
+	add	local03, local04
+'   c:=write_color<<24+write_background<<16
+	sub	objptr, #7
+	rdbyte	local05, objptr
+	qmul	local05, #100
+	getqx	local06
+	sub	objptr, #1
+	rdbyte	local05, objptr
+	add	local06, local05
+	shl	local06, #2
+	sub	objptr, ##12000
+	add	local06, objptr
+	rdlong	local07, local06
+	and	local07, ##65535
+	or	local07, local03
+'   buf[100*cursor_y+cursor_x]:=buf[100*cursor_y+cursor_x] &$FFFF | c
+	wrlong	local07, local06
+	add	objptr, ##12001
+	rdbyte	local05, objptr
+	qmul	local05, #100
+	getqx	local08
+	sub	objptr, #1
+	rdbyte	local05, objptr
+	add	local08, local05
+	shl	local08, #2
+	sub	objptr, ##12000
+	add	local08, objptr
+	rdlong	local09, local08
+	andn	local09, #255
+	and	local01, #255
+	or	local09, local01
+'   buf[100*cursor_y+cursor_x]:=(buf[100*cursor_y+cursor_x] & $FFFFFF00)  | (achar & $000000FF)
+	wrlong	local09, local08
+'   cursor_x+=1
+	add	objptr, ##12000
+	rdbyte	local10, objptr
+	add	local10, #1
+	wrbyte	local10, objptr
+'   if cursor_x==100
+	rdbyte	local10, objptr
+	sub	objptr, ##12168
+	cmp	local10, #100 wz
+ if_ne	jmp	#LR__0099
+'     cursor_x:=0
+	add	objptr, ##12168
+	wrbyte	#0, objptr
+'     cursor_y+=1
+	add	objptr, #1
+	rdbyte	local10, objptr
+	add	local10, #1
+	wrbyte	local10, objptr
+'     if cursor_y>29
+	rdbyte	local10, objptr
+	sub	objptr, ##12169
+	cmps	local10, #29 wcz
+ if_be	jmp	#LR__0098
+'       scrollup()
+	call	#_hn008_spin2_scrollup
+'       cursor_y:=29
+	add	objptr, ##12169
+	wrbyte	#29, objptr
+	sub	objptr, ##12169
+LR__0098
+LR__0099
+LR__0100
+' return 1
+	mov	result1, #1
+	mov	ptra, fp
+	call	#popregs_
+_hn008_spin2_putchar_ret
+	ret
+
+' 
+' pub scrollup() | i
+_hn008_spin2_scrollup
+	mov	COUNT_, #2
+	call	#pushregs_
+	add	objptr, #168
+	mov	arg01, objptr
+	sub	objptr, #168
+	mov	arg02, arg01
+	add	arg02, #400
+' 
+' ''-----------  Scroll the screen one line up
+' 
+' longmove(@buf,@buf+400,2900)
+	mov	arg03, ##2900
+	call	#__system__longmove
+	add	objptr, ##11768
+	mov	local01, objptr
+	sub	objptr, ##11768
+	loc	pa,	#(@LR__0103-@LR__0101)
+	call	#FCACHE_LOAD_
+LR__0101
+	rep	@LR__0104, #100
+LR__0102
+	rdlong	local02, local01
+	and	local02, ##-65536
+	or	local02, #32
+'   buf[i]:=(buf[i] & $FFFF0000) | 32
+	wrlong	local02, local01
+	add	local01, #4
+LR__0103
+LR__0104
+	mov	ptra, fp
+	call	#popregs_
+_hn008_spin2_scrollup_ret
+	ret
+
+' 
+' 
+' pub setmode(mode)
+_hn008_spin2_setmode
+' 
+' if (mode==0)
+	cmp	arg01, #0 wz
+ if_ne	jmp	#LR__0107
+' 
+'   timings[0]:= $70810000 + hdmi_base<<17 + 16          'before sync
+	add	objptr, ##12212
+	wrlong	##1893793808, objptr
+'   timings[1]:= $70810000 + hdmi_base<<17 + 80          'sync
+	add	objptr, #4
+	wrlong	##1893793872, objptr
+'   timings[2]:= $70810000 + hdmi_base<<17 + 20          'before visible
+	add	objptr, #4
+	wrlong	##1893793812, objptr
+'   timings[3]:= $70810000 + hdmi_base<<17 + 1024        'visible 1024
+	add	objptr, #4
+	wrlong	##1893794816, objptr
+'   timings[4]:= $70810000 + hdmi_base<<17 + 112         'immediate 112
+	add	objptr, #4
+	wrlong	##1893793904, objptr
+'   timings[5]:= $00880000 + hdmi_base<<17 + 8           'imm+lut, 1 char
+	add	objptr, #4
+	wrlong	##15204360, objptr
+'   timings[6]:= 48
+	add	objptr, #4
+	wrlong	#48, objptr
+'   timings[7]:= 16
+	add	objptr, #4
+	wrlong	#16, objptr
+'   timings[8]:= 16
+	add	objptr, #4
+	wrlong	#16, objptr
+'   timings[9]:= 16
+	add	objptr, #4
+	wrlong	#16, objptr
+	sub	objptr, ##12248
+' 
+'   clkfreq:=354693878
+	wrlong	##354693878, #20
+'   org
+	loc	pa,	#(@LR__0106-@LR__0105)
+	call	#FCACHE_LOAD_
+LR__0105
+	hubset	##29584635
+LR__0106
+LR__0107
+' 
+' 
+' if (mode==1)   ' 1026 px per line
+	cmp	arg01, #1 wz
+ if_ne	jmp	#LR__0110
+' 
+'   timings[0]:= $70810000 + hdmi_base<<17 + 30          'before sync
+	add	objptr, ##12212
+	wrlong	##1893793822, objptr
+'   timings[1]:= $70810000 + hdmi_base<<17 + 80          'sync
+	add	objptr, #4
+	wrlong	##1893793872, objptr
+'   timings[2]:= $70810000 + hdmi_base<<17 + 20          'before visible
+	add	objptr, #4
+	wrlong	##1893793812, objptr
+'   timings[3]:= $70810000 + hdmi_base<<17 + 896         'visible 896
+	add	objptr, #4
+	wrlong	##1893794688, objptr
+'   timings[4]:= $70810000 + hdmi_base<<17 + 48          'immediate 48
+	add	objptr, #4
+	wrlong	##1893793840, objptr
+'   timings[5]:= $00880000 + hdmi_base<<17 + 8           'imm+lut, 1 char
+	add	objptr, #4
+	wrlong	##15204360, objptr
+'   timings[6]:= 24
+	add	objptr, #4
+	wrlong	#24, objptr
+'   timings[7]:= 32
+	add	objptr, #4
+	wrlong	#32, objptr
+'   timings[8]:= 32
+	add	objptr, #4
+	wrlong	#32, objptr
+'   timings[9]:= 32
+	add	objptr, #4
+	wrlong	#32, objptr
+	sub	objptr, ##12248
+' 
+'   clkfreq:=319215686
+	wrlong	##319215686, #20
+'   org
+	loc	pa,	#(@LR__0109-@LR__0108)
+	call	#FCACHE_LOAD_
+LR__0108
+	hubset	##30092795
+LR__0109
+LR__0110
+' 
+' 
+' if (mode==2) ' 912 pixes per line     ' 283_751_600 80x PAL  - real settings: 64 908 283750000 - 0.9999944
+	cmp	arg01, #2 wz
+ if_ne	jmp	#LR__0113
+' 
+'   timings[0]:= $70810000 + hdmi_base<<17 + 16           'before sync
+	add	objptr, ##12212
+	wrlong	##1893793808, objptr
+'   timings[1]:= $70810000 + hdmi_base<<17 + 64           'sync
+	add	objptr, #4
+	wrlong	##1893793856, objptr
+'   timings[2]:= $70810000 + hdmi_base<<17 + 16           'before visible
+	add	objptr, #4
+	wrlong	##1893793808, objptr
+'   timings[3]:= $70810000 + hdmi_base<<17 + 816          'visible 1024
+	add	objptr, #4
+	wrlong	##1893794608, objptr
+'   timings[4]:= $70810000 + hdmi_base<<17 + 8            'immediate 112
+	add	objptr, #4
+	wrlong	##1893793800, objptr
+'   timings[5]:= $00880000 + hdmi_base<<17 + 8            'imm+lut, 1 char
+	add	objptr, #4
+	wrlong	##15204360, objptr
+'   timings[6]:= 8
+	add	objptr, #4
+	wrlong	#8, objptr
+'   timings[7]:= 32
+	add	objptr, #4
+	wrlong	#32, objptr
+'   timings[8]:= 64
+	add	objptr, #4
+	wrlong	#64, objptr
+' 
+'   timings[9]:= 32
+	add	objptr, #4
+	wrlong	#32, objptr
+	sub	objptr, ##12248
+' 
+'   clkfreq:=283750000
+	wrlong	##283750000, #20
+'   org
+	loc	pa,	#(@LR__0112-@LR__0111)
+	call	#FCACHE_LOAD_
+LR__0111
+	hubset	##33524731
+LR__0112
+LR__0113
+' 
+' if (mode==256)
+	cmp	arg01, #256 wz
+ if_ne	jmp	#LR__0116
+' 
+'   timings[0]:= $70810000 + hdmi_base<<17 + 80          'before sync
+	add	objptr, ##12212
+	wrlong	##1893793872, objptr
+'   timings[1]:= $70810000 + hdmi_base<<17 + 160         'sync
+	add	objptr, #4
+	wrlong	##1893793952, objptr
+'   timings[2]:= $70810000 + hdmi_base<<17 + 84          'before visible
+	add	objptr, #4
+	wrlong	##1893793876, objptr
+'   timings[3]:= $70810000 + hdmi_base<<17 + 816         'visible 816
+	add	objptr, #4
+	wrlong	##1893794608, objptr
+'   timings[4]:= $70810000 + hdmi_base<<17 + 8           'immediate 8
+	add	objptr, #4
+	wrlong	##1893793800, objptr
+'   timings[5]:= $00880000 + hdmi_base<<17 + 8           'imm+lut, 1 char
+	add	objptr, #4
+	wrlong	##15204360, objptr
+'   timings[6]:= 8
+	add	objptr, #4
+	wrlong	#8, objptr
+'   timings[7]:= 8
+	add	objptr, #4
+	wrlong	#8, objptr
+'   timings[8]:= 12
+	add	objptr, #4
+	wrlong	#12, objptr
+'   timings[9]:= 8
+	add	objptr, #4
+	wrlong	#8, objptr
+	sub	objptr, ##12248
+' 
+'   clkfreq:=357959184
+	wrlong	##357959184, #20
+'   org
+	loc	pa,	#(@LR__0115-@LR__0114)
+	call	#FCACHE_LOAD_
+LR__0114
+	hubset	##29582587
+LR__0115
+LR__0116
+' 
+' if (mode==257)  '1026 px
+	cmp	arg01, #257 wz
+ if_ne	jmp	#LR__0119
+' 
+'   timings[0]:= $70810000 + hdmi_base<<17 + 80          'before sync
+	add	objptr, ##12212
+	wrlong	##1893793872, objptr
+'   timings[1]:= $70810000 + hdmi_base<<17 + 50          'sync
+	add	objptr, #4
+	wrlong	##1893793842, objptr
+'   timings[2]:= $70810000 + hdmi_base<<17 + 80          'before visible
+	add	objptr, #4
+	wrlong	##1893793872, objptr
+'   timings[3]:= $70810000 + hdmi_base<<17 + 816         'visible 816
+	add	objptr, #4
+	wrlong	##1893794608, objptr
+'   timings[4]:= $70810000 + hdmi_base<<17 + 8           'immediate 8
+	add	objptr, #4
+	wrlong	##1893793800, objptr
+'   timings[5]:= $00880000 + hdmi_base<<17 + 8           'imm+lut, 1 char
+	add	objptr, #4
+	wrlong	##15204360, objptr
+'   timings[6]:= 8
+	add	objptr, #4
+	wrlong	#8, objptr
+'   timings[7]:= 8
+	add	objptr, #4
+	wrlong	#8, objptr
+'   timings[8]:= 12
+	add	objptr, #4
+	wrlong	#12, objptr
+'   timings[9]:= 8
+	add	objptr, #4
+	wrlong	#8, objptr
+	sub	objptr, ##12248
+' 
+'   clkfreq:=322162162
+	wrlong	##322162162, #20
+'   org
+	loc	pa,	#(@LR__0118-@LR__0117)
+	call	#FCACHE_LOAD_
+LR__0117
+	hubset	##26366971
+LR__0118
+LR__0119
+' 
+' if (mode==258)  '912 px
+	cmp	arg01, #258 wz
+ if_ne	jmp	#LR__0122
+' 
+'   timings[0]:= $70810000 + hdmi_base<<17 + 24          'before sync
+	add	objptr, ##12212
+	wrlong	##1893793816, objptr
+'   timings[1]:= $70810000 + hdmi_base<<17 + 48         'sync
+	add	objptr, #4
+	wrlong	##1893793840, objptr
+'   timings[2]:= $70810000 + hdmi_base<<17 + 24          'before visible
+	add	objptr, #4
+	wrlong	##1893793816, objptr
+'   timings[3]:= $70810000 + hdmi_base<<17 + 816         'visible 816
+	add	objptr, #4
+	wrlong	##1893794608, objptr
+'   timings[4]:= $70810000 + hdmi_base<<17 + 8           'immediate 8
+	add	objptr, #4
+	wrlong	##1893793800, objptr
+'   timings[5]:= $00880000 + hdmi_base<<17 + 8           'imm+lut, 1 char
+	add	objptr, #4
+	wrlong	##15204360, objptr
+'   timings[6]:= 8
+	add	objptr, #4
+	wrlong	#8, objptr
+'   timings[7]:= 8
+	add	objptr, #4
+	wrlong	#8, objptr
+'   timings[8]:= 12
+	add	objptr, #4
+	wrlong	#12, objptr
+'   timings[9]:= 8
+	add	objptr, #4
+	wrlong	#8, objptr
+	sub	objptr, ##12248
+' 
+'   clkfreq:=286363636
+	wrlong	##286363636, #20
+'   org
+	loc	pa,	#(@LR__0121-@LR__0120)
+	call	#FCACHE_LOAD_
+LR__0120
+	hubset	##22362875
+LR__0121
+LR__0122
+_hn008_spin2_setmode_ret
+	ret
+
+___struct__fmtfile_putchar
+	mov	COUNT_, #5
+	call	#pushregs_
+'         return f->putcf(c, f);
+	rdlong	local01, objptr
+	add	local01, #20
+	rdlong	local02, local01
+	rdlong	local03, local02
+	add	local02, #4
+	rdlong	local04, local02
+	rdlong	arg02, objptr
+	mov	local05, objptr
+	mov	objptr, local03
+	call	local04
+	mov	objptr, local05
+	mov	ptra, fp
+	call	#popregs_
+___struct__fmtfile_putchar_ret
+	ret
+hubexit
+	jmp	#cogexit
+
+__system___setbaud
+	rdlong	muldiva_, #20
+	mov	muldivb_, arg01
+	call	#divide_
+	dirl	#62
+	dirl	#63
+	wrlong	muldivb_, ptr___system__dat__
+	shl	muldivb_, #16
+	mov	arg02, #7
+	add	arg02, muldivb_
+	wrpin	#124, #62
+	wxpin	arg02, #62
+	wrpin	#62, #63
+	add	arg02, #20
+	wxpin	arg02, #63
+	dirh	#62
+	dirh	#63
+__system___setbaud_ret
+	ret
+
+__system___txraw
+	mov	COUNT_, #2
+	call	#pushregs_
+	mov	local01, arg01
+	rdlong	local02, ptr___system__dat__ wz
+ if_ne	jmp	#LR__0123
+	mov	arg01, ##230400
+	call	#__system___setbaud
+LR__0123
+	wypin	local01, #62
+	waitx	#1
+	loc	pa,	#(@LR__0125-@LR__0124)
+	call	#FCACHE_LOAD_
+LR__0124
+	testp	#62 wc
+ if_nc	jmp	#LR__0124
+LR__0125
+	mov	result1, #1
+	mov	ptra, fp
+	call	#popregs_
+__system___txraw_ret
+	ret
+
+__system___rxraw
+	mov	COUNT_, #13
+	call	#pushregs_
+	mov	local01, arg01
+	rdlong	local02, ptr___system__dat__ wz
+ if_ne	jmp	#LR__0126
+	mov	arg01, ##230400
+	call	#__system___setbaud
+LR__0126
+	cmp	local01, #0 wz
+ if_e	jmp	#LR__0127
+	rdlong	local03, #20
+	shr	local03, #10
+	qmul	local01, local03
+	getqx	local04
+	getct	local05
+	add	local05, local04
+LR__0127
+	neg	local06, #1
+	mov	local07, #0
+	add	ptr___system__dat__, #4
+	rdlong	local08, ptr___system__dat__
+	sub	ptr___system__dat__, #4
+	loc	pa,	#(@LR__0130-@LR__0128)
+	call	#FCACHE_LOAD_
+LR__0128
+	testb	local08, #8 wc
+	testbn	local08, #9 andc
+	shr	local08, #10
+ if_b	mov	local07, #1
+ if_b	jmp	#LR__0129
+	testp	#63 wz
+ if_e	mov	local07, #1
+ if_e	rdpin	local08, #63
+ if_e	shr	local08, #4
+LR__0129
+	mov	local02, #0
+	cmp	local07, #0 wz
+ if_ne	neg	local02, #1
+	mov	local09, #0
+	mov	local10, #0
+	cmp	local01, #0 wz
+ if_ne	neg	local10, #1
+	mov	local11, #0
+	mov	local12, #0
+	getct	local13
+	sub	local13, local05
+	cmps	local13, #0 wcz
+ if_b	neg	local12, #1
+	cmp	local12, #0 wz
+ if_ne	neg	local11, #1
+	test	local10, local11 wz
+ if_ne	neg	local09, #1
+	or	local02, local09 wz
+ if_e	jmp	#LR__0128
+LR__0130
+	cmp	local07, #0 wz
+ if_ne	mov	local06, local08
+ if_ne	and	local06, #255
+	add	ptr___system__dat__, #4
+	wrlong	local08, ptr___system__dat__
+	sub	ptr___system__dat__, #4
+	mov	result1, local06
+	mov	ptra, fp
+	call	#popregs_
+__system___rxraw_ret
+	ret
+
+__system__longmove
+	mov	_var01, arg01
+	cmps	arg01, arg02 wcz
+ if_ae	jmp	#LR__0135
+	mov	_var02, arg03 wz
+ if_e	jmp	#LR__0141
+	loc	pa,	#(@LR__0133-@LR__0131)
+	call	#FCACHE_LOAD_
+LR__0131
+	rep	@LR__0134, _var02
+LR__0132
+	rdlong	_var03, arg02
+	wrlong	_var03, arg01
+	add	arg01, #4
+	add	arg02, #4
+LR__0133
+LR__0134
+	jmp	#LR__0141
+LR__0135
+	mov	_var04, arg03
+	shl	_var04, #2
+	add	arg01, _var04
+	add	arg02, _var04
+	mov	_var05, arg03 wz
+ if_e	jmp	#LR__0140
+	loc	pa,	#(@LR__0138-@LR__0136)
+	call	#FCACHE_LOAD_
+LR__0136
+	rep	@LR__0139, _var05
+LR__0137
+	sub	arg01, #4
+	sub	arg02, #4
+	rdlong	_var03, arg02
+	wrlong	_var03, arg01
+LR__0138
+LR__0139
+LR__0140
+LR__0141
+	mov	result1, _var01
+__system__longmove_ret
+	ret
+
+__system____builtin_strcpy
+	mov	_var01, arg01
+	loc	pa,	#(@LR__0143-@LR__0142)
+	call	#FCACHE_LOAD_
+LR__0142
+	rdbyte	_var02, arg02 wz
+	wrbyte	_var02, arg01
+	add	arg02, #1
+	add	arg01, #1
+ if_ne	jmp	#LR__0142
+LR__0143
+	mov	result1, _var01
+__system____builtin_strcpy_ret
+	ret
+
+__system___make_methodptr
+	mov	COUNT_, #4
+	call	#pushregs_
+	mov	local01, arg01
+	mov	local02, arg02
+	mov	arg01, #8
+	call	#__system___gc_alloc_managed
+	mov	local03, result1 wz
+ if_e	jmp	#LR__0144
+	wrlong	local01, local03
+	mov	local04, local03
+	add	local04, #4
+	wrlong	local02, local04
+LR__0144
+	mov	result1, local03
+	mov	ptra, fp
+	call	#popregs_
+__system___make_methodptr_ret
+	ret
+
+__system___tx
+	mov	COUNT_, #2
+	call	#pushregs_
+	mov	local01, arg01
+	cmp	local01, #10 wz
+ if_ne	jmp	#LR__0145
+	add	ptr___system__dat__, #8
+	rdlong	local02, ptr___system__dat__
+	sub	ptr___system__dat__, #8
+	test	local02, #2 wz
+ if_e	jmp	#LR__0145
+	mov	local02, #13
+	mov	arg01, #13
+	call	#__system___txraw
+LR__0145
+	mov	arg01, local01
+	call	#__system___txraw
+	mov	ptra, fp
+	call	#popregs_
+__system___tx_ret
+	ret
+
+__system___rx
+	mov	COUNT_, #2
+	call	#pushregs_
+LR__0146
+	mov	arg01, #0
+	call	#__system___rxraw
+	mov	local01, result1
+	cmp	local01, ##-1 wz
+ if_e	jmp	#LR__0146
+	cmp	local01, #13 wz
+ if_ne	jmp	#LR__0147
+	add	ptr___system__dat__, #8
+	rdlong	local02, ptr___system__dat__
+	sub	ptr___system__dat__, #8
+	test	local02, #2 wz
+ if_ne	mov	local01, #10
+LR__0147
+	add	ptr___system__dat__, #8
+	rdlong	local02, ptr___system__dat__
+	sub	ptr___system__dat__, #8
+	test	local02, #1 wz
+ if_e	jmp	#LR__0150
+	cmp	local01, #127 wz
+ if_ne	jmp	#LR__0148
+	mov	arg01, #8
+	call	#__system___tx
+	jmp	#LR__0149
+LR__0148
+	mov	arg01, local01
+	call	#__system___tx
+LR__0149
+LR__0150
+	mov	result1, local01
+	mov	ptra, fp
+	call	#popregs_
+__system___rx_ret
+	ret
+
+__system___lockmem
+	mov	COUNT_, #2
+	call	#pushregs_
+	mov	local01, arg01
+	loc	pa,	#(@LR__0153-@LR__0151)
+	call	#FCACHE_LOAD_
+LR__0151
+LR__0152
+	rdlong	arg01, ##-3
+	locktry	arg01 wc
+	muxnc	result1, ##-1
+	cmp	result1, #0 wz
+ if_ne	jmp	#LR__0152
+	rdbyte	local02, local01 wz
+ if_e	wrbyte	#1, local01
+	rdlong	arg01, ##-3
+	lockrel	arg01 wc
+	muxc	result1, ##-1
+	cmp	local02, #0 wz
+ if_ne	jmp	#LR__0151
+LR__0153
+	mov	ptra, fp
+	call	#popregs_
+__system___lockmem_ret
+	ret
+
+__system___fmtchar
+	mov	COUNT_, #0
+	call	#pushregs_
+	add	ptra, #24
+	add	fp, #4
+	wrlong	arg01, fp
+	add	fp, #4
+	wrlong	arg02, fp
+	add	fp, #4
+	wrlong	arg03, fp
+	add	fp, #4
+	wrbyte	arg03, fp
+	add	fp, #1
+	wrbyte	#0, fp
+	sub	fp, #1
+	mov	arg03, fp
+	sub	fp, #12
+	rdlong	arg01, fp
+	add	fp, #4
+	rdlong	arg02, fp
+	sub	fp, #8
+	call	#__system___fmtstr
+	mov	ptra, fp
+	call	#popregs_
+__system___fmtchar_ret
+	ret
+
+__system___fmtstr
+	mov	COUNT_, #14
+	call	#pushregs_
+	mov	local01, arg01
+	mov	local02, arg02
+	mov	local03, arg03
+	mov	local04, local02
+	and	local04, #255
+	mov	arg01, local03
+	mov	local05, #0
+	loc	pa,	#(@LR__0155-@LR__0154)
+	call	#FCACHE_LOAD_
+LR__0154
+	rdbyte	local06, arg01 wz
+ if_ne	add	local05, #1
+ if_ne	add	arg01, #1
+ if_ne	jmp	#LR__0154
+LR__0155
+	mov	result1, local05
+	mov	local07, result1
+	cmp	local04, #0 wz
+ if_e	jmp	#LR__0156
+	fles	local07, local04 wcz
+LR__0156
+	mov	arg01, local01
+	mov	arg02, local02
+	mov	arg03, local07
+	mov	arg04, #2
+	call	#__system___fmtpad
+	mov	local08, result1
+	cmps	local08, #0 wcz
+ if_b	mov	result1, local08
+ if_b	jmp	#LR__0159
+	cmps	local07, #0 wcz
+ if_be	jmp	#LR__0158
+	mov	local09, local07
+LR__0157
+	mov	local10, local01
+	rdlong	local11, local10
+	add	local10, #4
+	rdlong	local12, local10
+	rdbyte	arg01, local03
+	mov	local13, objptr
+	mov	objptr, local11
+	add	local03, #1
+	call	local12
+	mov	objptr, local13
+	mov	local14, result1
+	cmps	local14, #0 wcz
+ if_b	mov	result1, local14
+ if_b	jmp	#LR__0159
+	add	local08, local14
+	djnz	local09, #LR__0157
+LR__0158
+	mov	arg01, local01
+	mov	arg02, local02
+	mov	arg03, local07
+	mov	arg04, #1
+	call	#__system___fmtpad
+	mov	local14, result1
+	cmps	local14, #0 wcz
+ if_b	mov	result1, local14
+ if_ae	add	local08, local14
+ if_ae	mov	result1, local08
+LR__0159
+	mov	ptra, fp
+	call	#popregs_
+__system___fmtstr_ret
+	ret
+
+__system___fmtnum
+	mov	COUNT_, #10
+	call	#pushregs_
+	add	ptra, #124
+	add	fp, #4
+	wrlong	arg01, fp
+	add	fp, #4
+	wrlong	arg02, fp
+	add	fp, #4
+	wrlong	arg03, fp
+	add	fp, #4
+	wrlong	arg04, fp
+	add	fp, #4
+	mov	local01, fp
+	add	fp, #68
+	wrlong	local01, fp
+	add	fp, #4
+	wrlong	#0, fp
+	sub	fp, #84
+	rdlong	local01, fp
+	shr	local01, #16
+	and	local01, #63
+	add	fp, #88
+	wrlong	local01, fp
+	sub	fp, #88
+	rdlong	local01, fp
+	and	local01, #255
+	add	fp, #92
+	wrlong	local01, fp
+	sub	fp, #92
+	rdlong	local01, fp
+	shr	local01, #26
+	and	local01, #3
+	add	fp, #96
+	wrlong	local01, fp
+	sub	fp, #8
+	rdlong	local01, fp
+	sub	fp, #96
+	cmps	local01, #0 wcz
+ if_be	jmp	#LR__0160
+	add	fp, #96
+	rdlong	local01, fp
+	sub	local01, #1
+	wrlong	local01, fp
+	sub	fp, #96
+LR__0160
+	add	fp, #100
+	rdlong	local01, fp
+	sub	fp, #100
+	cmps	local01, #64 wcz
+ if_a	jmp	#LR__0161
+	add	fp, #100
+	rdlong	local02, fp
+	sub	fp, #100
+	mov	local03, local02 wz
+ if_ne	jmp	#LR__0162
+LR__0161
+	add	fp, #100
+	wrlong	#64, fp
+	sub	fp, #100
+LR__0162
+	add	fp, #104
+	rdlong	local01, fp
+	sub	fp, #104
+	cmp	local01, #3 wz
+ if_ne	jmp	#LR__0163
+	add	fp, #104
+	wrlong	#0, fp
+	sub	fp, #104
+	jmp	#LR__0165
+LR__0163
+	add	fp, #12
+	rdlong	local01, fp
+	sub	fp, #12
+	cmps	local01, #0 wcz
+ if_ae	jmp	#LR__0164
+	add	fp, #104
+	wrlong	#4, fp
+	sub	fp, #92
+	rdlong	local01, fp
+	neg	local01, local01
+	wrlong	local01, fp
+	sub	fp, #12
+LR__0164
+LR__0165
+	add	fp, #104
+	rdlong	local01, fp wz
+	sub	fp, #104
+ if_e	jmp	#LR__0174
+	add	fp, #92
+	rdlong	local03, fp
+	add	local03, #1
+	wrlong	local03, fp
+	add	fp, #4
+	rdlong	local04, fp
+	add	fp, #4
+	rdlong	local02, fp
+	sub	fp, #100
+	mov	local03, local02
+	cmp	local04, local03 wz
+ if_ne	jmp	#LR__0167
+	add	fp, #96
+	rdlong	local02, fp
+	mov	local03, local02
+	sub	local03, #1
+	wrlong	local03, fp
+	mov	local04, local03 wz
+	sub	fp, #96
+ if_ne	jmp	#LR__0166
+	add	fp, #4
+	rdlong	arg01, fp
+	add	fp, #4
+	rdlong	arg02, fp
+	sub	fp, #8
+	mov	arg03, #35
+	call	#__system___fmtchar
+	jmp	#LR__0179
+LR__0166
+LR__0167
+	add	fp, #104
+	rdlong	local01, fp
+	sub	fp, #104
+	mov	local05, local01
+	sub	local05, #1
+	fle	local05, #4
+	jmprel	local05
+LR__0168
+	jmp	#LR__0171
+	jmp	#LR__0169
+	jmp	#LR__0170
+	jmp	#LR__0172
+	jmp	#LR__0170
+LR__0169
+	add	fp, #88
+	rdlong	local04, fp
+	mov	local02, local04
+	add	local02, #1
+	wrlong	local02, fp
+	sub	fp, #88
+	wrbyte	#32, local04
+	jmp	#LR__0173
+LR__0170
+LR__0171
+	add	fp, #88
+	rdlong	local04, fp
+	mov	local02, local04
+	add	local02, #1
+	wrlong	local02, fp
+	sub	fp, #88
+	wrbyte	#43, local04
+	jmp	#LR__0173
+LR__0172
+	add	fp, #88
+	rdlong	local03, fp
+	mov	local04, local03
+	mov	local06, local03
+	mov	local02, local06
+	add	local02, #1
+	wrlong	local02, fp
+	sub	fp, #88
+	mov	local07, #45
+	wrbyte	#45, local04
+LR__0173
+LR__0174
+	add	fp, #88
+	rdlong	arg01, fp
+	sub	fp, #76
+	rdlong	arg02, fp
+	add	fp, #4
+	rdlong	arg03, fp
+	add	fp, #80
+	rdlong	arg04, fp
+	mov	local08, #0
+	sub	fp, #88
+	rdlong	local09, fp
+	sub	fp, #8
+	testbn	local09, #29 wz
+ if_ne	mov	local08, #1
+	mov	arg05, local08
+	call	#__system___uitoa
+	mov	local10, result1
+	add	fp, #92
+	rdlong	local01, fp
+	add	local01, local10
+	wrlong	local01, fp
+	add	fp, #8
+	rdlong	local03, fp
+	sub	fp, #100
+	cmps	local01, local03 wcz
+ if_be	jmp	#LR__0178
+	loc	pa,	#(@LR__0176-@LR__0175)
+	call	#FCACHE_LOAD_
+LR__0175
+	add	fp, #100
+	rdlong	local01, fp
+	mov	local03, local01
+	sub	local03, #1
+	wrlong	local03, fp
+	sub	fp, #100
+	cmps	local01, #0 wcz
+ if_be	jmp	#LR__0177
+	add	fp, #88
+	rdlong	local01, fp
+	mov	local03, local01
+	add	local03, #1
+	wrlong	local03, fp
+	sub	fp, #88
+	wrbyte	#35, local01
+	jmp	#LR__0175
+LR__0176
+LR__0177
+	add	fp, #88
+	rdlong	local01, fp
+	mov	local03, local01
+	add	local03, #1
+	wrlong	local03, fp
+	sub	fp, #88
+	wrbyte	#0, local01
+LR__0178
+	add	fp, #20
+	mov	arg03, fp
+	sub	fp, #16
+	rdlong	arg01, fp
+	add	fp, #4
+	rdlong	arg02, fp
+	sub	fp, #8
+	call	#__system___fmtstr
+LR__0179
+	mov	ptra, fp
+	call	#popregs_
+__system___fmtnum_ret
+	ret
+
+__system___fmtfloat
+	mov	COUNT_, #56
+	call	#pushregs_
+	add	ptra, #424
+	add	fp, #4
+	wrlong	arg01, fp
+	add	fp, #4
+	wrlong	arg02, fp
+	add	fp, #4
+	wrlong	arg03, fp
+	add	fp, #4
+	wrlong	arg04, fp
+	add	fp, #12
+	wrlong	#10, fp
+	add	fp, #8
+	wrlong	#0, fp
+	add	fp, #8
+	wrlong	#0, fp
+	add	fp, #8
+	wrlong	#0, fp
+	add	fp, #4
+	wrlong	#2, fp
+	add	fp, #4
+	wrlong	#0, fp
+	add	fp, #4
+	wrlong	#0, fp
+	add	fp, #4
+	wrlong	#0, fp
+	add	fp, #4
+	wrlong	#0, fp
+	add	fp, #24
+	wrlong	#0, fp
+	add	fp, #96
+	wrlong	ptra, fp
+	mov	local01, ptra
+	add	fp, #4
+	wrlong	local01, fp
+	sub	fp, #188
+	rdlong	local02, fp
+	shr	local02, #16
+	mov	local03, local02
+	and	local03, #63
+	add	fp, #176
+	wrlong	local03, fp
+	sub	fp, #176
+	rdlong	local04, fp
+	shr	local04, #28
+	mov	local05, local04
+	and	local05, #1
+	add	fp, #196
+	wrlong	local05, fp
+	sub	fp, #20
+	rdlong	local06, fp wz
+	sub	fp, #184
+	add	ptra, #68
+ if_ne	jmp	#LR__0181
+	add	fp, #16
+	rdlong	local06, fp
+	sub	fp, #16
+	cmp	local06, #97 wz
+ if_ne	jmp	#LR__0180
+	add	fp, #184
+	wrlong	#13, fp
+	sub	fp, #132
+	wrlong	#1, fp
+	sub	fp, #52
+	jmp	#LR__0182
+LR__0180
+	add	fp, #184
+	wrlong	#6, fp
+	sub	fp, #184
+	jmp	#LR__0182
+LR__0181
+	add	fp, #184
+	rdlong	local06, fp
+	sub	local06, #1
+	wrlong	local06, fp
+	sub	fp, #184
+LR__0182
+	add	fp, #8
+	rdlong	local07, fp
+	shr	local07, #22
+	mov	local08, local07
+	and	local08, #3
+	add	fp, #192
+	wrlong	local08, fp
+	sub	fp, #192
+	rdlong	local09, fp
+	shr	local09, #29
+	mov	local10, local09
+	and	local10, #1
+	add	fp, #180
+	wrlong	local10, fp
+	sub	fp, #180
+	rdlong	local11, fp
+	shr	local11, #8
+	mov	local12, local11
+	and	local12, #255
+	add	fp, #96
+	wrlong	local12, fp
+	sub	fp, #96
+	rdlong	local13, fp
+	mov	local14, local13
+	and	local14, #255
+	add	fp, #100
+	wrlong	local14, fp
+	mov	local06, #0
+	sub	fp, #92
+	rdlong	local01, fp
+	cmp	local01, #101 wz
+ if_e	mov	local06, #1
+	add	fp, #20
+	wrlong	local06, fp
+	add	fp, #152
+	rdlong	local01, fp wz
+ if_ne	mov	local06, #69
+ if_e	mov	local06, #101
+	sub	fp, #140
+	wrlong	local06, fp
+	sub	fp, #32
+	rdlong	local06, fp
+	sub	fp, #16
+	cmp	local06, #97 wz
+ if_ne	jmp	#LR__0183
+	add	fp, #36
+	wrlong	#1, fp
+	add	fp, #152
+	rdlong	local01, fp wz
+ if_ne	mov	local06, #80
+ if_e	mov	local06, #112
+	sub	fp, #140
+	wrlong	local06, fp
+	sub	fp, #20
+	wrlong	#2, fp
+	add	fp, #28
+	wrlong	#1, fp
+	add	fp, #132
+	rdlong	local01, fp wz
+ if_ne	mov	local06, #88
+ if_e	mov	local06, #120
+	sub	fp, #124
+	wrlong	local06, fp
+	sub	fp, #64
+LR__0183
+	add	fp, #16
+	rdlong	local06, fp
+	sub	fp, #16
+	cmp	local06, #35 wz
+ if_ne	jmp	#LR__0186
+	add	fp, #72
+	wrlong	#1, fp
+	add	fp, #132
+	rdlong	local06, fp wz
+	sub	fp, #204
+ if_e	jmp	#LR__0184
+	add	fp, #16
+	wrlong	#102, fp
+	add	fp, #188
+	wrlong	#0, fp
+	sub	fp, #204
+	jmp	#LR__0185
+LR__0184
+	add	fp, #204
+	wrlong	#1, fp
+	sub	fp, #204
+LR__0185
+LR__0186
+	add	fp, #8
+	rdlong	local15, fp
+	shr	local15, #26
+	mov	local16, local15
+	and	local16, #3
+	add	fp, #92
+	wrlong	local16, fp
+	sub	fp, #88
+	rdlong	result1, fp
+	sub	fp, #12
+	shr	result1, #31 wz
+ if_e	jmp	#LR__0187
+	add	fp, #44
+	wrlong	#45, fp
+	sub	fp, #32
+	rdlong	result1, fp
+	bitnot	result1, #31
+	wrlong	result1, fp
+	sub	fp, #12
+	jmp	#LR__0190
+LR__0187
+	add	fp, #100
+	rdlong	local06, fp
+	sub	fp, #100
+	cmp	local06, #1 wz
+ if_ne	jmp	#LR__0188
+	add	fp, #44
+	wrlong	#43, fp
+	sub	fp, #44
+	jmp	#LR__0189
+LR__0188
+	add	fp, #100
+	rdlong	local06, fp
+	sub	fp, #100
+	cmp	local06, #2 wz
+ if_e	add	fp, #44
+ if_e	wrlong	#32, fp
+ if_e	sub	fp, #44
+LR__0189
+LR__0190
+	add	fp, #8
+	rdlong	local17, fp
+	shr	local17, #24
+	mov	local18, local17
+	and	local18, #3
+	add	fp, #60
+	wrlong	local18, fp
+	mov	local06, #0
+	sub	fp, #24
+	rdlong	local19, fp
+	sub	fp, #44
+	mov	local01, local19 wz
+ if_ne	jmp	#LR__0191
+	add	fp, #28
+	rdlong	local20, fp
+	sub	fp, #28
+	mov	local21, local20
+	cmp	local21, #10 wz
+ if_e	jmp	#LR__0192
+LR__0191
+	xor	local06, #1
+LR__0192
+	add	fp, #60
+	wrlong	local06, fp
+	mov	local06, local06 wz
+	sub	fp, #60
+ if_e	jmp	#LR__0195
+	add	fp, #68
+	rdlong	local19, fp
+	sub	fp, #68
+	cmp	local19, #2 wz
+ if_ne	jmp	#LR__0195
+	add	fp, #200
+	rdlong	local22, fp
+	sub	fp, #200
+	mov	local20, local22
+	cmp	local20, #2 wz
+ if_e	jmp	#LR__0195
+	add	fp, #192
+	rdlong	arg01, fp
+	sub	fp, #148
+	rdlong	local21, fp
+	mov	local19, local21
+	add	fp, #20
+	rdlong	local22, fp
+	sub	fp, #64
+	mov	local20, local22
+	mov	arg02, local19
+	mov	arg03, local20
+	call	#__system__emitsign_0189
+	mov	local23, result1
+	add	fp, #208
+	wrlong	local23, fp
+	mov	local06, local23
+	sub	fp, #208
+	cmps	local06, #0 wcz
+ if_ae	jmp	#LR__0193
+	add	fp, #208
+	rdlong	result1, fp
+	sub	fp, #208
+	jmp	#LR__0251
+LR__0193
+	add	fp, #208
+	rdlong	local24, fp
+	sub	fp, #16
+	rdlong	local06, fp
+	add	local06, local24
+	wrlong	local06, fp
+	sub	fp, #88
+	rdlong	local01, fp wz
+	sub	fp, #104
+ if_e	jmp	#LR__0194
+	add	fp, #104
+	rdlong	local06, fp
+	add	fp, #104
+	rdlong	local21, fp
+	mov	local19, local21
+	sub	local06, local19
+	sub	fp, #104
+	wrlong	local06, fp
+	sub	fp, #104
+	cmps	local06, #0 wcz
+ if_b	add	fp, #104
+ if_b	wrlong	#0, fp
+ if_b	sub	fp, #104
+	add	fp, #8
+	rdlong	local06, fp
+	bitl	local06, #232
+	wrlong	local06, fp
+	add	fp, #96
+	rdlong	local25, fp
+	shl	local25, #8
+	sub	fp, #96
+	rdlong	local01, fp
+	mov	local06, local01
+	or	local06, local25
+	wrlong	local06, fp
+	sub	fp, #8
+LR__0194
+	mov	local06, #0
+	add	fp, #60
+	wrlong	#0, fp
+	sub	fp, #60
+LR__0195
+	add	fp, #12
+	rdlong	arg01, fp
+	sub	fp, #12
+	call	#__system____builtin_ilogb
+	cmp	result1, ##2147483647 wz
+ if_ne	jmp	#LR__0197
+	add	fp, #192
+	wrlong	ptra, fp
+	add	fp, #4
+	wrlong	ptra, fp
+	sub	fp, #152
+	rdlong	local06, fp wz
+	sub	fp, #44
+	add	ptra, #8
+ if_e	jmp	#LR__0196
+	add	fp, #192
+	rdlong	local06, fp
+	mov	local19, local06
+	add	local19, #1
+	wrlong	local19, fp
+	sub	fp, #148
+	rdlong	local20, fp
+	sub	fp, #44
+	wrbyte	local20, local06
+LR__0196
+	add	fp, #192
+	rdlong	arg01, fp
+	sub	fp, #192
+	mov	arg02, ##@LR__0415
+	call	#__system____builtin_strcpy
+	jmp	#LR__0239
+LR__0197
+	add	fp, #12
+	rdlong	arg01, fp
+	sub	fp, #12
+	call	#__system____builtin_ilogb
+	cmp	result1, ##-2147483648 wz
+ if_ne	jmp	#LR__0199
+	add	fp, #192
+	wrlong	ptra, fp
+	add	fp, #4
+	wrlong	ptra, fp
+	sub	fp, #152
+	rdlong	local06, fp wz
+	sub	fp, #44
+	add	ptra, #8
+ if_e	jmp	#LR__0198
+	add	fp, #192
+	rdlong	local06, fp
+	mov	local19, local06
+	add	local19, #1
+	wrlong	local19, fp
+	sub	fp, #148
+	rdlong	local20, fp
+	sub	fp, #44
+	wrbyte	local20, local06
+LR__0198
+	add	fp, #192
+	rdlong	arg01, fp
+	sub	fp, #192
+	mov	arg02, ##@LR__0416
+	call	#__system____builtin_strcpy
+	jmp	#LR__0239
+LR__0199
+	add	fp, #16
+	rdlong	local01, fp
+	sub	fp, #16
+	cmp	local01, #103 wz
+ if_e	jmp	#LR__0200
+	add	fp, #16
+	rdlong	local21, fp
+	sub	fp, #16
+	mov	local19, local21
+	cmp	local19, #35 wz
+ if_ne	jmp	#LR__0206
+LR__0200
+	add	fp, #20
+	mov	local26, fp
+	add	fp, #12
+	mov	local27, fp
+	sub	fp, #20
+	rdlong	arg01, fp
+	add	fp, #172
+	rdlong	local20, fp
+	sub	fp, #156
+	rdlong	arg05, fp
+	sub	fp, #28
+	mov	arg02, local26
+	mov	arg03, local27
+	mov	arg04, local20
+	call	#__system__disassemble_0187
+	add	fp, #16
+	rdlong	local06, fp
+	sub	fp, #16
+	cmp	local06, #35 wz
+ if_ne	jmp	#LR__0203
+	add	fp, #32
+	rdlong	local06, fp
+	add	fp, #152
+	rdlong	local19, fp
+	sub	fp, #184
+	cmps	local06, local19 wcz
+ if_be	jmp	#LR__0201
+	add	fp, #36
+	wrlong	#1, fp
+	sub	fp, #36
+	jmp	#LR__0209
+LR__0201
+	add	fp, #32
+	rdlong	local06, fp
+	sub	fp, #32
+	cmps	local06, #0 wcz
+ if_ae	jmp	#LR__0202
+	add	fp, #184
+	rdlong	local06, fp
+	neg	local06, local06
+	sub	fp, #152
+	rdlong	local19, fp
+	sub	fp, #32
+	cmps	local19, local06 wcz
+ if_be	add	fp, #36
+ if_be	wrlong	#1, fp
+ if_be	sub	fp, #36
+	jmp	#LR__0209
+LR__0202
+	add	fp, #32
+	rdlong	local06, fp
+	sub	fp, #32
+	cmps	local06, #0 wcz
+ if_be	jmp	#LR__0209
+	add	fp, #184
+	rdlong	local06, fp
+	sub	fp, #152
+	rdlong	local19, fp
+	sub	local06, local19
+	add	fp, #152
+	wrlong	local06, fp
+	sub	fp, #184
+	jmp	#LR__0209
+LR__0203
+	mov	local06, #0
+	add	fp, #8
+	rdlong	local01, fp
+	shr	local01, #28
+	test	local01, #1 wz
+ if_e	mov	local06, #1
+	add	fp, #44
+	wrlong	local06, fp
+	sub	fp, #20
+	rdlong	local01, fp
+	mov	local06, local01
+	add	fp, #152
+	rdlong	local21, fp
+	sub	fp, #184
+	mov	local19, local21
+	cmps	local06, local19 wcz
+ if_ae	jmp	#LR__0204
+	add	fp, #32
+	rdlong	local22, fp
+	sub	fp, #32
+	cmps	local22, ##-4 wcz
+ if_ae	jmp	#LR__0205
+LR__0204
+	add	fp, #36
+	wrlong	#1, fp
+	sub	fp, #36
+	jmp	#LR__0209
+LR__0205
+	add	fp, #184
+	rdlong	local06, fp
+	sub	fp, #152
+	rdlong	local19, fp
+	sub	local06, local19
+	add	fp, #152
+	wrlong	local06, fp
+	sub	fp, #172
+	rdlong	arg01, fp
+	add	fp, #172
+	rdlong	local20, fp
+	neg	arg04, local20
+	sub	fp, #156
+	rdlong	arg05, fp
+	sub	fp, #28
+	mov	arg02, local26
+	mov	arg03, local27
+	call	#__system__disassemble_0187
+	jmp	#LR__0209
+LR__0206
+	add	fp, #36
+	rdlong	local06, fp wz
+	sub	fp, #36
+ if_e	jmp	#LR__0207
+	add	fp, #20
+	mov	local28, fp
+	add	fp, #12
+	mov	local29, fp
+	sub	fp, #20
+	rdlong	arg01, fp
+	add	fp, #172
+	rdlong	arg04, fp
+	sub	fp, #156
+	rdlong	arg05, fp
+	sub	fp, #28
+	mov	arg02, local28
+	mov	arg03, local29
+	call	#__system__disassemble_0187
+	jmp	#LR__0208
+LR__0207
+	add	fp, #20
+	mov	local30, fp
+	add	fp, #12
+	mov	local31, fp
+	add	fp, #152
+	rdlong	local32, fp
+	add	local32, #1
+	sub	fp, #172
+	rdlong	arg01, fp
+	mov	local20, local32
+	neg	arg04, local20
+	add	fp, #16
+	rdlong	arg05, fp
+	sub	fp, #28
+	mov	arg02, local30
+	mov	arg03, local31
+	call	#__system__disassemble_0187
+LR__0208
+LR__0209
+	add	fp, #28
+	rdlong	local06, fp
+	sub	fp, #28
+	cmp	local06, #2 wz
+ if_ne	jmp	#LR__0212
+	add	fp, #28
+	wrlong	#16, fp
+	sub	fp, #28
+LR__0210
+	add	fp, #20
+	rdlong	local06, fp wz
+	sub	fp, #20
+ if_e	jmp	#LR__0211
+	add	fp, #20
+	rdlong	local19, fp
+	sub	fp, #20
+	cmp	local19, ##16777216 wcz
+ if_ae	jmp	#LR__0211
+	add	fp, #20
+	rdlong	local06, fp
+	shl	local06, #1
+	wrlong	local06, fp
+	sub	fp, #20
+	jmp	#LR__0210
+LR__0211
+LR__0212
+	add	fp, #112
+	mov	local33, fp
+	sub	fp, #92
+	rdlong	arg02, fp
+	add	fp, #8
+	rdlong	arg03, fp
+	add	fp, #160
+	rdlong	arg05, fp
+	sub	fp, #188
+	mov	arg01, local33
+	mov	arg04, #1
+	call	#__system___uitoa
+	add	fp, #88
+	wrlong	result1, fp
+	sub	fp, #56
+	rdlong	local06, fp
+	sub	fp, #32
+	cmps	local06, #0 wcz
+ if_ae	jmp	#LR__0213
+	add	fp, #96
+	wrlong	#45, fp
+	add	fp, #80
+	mov	local34, fp
+	sub	fp, #144
+	rdlong	local01, fp
+	neg	local21, local01
+	mov	local20, #10
+	add	fp, #24
+	rdlong	local23, fp
+	mov	local22, local23
+	add	fp, #132
+	rdlong	local35, fp
+	sub	fp, #188
+	mov	local36, local35
+	mov	arg01, local34
+	mov	arg02, local21
+	mov	arg03, #10
+	mov	arg04, local22
+	mov	arg05, local36
+	call	#__system___uitoa
+	mov	local37, result1
+	add	fp, #92
+	wrlong	local37, fp
+	sub	fp, #92
+	jmp	#LR__0214
+LR__0213
+	add	fp, #96
+	wrlong	#43, fp
+	add	fp, #80
+	mov	local38, fp
+	sub	fp, #144
+	rdlong	arg02, fp
+	add	fp, #24
+	rdlong	local22, fp
+	add	fp, #132
+	rdlong	local36, fp
+	sub	fp, #188
+	mov	local23, local36
+	mov	arg01, local38
+	mov	arg03, #10
+	mov	arg04, local22
+	mov	arg05, local23
+	call	#__system___uitoa
+	mov	local35, result1
+	add	fp, #92
+	wrlong	local35, fp
+	sub	fp, #92
+LR__0214
+	add	fp, #36
+	rdlong	local06, fp wz
+	sub	fp, #36
+ if_e	jmp	#LR__0215
+	add	fp, #80
+	wrlong	#0, fp
+	sub	fp, #4
+	wrlong	#0, fp
+	add	fp, #108
+	rdlong	local39, fp
+	add	local39, #1
+	sub	fp, #100
+	wrlong	local39, fp
+	sub	fp, #84
+	jmp	#LR__0218
+LR__0215
+	add	fp, #32
+	rdlong	local06, fp
+	sub	fp, #32
+	cmps	local06, #0 wcz
+ if_ae	jmp	#LR__0216
+	add	fp, #32
+	rdlong	local01, fp
+	add	fp, #48
+	wrlong	local01, fp
+	sub	fp, #4
+	wrlong	local01, fp
+	sub	fp, #44
+	rdlong	local40, fp
+	add	fp, #152
+	rdlong	local01, fp
+	add	local40, local01
+	mov	local41, local40
+	add	local41, #1
+	sub	fp, #100
+	wrlong	local41, fp
+	sub	fp, #84
+	jmp	#LR__0217
+LR__0216
+	add	fp, #76
+	wrlong	#0, fp
+	sub	fp, #44
+	rdlong	local42, fp
+	add	fp, #48
+	wrlong	local42, fp
+	add	fp, #104
+	rdlong	local01, fp
+	add	local42, local01
+	mov	local43, local42
+	add	local43, #1
+	sub	fp, #100
+	wrlong	local43, fp
+	sub	fp, #84
+LR__0217
+LR__0218
+	add	fp, #84
+	rdlong	local44, fp
+	sub	fp, #8
+	rdlong	local01, fp
+	sub	local44, local01
+	mov	local45, local44
+	add	local45, #1
+	sub	fp, #36
+	wrlong	local45, fp
+	add	fp, #4
+	rdlong	local06, fp wz
+	sub	fp, #44
+ if_e	jmp	#LR__0219
+	add	fp, #40
+	rdlong	local19, fp
+	add	local19, #1
+	wrlong	local19, fp
+	sub	fp, #40
+LR__0219
+	add	fp, #28
+	rdlong	local06, fp
+	sub	fp, #28
+	cmp	local06, #16 wz
+ if_ne	jmp	#LR__0220
+	add	fp, #40
+	rdlong	local06, fp
+	add	local06, #2
+	wrlong	local06, fp
+	sub	fp, #40
+LR__0220
+	add	fp, #36
+	rdlong	local06, fp wz
+	sub	fp, #36
+ if_e	jmp	#LR__0221
+	mov	local46, #2
+	add	fp, #92
+	rdlong	local06, fp
+	add	local46, local06
+	sub	fp, #52
+	rdlong	local06, fp
+	add	local06, local46
+	wrlong	local06, fp
+	sub	fp, #40
+LR__0221
+	add	fp, #40
+	rdlong	local06, fp
+	sub	fp, #40
+	cmps	local06, #64 wcz
+ if_a	neg	result1, #1
+ if_a	jmp	#LR__0251
+	add	fp, #60
+	rdlong	local06, fp wz
+	sub	fp, #60
+ if_e	jmp	#LR__0223
+	add	fp, #192
+	rdlong	arg01, fp
+	sub	fp, #148
+	rdlong	arg02, fp
+	add	fp, #20
+	rdlong	local22, fp
+	sub	fp, #64
+	mov	arg03, local22
+	call	#__system__emitsign_0189
+	mov	local23, result1
+	add	fp, #212
+	wrlong	local23, fp
+	mov	local06, local23
+	sub	fp, #212
+	cmps	local06, #0 wcz
+ if_ae	jmp	#LR__0222
+	add	fp, #212
+	rdlong	result1, fp
+	sub	fp, #212
+	jmp	#LR__0251
+LR__0222
+	add	fp, #212
+	rdlong	local47, fp
+	sub	fp, #20
+	rdlong	local06, fp
+	add	local06, local47
+	wrlong	local06, fp
+	sub	fp, #192
+LR__0223
+	add	fp, #76
+	rdlong	local06, fp
+	sub	fp, #52
+	wrlong	local06, fp
+	sub	fp, #24
+	loc	pa,	#(@LR__0229-@LR__0224)
+	call	#FCACHE_LOAD_
+LR__0224
+	add	fp, #24
+	rdlong	local19, fp
+	mov	local01, local19
+	add	fp, #60
+	rdlong	local20, fp
+	sub	fp, #84
+	mov	local21, local20
+	cmps	local01, local21 wcz
+ if_ae	jmp	#LR__0230
+	add	fp, #24
+	rdlong	local22, fp
+	sub	fp, #24
+	cmps	local22, #0 wcz
+ if_b	jmp	#LR__0225
+	add	fp, #24
+	rdlong	local36, fp
+	add	fp, #64
+	rdlong	local48, fp
+	sub	fp, #88
+	cmps	local36, local48 wcz
+ if_ae	jmp	#LR__0225
+	add	fp, #192
+	rdlong	local22, fp
+	mov	local36, local22
+	add	local36, #1
+	wrlong	local36, fp
+	sub	fp, #168
+	rdlong	local48, fp
+	mov	local37, local48
+	add	fp, #88
+	mov	local49, fp
+	add	local37, fp
+	rdbyte	local50, local37
+	wrbyte	local50, local22
+	sub	fp, #112
+	jmp	#LR__0226
+LR__0225
+	add	fp, #192
+	rdlong	local22, fp
+	mov	local36, local22
+	add	local36, #1
+	wrlong	local36, fp
+	sub	fp, #192
+	mov	local37, #48
+	wrbyte	#48, local22
+LR__0226
+	add	fp, #24
+	rdlong	local22, fp
+	add	fp, #56
+	rdlong	local36, fp
+	sub	fp, #80
+	cmp	local22, local36 wz
+ if_ne	jmp	#LR__0228
+	add	fp, #204
+	rdlong	local48, fp
+	sub	fp, #204
+	mov	local37, local48 wz
+ if_ne	jmp	#LR__0227
+	add	fp, #84
+	rdlong	local50, fp
+	mov	local49, local50
+	sub	local49, #1
+	sub	fp, #60
+	rdlong	local51, fp
+	sub	fp, #24
+	mov	local52, local51
+	cmps	local52, local49 wcz
+ if_ae	jmp	#LR__0228
+LR__0227
+	add	fp, #192
+	rdlong	local23, fp
+	mov	local22, local23
+	mov	local35, local23
+	mov	local36, local35
+	add	local36, #1
+	wrlong	local36, fp
+	sub	fp, #192
+	mov	local37, #46
+	wrbyte	#46, local22
+LR__0228
+	add	fp, #24
+	rdlong	local23, fp
+	mov	local22, local23
+	mov	local35, local23
+	mov	local36, local35
+	add	local36, #1
+	wrlong	local36, fp
+	sub	fp, #24
+	jmp	#LR__0224
+LR__0229
+LR__0230
+	add	fp, #52
+	rdlong	local06, fp wz
+	sub	fp, #52
+ if_e	jmp	#LR__0235
+	add	fp, #192
+	rdlong	local06, fp
+	sub	local06, #1
+	wrlong	local06, fp
+	sub	fp, #192
+	loc	pa,	#(@LR__0232-@LR__0231)
+	call	#FCACHE_LOAD_
+LR__0231
+	add	fp, #192
+	rdlong	local06, fp
+	add	fp, #4
+	rdlong	local19, fp
+	sub	fp, #196
+	cmps	local06, local19 wcz
+ if_be	jmp	#LR__0233
+	add	fp, #192
+	rdlong	local23, fp
+	sub	fp, #192
+	mov	local22, local23
+	rdbyte	local20, local22
+	cmp	local20, #48 wz
+ if_ne	jmp	#LR__0233
+	add	fp, #192
+	rdlong	local06, fp
+	sub	local06, #1
+	wrlong	local06, fp
+	sub	fp, #192
+	jmp	#LR__0231
+LR__0232
+LR__0233
+	add	fp, #192
+	rdlong	local01, fp
+	sub	fp, #192
+	rdbyte	local06, local01
+	cmp	local06, #46 wz
+ if_ne	jmp	#LR__0234
+	add	fp, #192
+	rdlong	local06, fp
+	sub	local06, #1
+	wrlong	local06, fp
+	sub	fp, #192
+LR__0234
+	add	fp, #192
+	rdlong	local21, fp
+	mov	local19, local21
+	add	local19, #1
+	wrlong	local19, fp
+	sub	fp, #192
+LR__0235
+	add	fp, #36
+	rdlong	local06, fp wz
+	sub	fp, #36
+ if_e	jmp	#LR__0238
+	add	fp, #192
+	rdlong	local06, fp
+	mov	local19, local06
+	add	local19, #1
+	wrlong	local19, fp
+	sub	fp, #144
+	rdlong	local20, fp
+	wrbyte	local20, local06
+	add	fp, #144
+	rdlong	local06, fp
+	mov	local19, local06
+	add	local19, #1
+	wrlong	local19, fp
+	sub	fp, #96
+	rdlong	local20, fp
+	wrbyte	local20, local06
+	sub	fp, #72
+	wrlong	#0, fp
+	sub	fp, #24
+LR__0236
+	add	fp, #24
+	rdlong	local01, fp
+	add	fp, #68
+	rdlong	local20, fp
+	sub	fp, #92
+	mov	local21, local20
+	cmps	local01, local21 wcz
+ if_ae	jmp	#LR__0237
+	add	fp, #192
+	rdlong	local22, fp
+	mov	local36, local22
+	add	local36, #1
+	wrlong	local36, fp
+	sub	fp, #168
+	rdlong	local48, fp
+	mov	local37, local48
+	add	fp, #152
+	mov	local49, fp
+	add	local37, fp
+	rdbyte	local50, local37
+	wrbyte	local50, local22
+	sub	fp, #152
+	rdlong	local23, fp
+	mov	local22, local23
+	mov	local35, local23
+	mov	local36, local35
+	add	local36, #1
+	wrlong	local36, fp
+	sub	fp, #24
+	jmp	#LR__0236
+LR__0237
+LR__0238
+	add	fp, #192
+	rdlong	local01, fp
+	sub	fp, #192
+	mov	local06, local01
+	mov	local19, #0
+	wrbyte	#0, local06
+LR__0239
+	add	fp, #108
+	rdlong	local06, fp wz
+	sub	fp, #108
+ if_e	jmp	#LR__0250
+	add	fp, #72
+	rdlong	local19, fp wz
+	sub	fp, #72
+ if_e	jmp	#LR__0250
+	add	fp, #196
+	rdlong	local22, fp
+	sub	fp, #196
+	mov	arg01, local22
+	mov	local53, #0
+	loc	pa,	#(@LR__0241-@LR__0240)
+	call	#FCACHE_LOAD_
+LR__0240
+	rdbyte	local54, arg01 wz
+ if_ne	add	local53, #1
+ if_ne	add	arg01, #1
+ if_ne	jmp	#LR__0240
+LR__0241
+	mov	result1, local53
+	mov	local23, result1
+	add	fp, #108
+	rdlong	local35, fp
+	sub	fp, #108
+	mov	local36, local35
+	cmps	local23, local36 wcz
+ if_be	jmp	#LR__0250
+	add	fp, #196
+	rdlong	local06, fp
+	add	fp, #24
+	wrlong	local06, fp
+	sub	fp, #184
+	rdlong	local06, fp wz
+	sub	fp, #36
+ if_e	jmp	#LR__0242
+	add	fp, #184
+	wrlong	#0, fp
+	sub	fp, #76
+	rdlong	local06, fp
+	add	fp, #108
+	wrlong	local06, fp
+	sub	fp, #216
+	jmp	#LR__0243
+LR__0242
+	add	fp, #108
+	rdlong	local55, fp
+	sub	local55, #1
+	mov	local56, local55
+	add	fp, #76
+	rdlong	local06, fp
+	sub	local56, local06
+	add	fp, #32
+	wrlong	local56, fp
+	sub	fp, #216
+LR__0243
+	loc	pa,	#(@LR__0245-@LR__0244)
+	call	#FCACHE_LOAD_
+LR__0244
+	add	fp, #216
+	rdlong	local06, fp wz
+	sub	fp, #216
+ if_e	jmp	#LR__0246
+	add	fp, #220
+	rdlong	local06, fp
+	mov	local19, local06
+	add	local19, #1
+	wrlong	local19, fp
+	wrbyte	#42, local06
+	sub	fp, #4
+	rdlong	local06, fp
+	sub	local06, #1
+	wrlong	local06, fp
+	sub	fp, #216
+	jmp	#LR__0244
+LR__0245
+LR__0246
+	add	fp, #184
+	rdlong	local06, fp wz
+	sub	fp, #184
+ if_e	jmp	#LR__0249
+	add	fp, #220
+	rdlong	local06, fp
+	mov	local19, local06
+	add	local19, #1
+	wrlong	local19, fp
+	wrbyte	#46, local06
+	sub	fp, #4
+	wrlong	#0, fp
+	sub	fp, #216
+LR__0247
+	add	fp, #216
+	rdlong	local01, fp
+	sub	fp, #32
+	rdlong	local21, fp
+	sub	fp, #184
+	cmps	local01, local21 wcz
+ if_ae	jmp	#LR__0248
+	add	fp, #220
+	rdlong	local22, fp
+	mov	local36, local22
+	add	local36, #1
+	wrlong	local36, fp
+	mov	local37, #42
+	wrbyte	#42, local22
+	sub	fp, #4
+	rdlong	local23, fp
+	mov	local22, local23
+	mov	local35, local23
+	mov	local36, local35
+	add	local36, #1
+	wrlong	local36, fp
+	sub	fp, #216
+	jmp	#LR__0247
+LR__0248
+LR__0249
+	add	fp, #220
+	rdlong	local01, fp
+	mov	local06, local01
+	mov	local21, local01
+	mov	local19, local21
+	add	local19, #1
+	wrlong	local19, fp
+	sub	fp, #220
+	mov	local20, #0
+	wrbyte	#0, local06
+LR__0250
+	add	fp, #4
+	rdlong	arg01, fp
+	add	fp, #4
+	rdlong	arg02, fp
+	add	fp, #188
+	rdlong	arg03, fp
+	sub	fp, #196
+	call	#__system___fmtstr
+LR__0251
+	mov	ptra, fp
+	call	#popregs_
+__system___fmtfloat_ret
+	ret
+
+__system___seterror
+	cmp	arg01, #0 wz
+ if_e	jmp	#LR__0252
+	add	ptr___system__dat__, #16
+	wrlong	arg01, ptr___system__dat__
+	sub	ptr___system__dat__, #16
+	neg	result1, #1
+	jmp	#__system___seterror_ret
+LR__0252
+	mov	result1, #0
+__system___seterror_ret
+	ret
+
+__system___float_fromuns
+	mov	COUNT_, #2
+	call	#pushregs_
+	mov	local01, arg01 wz
+ if_e	mov	result1, local01
+ if_e	jmp	#LR__0253
+	mov	arg02, local01
+	encod	arg02, arg02 wc
+ if_b	add	arg02, #1
+	sub	arg02, #1
+	mov	local02, #31
+	sub	local02, arg02
+	shl	local01, local02
+	shr	local01, #2
+	mov	arg01, #0
+	mov	arg03, local01
+	call	#__system___float_Pack
+LR__0253
+	mov	ptra, fp
+	call	#popregs_
+__system___float_fromuns_ret
+	ret
+
+__system___float_fromint
+	mov	COUNT_, #2
+	call	#pushregs_
+	mov	local01, arg01
+	cmps	local01, #0 wcz
+ if_b	neg	local01, local01
+ if_b	mov	local02, #1
+ if_ae	mov	local02, #0
+	mov	arg01, local01
+	call	#__system___float_fromuns
+	cmp	local02, #0 wz
+ if_ne	bitnot	result1, #31
+	mov	ptra, fp
+	call	#popregs_
+__system___float_fromint_ret
+	ret
+
+__system___float_add
+	mov	COUNT_, #31
+	call	#pushregs_
+	mov	local01, arg01
+	mov	local02, arg02
+	mov	local03, #0
+	mov	local04, local01
+	mov	local05, local04
+	shl	local05, #9
+	mov	local06, local05
+	shr	local06, #9
+	mov	local07, local06
+	mov	local08, local04
+	shl	local08, #1
+	mov	local09, local08
+	shr	local09, #24
+	mov	local10, local09
+	shr	local04, #31
+	mov	arg01, local02
+	mov	result1, arg01
+	mov	local11, result1
+	mov	local12, local11
+	shl	local12, #9
+	mov	local13, local12
+	shr	local13, #9
+	mov	local14, local13
+	mov	local15, local11
+	shl	local15, #1
+	mov	local16, local15
+	shr	local16, #24
+	mov	local17, local16
+	mov	local18, local11
+	shr	local18, #31
+	mov	local19, local18
+	mov	local20, #0
+	mov	local21, #0
+	cmp	local10, local17 wcz
+ if_b	jmp	#LR__0254
+	cmp	local10, local17 wz
+ if_ne	jmp	#LR__0255
+	cmp	local07, local14 wcz
+ if_ae	jmp	#LR__0255
+LR__0254
+	mov	local22, local07
+	mov	local07, local14
+	mov	local14, local22
+	mov	local22, local10
+	mov	local10, local17
+	mov	local17, local22
+	mov	local22, local04
+	mov	local04, local19
+	mov	local19, local22
+LR__0255
+	cmp	local10, #255 wz
+ if_e	jmp	#LR__0271
+	cmp	local10, #0 wz
+ if_e	jmp	#LR__0273
+	bith	local07, #23
+LR__0256
+	cmp	local17, #0 wz
+ if_e	jmp	#LR__0276
+	bith	local14, #23
+LR__0257
+	sub	local10, #127
+	mov	local18, local17
+	sub	local18, #127
+	mov	local17, local18
+	mov	local23, local10
+	sub	local23, local17
+	mov	local24, local23
+	loc	pa,	#(@LR__0259-@LR__0258)
+	call	#FCACHE_LOAD_
+LR__0258
+	cmps	local24, #32 wcz
+ if_b	jmp	#LR__0260
+	cmp	local20, #0 wz
+	wrnz	local11
+	or	local14, local11
+	mov	local20, local14
+	mov	local14, #0
+	mov	local18, local24
+	sub	local18, #32
+	mov	local24, local18
+	jmp	#LR__0258
+LR__0259
+LR__0260
+	cmp	local24, #0 wz
+ if_e	jmp	#LR__0261
+	mov	local25, local14
+	mov	local11, #32
+	sub	local11, local24
+	shl	local25, local11
+	mov	local26, local20
+	mov	local11, #32
+	sub	local11, local24
+	shl	local26, local11 wz
+	shr	local20, local24
+	shr	local14, local24
+	or	local20, local25
+	mov	local18, local20
+	mov	local11, #0
+ if_ne	mov	local11, #1
+	or	local18, local11
+	mov	local20, local18
+LR__0261
+	mov	local27, local04
+	xor	local27, local19
+	mov	local28, local27
+	and	local28, #1
+	mov	local29, local28 wz
+ if_e	jmp	#LR__0262
+	not	local14, local14
+	not	local20, local20
+	add	local20, #1 wz
+	mov	local11, #0
+ if_e	mov	local11, #1
+	add	local14, local11
+LR__0262
+	add	local21, local20 wc
+	addx	local07, local14
+	cmps	local07, #0 wcz
+ if_ae	jmp	#LR__0263
+	xor	local04, #1
+	not	local07, local07
+	not	local21, local21
+	add	local21, #1 wz
+	mov	local11, #0
+ if_e	mov	local11, #1
+	add	local07, local11
+LR__0263
+	cmp	local07, ##16777216 wcz
+ if_b	jmp	#LR__0264
+	add	local10, #1
+	mov	local30, local21
+	and	local30, #1
+	shr	local21, #1
+	mov	local31, local07
+	shl	local31, #31
+	or	local21, local31
+	or	local21, local30
+	shr	local07, #1
+	jmp	#LR__0270
+LR__0264
+	cmp	local07, ##8388608 wcz
+ if_ae	jmp	#LR__0269
+	cmp	local07, #0 wz
+ if_ne	jmp	#LR__0265
+	cmp	local21, #0 wz
+ if_e	or	local04, #8
+ if_e	andn	local04, #1
+ if_e	jmp	#LR__0268
+LR__0265
+LR__0266
+	cmp	local07, ##8388608 wcz
+ if_ae	jmp	#LR__0267
+	add	local21, local21 wc
+	addx	local07, local07
+	sub	local10, #1
+	jmp	#LR__0266
+LR__0267
+LR__0268
+LR__0269
+LR__0270
+	mov	arg01, local07
+	mov	arg02, local21
+	mov	arg03, local10
+	mov	arg04, local04
+	call	#__system__pack_0257
+	jmp	#LR__0279
+LR__0271
+	cmp	local17, #255 wz
+ if_ne	jmp	#LR__0272
+	cmp	local19, local04 wz
+ if_ne	mov	result1, ##2146435072
+ if_ne	jmp	#LR__0279
+LR__0272
+	cmp	local07, #0 wz
+ if_ne	mov	result1, ##2146435072
+ if_ne	jmp	#LR__0279
+	mov	arg04, local04
+	or	arg04, #2
+	mov	arg01, local07
+	mov	arg02, local21
+	mov	arg03, local10
+	call	#__system__pack_0257
+	jmp	#LR__0279
+LR__0273
+	cmp	local07, #0 wz
+ if_e	jmp	#LR__0275
+	shl	local07, #1
+LR__0274
+	cmp	local07, ##8388608 wcz
+ if_ae	jmp	#LR__0256
+	mov	local11, local10
+	sub	local11, #1
+	mov	local10, local11
+	shl	local07, #1
+	jmp	#LR__0274
+LR__0275
+	and	local04, local19
+	mov	arg04, local04
+	or	arg04, #8
+	mov	arg01, #0
+	mov	arg02, #0
+	mov	arg03, #0
+	call	#__system__pack_0257
+	jmp	#LR__0279
+LR__0276
+	cmp	local14, #0 wz
+ if_e	jmp	#LR__0278
+	shl	local14, #1
+LR__0277
+	cmp	local14, ##8388608 wcz
+ if_ae	jmp	#LR__0257
+	mov	local11, local17
+	sub	local11, #1
+	mov	local17, local11
+	shl	local14, #1
+	jmp	#LR__0277
+LR__0278
+	mov	arg03, local10
+	sub	arg03, #127
+	mov	arg01, local07
+	mov	arg02, local21
+	mov	arg04, local04
+	call	#__system__pack_0257
+LR__0279
+	mov	ptra, fp
+	call	#popregs_
+__system___float_add_ret
+	ret
+
+__system___float_mul
+	mov	COUNT_, #26
+	call	#pushregs_
+	mov	local01, arg01
+	mov	local02, arg02
+	mov	local03, local01
+	mov	local04, local03
+	shl	local04, #9
+	mov	local05, local04
+	shr	local05, #9
+	mov	local06, local05
+	mov	local07, local03
+	shl	local07, #1
+	mov	local08, local07
+	shr	local08, #24
+	mov	local09, local08
+	shr	local03, #31
+	mov	local10, local02
+	mov	arg01, local10
+	mov	result1, arg01
+	mov	local11, result1
+	mov	local12, local11
+	mov	local13, local12
+	shl	local13, #9
+	mov	local14, local13
+	shr	local14, #9
+	mov	local15, local14
+	mov	local16, local12
+	shl	local16, #1
+	mov	local17, local16
+	shr	local17, #24
+	mov	local18, local17
+	shr	local12, #31
+	mov	local19, #0
+	xor	local03, local12
+	cmp	local09, #255 wz
+ if_e	jmp	#LR__0283
+	cmp	local18, #255 wz
+ if_e	jmp	#LR__0286
+	cmp	local09, #0 wz
+ if_e	jmp	#LR__0288
+	bith	local06, #23
+LR__0280
+	cmp	local18, #0 wz
+ if_e	jmp	#LR__0291
+	bith	local15, #23
+LR__0281
+	mov	local20, local09
+	add	local20, local18
+	sub	local20, #254
+	mov	local21, local06
+	shl	local21, #4
+	mov	local22, local15
+	shl	local22, #5
+	qmul	local21, local22
+	getqx	local19
+	getqy	local23
+	cmp	local23, ##16777216 wcz
+ if_b	jmp	#LR__0282
+	add	local20, #1
+	shr	local19, #1
+	mov	local24, local23
+	shl	local24, #31
+	or	local19, local24
+	shr	local23, #1
+LR__0282
+	mov	arg01, local23
+	mov	arg02, local19
+	mov	arg03, local20
+	mov	arg04, local03
+	call	#__system__pack_0257
+	jmp	#LR__0295
+LR__0283
+	cmp	local06, #0 wz
+ if_ne	mov	result1, local01
+ if_ne	jmp	#LR__0295
+	cmps	local18, #255 wcz
+ if_ae	jmp	#LR__0284
+	cmp	local18, #0 wz
+ if_ne	jmp	#LR__0285
+	cmp	local15, #0 wz
+ if_ne	jmp	#LR__0285
+	mov	result1, ##2146435072
+	jmp	#LR__0295
+LR__0284
+	cmp	local15, #0 wz
+ if_ne	mov	result1, local02
+ if_ne	jmp	#LR__0295
+LR__0285
+	mov	arg04, local03
+	or	arg04, #2
+	mov	arg01, #0
+	mov	arg02, #0
+	mov	arg03, local09
+	call	#__system__pack_0257
+	jmp	#LR__0295
+LR__0286
+	cmp	local09, #0 wz
+ if_ne	jmp	#LR__0287
+	cmp	local06, #0 wz
+ if_e	mov	result1, ##2146435072
+ if_e	jmp	#LR__0295
+LR__0287
+	cmp	local15, #0 wz
+ if_ne	mov	result1, local02
+ if_ne	jmp	#LR__0295
+	mov	arg03, local18
+	mov	arg04, local25
+	mov	arg01, #0
+	mov	arg02, #0
+	call	#__system__pack_0257
+	jmp	#LR__0295
+LR__0288
+	cmp	local06, #0 wz
+ if_e	jmp	#LR__0290
+	shl	local06, #1
+LR__0289
+	cmp	local06, ##8388608 wcz
+ if_ae	jmp	#LR__0280
+	sub	local09, #1
+	shl	local06, #1
+	jmp	#LR__0289
+LR__0290
+	mov	arg04, local03
+	or	arg04, #8
+	mov	arg01, #0
+	mov	arg02, #0
+	mov	arg03, #0
+	call	#__system__pack_0257
+	jmp	#LR__0295
+LR__0291
+	cmp	local15, #0 wz
+ if_e	jmp	#LR__0294
+	shl	local15, #1
+	loc	pa,	#(@LR__0293-@LR__0292)
+	call	#FCACHE_LOAD_
+LR__0292
+	cmp	local15, ##8388608 wcz
+ if_b	sub	local18, #1
+ if_b	shl	local15, #1
+ if_b	jmp	#LR__0292
+LR__0293
+	jmp	#LR__0281
+LR__0294
+	mov	arg04, local26
+	mov	arg01, #0
+	mov	arg02, #0
+	mov	arg03, #0
+	call	#__system__pack_0257
+LR__0295
+	mov	ptra, fp
+	call	#popregs_
+__system___float_mul_ret
+	ret
+
+__system___float_div
+	mov	COUNT_, #27
+	call	#pushregs_
+	mov	local03, arg01
+	mov	local04, arg02
+	mov	local05, local03
+	mov	local06, local05
+	shl	local06, #9
+	mov	local07, local06
+	shr	local07, #9
+	mov	local08, local07
+	mov	local09, local05
+	shl	local09, #1
+	mov	local10, local09
+	shr	local10, #24
+	mov	local11, local10
+	shr	local05, #31
+	mov	result1, local04
+	mov	local12, result1
+	mov	local13, local12
+	shl	local13, #9
+	mov	local14, local13
+	shr	local14, #9
+	mov	local15, local14
+	mov	local16, local12
+	shl	local16, #1
+	mov	local17, local16
+	shr	local17, #24
+	mov	local18, local17
+	shr	local12, #31
+	xor	local05, local12
+	cmp	local11, #255 wz
+ if_e	jmp	#LR__0301
+	cmp	local18, #255 wz
+ if_e	jmp	#LR__0302
+	cmp	local11, #0 wz
+ if_e	jmp	#LR__0303
+	bith	local08, #23
+LR__0296
+	cmp	local18, #0 wz
+ if_e	jmp	#LR__0308
+	bith	local15, #23
+LR__0297
+	mov	local19, local11
+	sub	local19, local18
+	mov	arg01, local08
+	shr	arg01, #2
+	mov	arg02, local08
+	shl	arg02, #30
+	mov	arg03, local15
+	setq	arg01
+	qdiv	arg02, arg03
+	getqx	result1
+	getqy	result2
+	mov	local01, result1
+	mov	local02, result2
+	mov	local20, local01
+	mov	local21, local02 wz
+	mov	local22, local20
+	shl	local22, #25
+	mov	local23, #0
+ if_ne	mov	local23, #1
+	or	local22, local23
+	shr	local20, #7
+	cmp	local20, ##16777216 wcz
+ if_b	jmp	#LR__0298
+	add	local19, #1
+	shr	local22, #1
+	mov	local24, local20
+	shl	local24, #31
+	or	local22, local24
+	shr	local20, #1
+	jmp	#LR__0300
+LR__0298
+	cmp	local20, ##8388608 wcz
+ if_ae	jmp	#LR__0299
+	sub	local19, #1
+	shl	local20, #1
+	mov	local25, local22
+	shr	local25, #31
+	or	local20, local25
+	shl	local22, #1
+LR__0299
+LR__0300
+	mov	arg01, local20
+	mov	arg02, local22
+	mov	arg03, local19
+	mov	arg04, local05
+	call	#__system__pack_0257
+	jmp	#LR__0312
+LR__0301
+	cmp	local08, #0 wz
+ if_ne	mov	result1, local03
+ if_ne	jmp	#LR__0312
+	cmp	local18, #255 wz
+ if_e	mov	result1, ##2146435072
+ if_e	jmp	#LR__0312
+	or	local05, #2
+	mov	arg01, #0
+	mov	arg02, #0
+	mov	arg03, local11
+	mov	arg04, local05
+	call	#__system__pack_0257
+	jmp	#LR__0312
+LR__0302
+	cmp	local15, #0 wz
+ if_ne	mov	result1, local04
+ if_ne	jmp	#LR__0312
+	mov	arg04, local05
+	or	arg04, #8
+	mov	arg01, #0
+	mov	arg02, #0
+	mov	arg03, #0
+	call	#__system__pack_0257
+	jmp	#LR__0312
+LR__0303
+	cmp	local08, #0 wz
+ if_e	jmp	#LR__0306
+	shl	local08, #1
+	loc	pa,	#(@LR__0305-@LR__0304)
+	call	#FCACHE_LOAD_
+LR__0304
+	cmp	local08, ##8388608 wcz
+ if_b	sub	local11, #1
+ if_b	shl	local08, #1
+ if_b	jmp	#LR__0304
+LR__0305
+	jmp	#LR__0296
+LR__0306
+	cmp	local18, #0 wz
+ if_ne	jmp	#LR__0307
+	cmp	local15, #0 wz
+ if_e	mov	result1, ##2146435072
+ if_e	jmp	#LR__0312
+LR__0307
+	mov	arg04, local26
+	mov	arg01, #0
+	mov	arg02, #0
+	mov	arg03, #0
+	call	#__system__pack_0257
+	jmp	#LR__0312
+LR__0308
+	cmp	local15, #0 wz
+ if_e	jmp	#LR__0311
+	shl	local15, #1
+	loc	pa,	#(@LR__0310-@LR__0309)
+	call	#FCACHE_LOAD_
+LR__0309
+	cmp	local15, ##8388608 wcz
+ if_b	sub	local18, #1
+ if_b	shl	local15, #1
+ if_b	jmp	#LR__0309
+LR__0310
+	jmp	#LR__0297
+LR__0311
+	mov	arg04, local27
+	mov	arg01, #0
+	mov	arg02, #0
+	mov	arg03, #0
+	call	#__system__pack_0257
+LR__0312
+	mov	ptra, fp
+	call	#popregs_
+__system___float_div_ret
+	ret
+
+__system___float_cmp
+	mov	_var01, arg01
+	cmps	_var01, ##2139095040 wcz
+ if_a	jmp	#LR__0313
+	cmps	arg02, ##2139095040 wcz
+ if_be	jmp	#LR__0314
+LR__0313
+	mov	result1, arg03
+	jmp	#__system___float_cmp_ret
+LR__0314
+	cmp	_var01, ##-8388608 wcz
+ if_a	jmp	#LR__0315
+	cmp	_var01, ##-8388608 wcz
+ if_be	jmp	#LR__0316
+LR__0315
+	mov	result1, arg03
+	jmp	#__system___float_cmp_ret
+LR__0316
+	cmps	_var01, #0 wcz
+ if_ae	jmp	#LR__0318
+	cmps	arg02, #0 wcz
+ if_b	mov	result1, arg02
+ if_b	sub	result1, _var01
+ if_b	jmp	#__system___float_cmp_ret
+	cmp	arg02, #0 wz
+ if_ne	jmp	#LR__0317
+	cmp	_var01, ##-2147483648 wz
+ if_e	mov	result1, #0
+ if_e	jmp	#__system___float_cmp_ret
+LR__0317
+	neg	result1, #1
+	jmp	#__system___float_cmp_ret
+LR__0318
+	cmps	arg02, #0 wcz
+ if_ae	jmp	#LR__0320
+	cmp	_var01, #0 wz
+ if_ne	jmp	#LR__0319
+	cmp	arg02, ##-2147483648 wz
+ if_e	mov	result1, #0
+ if_e	jmp	#__system___float_cmp_ret
+LR__0319
+	mov	result1, #1
+	jmp	#__system___float_cmp_ret
+LR__0320
+	sub	_var01, arg02
+	mov	result1, _var01
+__system___float_cmp_ret
+	ret
+
+__system___float_tointeger
+	mov	COUNT_, #4
+	call	#pushregs_
+	mov	local01, arg02
+	call	#__system___float_Unpack
+	mov	local02, result2
+	mov	local03, result3
+	cmps	local02, ##-1 wcz
+ if_b	jmp	#LR__0321
+	cmps	local02, #30 wcz
+ if_a	jmp	#LR__0321
+	shl	local03, #2
+	mov	local04, #30
+	sub	local04, local02
+	shr	local03, local04
+	add	local03, local01
+	shr	local03, #1
+	cmp	result1, #0 wz
+ if_ne	neg	local03, local03
+	mov	result1, local03
+	jmp	#LR__0322
+LR__0321
+	mov	result1, #0
+LR__0322
+	mov	ptra, fp
+	call	#popregs_
+__system___float_tointeger_ret
+	ret
+
+__system___float_Unpack
+	mov	_var01, arg01
+	shr	_var01, #31
+	mov	_var02, arg01
+	shl	_var02, #1
+	shr	_var02, #24 wz
+	and	arg01, ##8388607
+ if_ne	shl	arg01, #6
+ if_ne	bith	arg01, #29
+ if_ne	jmp	#LR__0323
+	mov	_var03, arg01
+	encod	_var03, _var03 wc
+ if_b	add	_var03, #1
+	sub	_var03, #23
+	mov	_var02, _var03
+	mov	_var04, #7
+	sub	_var04, _var03
+	shl	arg01, _var04
+LR__0323
+	sub	_var02, #127
+	mov	result3, arg01
+	mov	result1, _var01
+	mov	result2, _var02
+__system___float_Unpack_ret
+	ret
+
+__system___float_Pack
+	mov	_var01, #0
+	cmp	arg03, #0 wz
+ if_e	jmp	#LR__0325
+	mov	_var02, arg03
+	encod	_var02, _var02 wc
+ if_b	add	_var02, #1
+	mov	_var01, #33
+	sub	_var01, _var02
+	shl	arg03, _var01
+	mov	_var03, #3
+	sub	_var03, _var01
+	add	arg02, _var03
+	add	arg03, #256
+	mov	_var04, arg03
+	andn	_var04, #255 wz
+ if_e	add	arg02, #1
+	add	arg02, #127
+	fges	arg02, ##-23
+	fles	arg02, #255
+	cmps	arg02, #1 wcz
+ if_ae	jmp	#LR__0324
+	shr	arg03, #1
+	decod	_var04, #31
+	add	_var04, arg03
+	neg	arg02, arg02
+	shr	_var04, arg02
+	mov	arg03, _var04
+	mov	arg02, #0
+LR__0324
+	shl	arg01, #31
+	mov	result1, arg01
+	shl	arg02, #23
+	or	result1, arg02
+	shr	arg03, #9
+	or	result1, arg03
+	jmp	#__system___float_Pack_ret
+LR__0325
+	mov	result1, _var01
+__system___float_Pack_ret
+	ret
+
+__system____builtin_ilogb
+	mov	COUNT_, #2
+	call	#pushregs_
+	call	#__system___float_Unpack
+	mov	local01, result2
+	mov	local02, result3 wz
+ if_e	mov	result1, ##-2147483647
+ if_e	jmp	#LR__0327
+	cmp	local01, #128 wz
+ if_ne	jmp	#LR__0326
+	cmp	local02, ##536870912 wz
+ if_e	bmask	result1, #30
+ if_e	jmp	#LR__0327
+	decod	result1, #31
+	jmp	#LR__0327
+LR__0326
+	mov	result1, local01
+LR__0327
+	mov	ptra, fp
+	call	#popregs_
+__system____builtin_ilogb_ret
+	ret
+
+__system___float_pow_n
+	mov	COUNT_, #5
+	call	#pushregs_
+	mov	local01, arg01
+	mov	local02, arg02
+	mov	local03, arg03
+	cmps	local03, #0 wcz
+ if_ae	jmp	#LR__0328
+	mov	local04, #1
+	neg	local03, local03
+	cmps	local03, #0 wcz
+ if_b	mov	result1, #0
+ if_b	jmp	#LR__0336
+	jmp	#LR__0329
+LR__0328
+	mov	local04, #0
+LR__0329
+	mov	local05, ##1065353216
+LR__0330
+	cmps	local03, #0 wcz
+ if_be	jmp	#LR__0332
+	test	local03, #1 wz
+ if_e	jmp	#LR__0331
+	mov	arg01, local05
+	mov	arg02, local02
+	call	#__system___float_mul
+	mov	local05, result1
+LR__0331
+	sar	local03, #1
+	mov	arg01, local02
+	mov	arg02, local02
+	call	#__system___float_mul
+	mov	local02, result1
+	jmp	#LR__0330
+LR__0332
+	cmp	local04, #0 wz
+ if_e	jmp	#LR__0333
+	mov	arg01, local01
+	mov	arg02, local05
+	call	#__system___float_div
+	mov	local05, result1
+	jmp	#LR__0335
+LR__0333
+	mov	arg01, local01
+	mov	arg02, ##1065353216
+	mov	arg03, #1
+	call	#__system___float_cmp
+	cmp	result1, #0 wz
+ if_e	jmp	#LR__0334
+	mov	arg01, local01
+	mov	arg02, local05
+	call	#__system___float_mul
+	mov	local05, result1
+LR__0334
+LR__0335
+	mov	result1, local05
+LR__0336
+	mov	ptra, fp
+	call	#popregs_
+__system___float_pow_n_ret
+	ret
+
+__system___gc_ptrs
+	mov	_var01, __heap_ptr
+	mov	_var02, _var01
+	add	_var02, ##4088
+	rdlong	_var03, _var01 wz
+ if_ne	jmp	#LR__0337
+	mov	_var04, _var02
+	sub	_var04, _var01
+	wrword	#1, _var01
+	mov	_var05, _var01
+	add	_var05, #2
+	wrword	##27792, _var05
+	mov	_var06, _var01
+	add	_var06, #4
+	wrword	#0, _var06
+	mov	_var07, _var01
+	add	_var07, #6
+	wrword	#1, _var07
+	add	_var01, #16
+	abs	_var03, _var04 wc
+	shr	_var03, #4
+ if_b	neg	_var03, _var03
+	wrword	_var03, _var01
+	mov	_var08, _var01
+	add	_var08, #2
+	wrword	##27791, _var08
+	mov	_var09, _var01
+	add	_var09, #4
+	wrword	#0, _var09
+	mov	_var10, _var01
+	add	_var10, #6
+	wrword	#0, _var10
+	sub	_var01, #16
+LR__0337
+	mov	result2, _var02
+	mov	result1, _var01
+__system___gc_ptrs_ret
+	ret
+
+__system___gc_nextBlockPtr
+	mov	COUNT_, #2
+	call	#pushregs_
+	mov	local01, arg01
+	rdword	local02, local01 wz
+ if_ne	jmp	#LR__0338
+	mov	arg01, ##@LR__0417
+	call	#__system___gc_errmsg
+	jmp	#LR__0339
+LR__0338
+	shl	local02, #4
+	mov	result1, local01
+	add	result1, local02
+LR__0339
+	mov	ptra, fp
+	call	#popregs_
+__system___gc_nextBlockPtr_ret
+	ret
+
+__system___gc_tryalloc
+	mov	COUNT_, #27
+	call	#pushregs_
+	mov	local01, arg01
+	mov	local02, arg02
+	call	#__system___gc_ptrs
+	mov	local03, result1
+	mov	local04, result2
+	mov	local05, local03
+	mov	local06, #0
+	loc	pa,	#(@LR__0341-@LR__0340)
+	call	#FCACHE_LOAD_
+LR__0340
+	mov	local07, local05
+	add	local05, #6
+	mov	local08, local05
+	mov	local09, local03
+	rdword	local10, local08
+	mov	arg01, local09
+	mov	arg02, local10 wz
+ if_e	mov	result1, #0
+ if_ne	shl	arg02, #4
+ if_ne	add	arg01, arg02
+ if_ne	mov	result1, arg01
+	mov	local11, result1
+	mov	local05, local11 wz
+ if_ne	mov	local09, local05
+ if_ne	mov	local12, local09
+ if_ne	rdword	local06, local12
+	cmp	local05, #0 wz
+ if_e	jmp	#LR__0342
+	cmps	local05, local04 wcz
+ if_ae	jmp	#LR__0342
+	cmps	local01, local06 wcz
+ if_a	jmp	#LR__0340
+LR__0341
+LR__0342
+	cmp	local05, #0 wz
+ if_e	mov	result1, local05
+ if_e	jmp	#LR__0345
+	mov	local13, local05
+	add	local13, #6
+	rdword	local14, local13
+	cmps	local01, local06 wcz
+ if_ae	jmp	#LR__0344
+	mov	local15, local05
+	wrword	local01, local15
+	mov	local16, local01
+	shl	local16, #4
+	mov	local17, local05
+	add	local17, local16
+	mov	local18, local06
+	sub	local18, local01
+	mov	local19, local17
+	wrword	local18, local19
+	mov	local20, local17
+	add	local20, #2
+	wrword	##27791, local20
+	mov	local21, local17
+	add	local21, #4
+	mov	arg02, local05 wz
+ if_e	mov	result1, #0
+ if_ne	sub	arg02, local03
+ if_ne	shr	arg02, #4
+ if_ne	mov	result1, arg02
+	wrword	result1, local21
+	mov	local22, local17
+	rdword	local09, local13
+	add	local22, #6
+	wrword	local09, local22
+	mov	local23, local17
+	mov	arg02, local23 wz
+ if_e	mov	result1, #0
+ if_ne	sub	arg02, local03
+ if_ne	shr	arg02, #4
+ if_ne	mov	result1, arg02
+	mov	local14, result1
+	mov	arg01, local17
+	call	#__system___gc_nextBlockPtr
+	mov	local24, result1 wz
+ if_e	jmp	#LR__0343
+	cmps	local24, local04 wcz
+ if_ae	jmp	#LR__0343
+	mov	local25, local24
+	add	local25, #4
+	mov	local09, local03
+	mov	local10, local23
+	mov	arg01, local09
+	mov	arg02, local10 wz
+ if_e	mov	result1, #0
+ if_ne	sub	arg02, arg01
+ if_ne	shr	arg02, #4
+ if_ne	mov	result1, arg02
+	mov	local11, result1
+	wrword	local11, local25
+LR__0343
+LR__0344
+	add	local07, #6
+	wrword	local14, local07
+	mov	local09, ##27776
+	or	local09, local02
+	mov	local26, local05
+	add	local26, #2
+	cogid	result1
+	or	local09, result1
+	wrword	local09, local26
+	mov	local27, local03
+	add	local27, #8
+	rdword	local09, local27
+	wrword	local09, local13
+	mov	arg02, local05 wz
+ if_e	mov	result1, #0
+ if_ne	sub	arg02, local03
+ if_ne	shr	arg02, #4
+ if_ne	mov	result1, arg02
+	wrword	result1, local27
+	add	local05, #8
+	mov	result1, local05
+	or	result1, ##1669332992
+LR__0345
+	mov	ptra, fp
+	call	#popregs_
+__system___gc_tryalloc_ret
+	ret
+
+__system___gc_errmsg
+	mov	COUNT_, #2
+	call	#pushregs_
+	mov	local01, arg01
+LR__0346
+	rdbyte	local02, local01 wz
+	add	local01, #1
+ if_e	jmp	#LR__0347
+	mov	arg01, local02
+	call	#__system___tx
+	jmp	#LR__0346
+LR__0347
+	mov	result1, #0
+	mov	ptra, fp
+	call	#popregs_
+__system___gc_errmsg_ret
+	ret
+
+__system___gc_alloc_managed
+	mov	COUNT_, #2
+	call	#pushregs_
+	mov	local01, arg01
+	mov	arg02, #0
+	call	#__system___gc_doalloc
+	mov	local02, result1 wz
+ if_ne	jmp	#LR__0348
+	cmps	local01, #0 wcz
+ if_be	jmp	#LR__0348
+	mov	arg01, ##@LR__0418
+	call	#__system___gc_errmsg
+	jmp	#LR__0349
+LR__0348
+	mov	result1, local02
+LR__0349
+	mov	ptra, fp
+	call	#popregs_
+__system___gc_alloc_managed_ret
+	ret
+
+__system___gc_doalloc
+	mov	COUNT_, #7
+	call	#pushregs_
+	mov	local01, arg01 wz
+	mov	local02, arg02
+ if_e	mov	result1, #0
+ if_e	jmp	#LR__0357
+	add	local01, #23
+	andn	local01, #15
+	shr	local01, #4
+	add	ptr___system__dat__, #12
+	mov	local03, ptr___system__dat__
+	mov	arg01, local03
+	sub	ptr___system__dat__, #12
+	call	#__system___lockmem
+	mov	arg01, local01
+	mov	arg02, local02
+	call	#__system___gc_tryalloc
+	mov	local04, result1 wz
+ if_ne	jmp	#LR__0350
+	call	#__system___gc_docollect
+	mov	arg01, local01
+	mov	arg02, local02
+	call	#__system___gc_tryalloc
+	mov	local04, result1
+LR__0350
+	wrbyte	#0, local03
+	cmp	local04, #0 wz
+ if_e	jmp	#LR__0356
+	shl	local01, #4
+	sub	local01, #8
+	abs	local05, local01 wc
+	shr	local05, #2
+ if_b	neg	local05, local05
+	mov	local06, local05 wz
+	mov	local07, local04
+ if_e	jmp	#LR__0355
+	loc	pa,	#(@LR__0353-@LR__0351)
+	call	#FCACHE_LOAD_
+LR__0351
+	rep	@LR__0354, local06
+LR__0352
+	wrlong	#0, local07
+	add	local07, #4
+LR__0353
+LR__0354
+LR__0355
+LR__0356
+	mov	result1, local04
+LR__0357
+	mov	ptra, fp
+	call	#popregs_
+__system___gc_doalloc_ret
+	ret
+
+__system___gc_isvalidptr
+	mov	_var01, arg03
+	mov	_var02, _var01
+	and	_var02, ##-1048576
+	cmp	_var02, ##1669332992 wz
+ if_ne	mov	result1, #0
+ if_ne	jmp	#__system___gc_isvalidptr_ret
+	sub	_var01, #8
+	mov	_var03, _var01
+	andn	_var03, ##-1048576
+	cmps	_var03, arg01 wcz
+ if_b	jmp	#LR__0358
+	cmps	_var03, arg02 wcz
+ if_b	jmp	#LR__0359
+LR__0358
+	mov	result1, #0
+	jmp	#__system___gc_isvalidptr_ret
+LR__0359
+	mov	_var02, _var03
+	xor	_var02, arg01
+	and	_var02, #15 wz
+ if_ne	mov	result1, #0
+ if_ne	jmp	#__system___gc_isvalidptr_ret
+	mov	_var04, _var03
+	add	_var04, #2
+	rdword	_var02, _var04
+	and	_var02, ##65472
+	cmp	_var02, ##27776 wz
+ if_ne	mov	result1, #0
+ if_e	mov	result1, _var03
+__system___gc_isvalidptr_ret
+	ret
+
+__system___gc_dofree
+	mov	COUNT_, #26
+	call	#pushregs_
+	mov	local01, arg01
+	call	#__system___gc_ptrs
+	mov	local02, result2
+	mov	local03, result1
+	mov	local04, local01
+	add	local04, #2
+	wrword	##27791, local04
+	mov	local05, local01
+	mov	arg01, local01
+	call	#__system___gc_nextBlockPtr
+	mov	local06, result1
+	loc	pa,	#(@LR__0361-@LR__0360)
+	call	#FCACHE_LOAD_
+LR__0360
+	add	local05, #4
+	mov	local07, local05
+	rdword	arg02, local07 wz
+	mov	arg01, local03
+ if_e	mov	result1, #0
+ if_ne	shl	arg02, #4
+ if_ne	add	arg01, arg02
+ if_ne	mov	result1, arg01
+	mov	local05, result1 wz
+ if_e	jmp	#LR__0362
+	mov	arg01, local05
+	mov	local08, #0
+	add	arg01, #2
+	rdword	local09, arg01
+	cmp	local09, ##27791 wz
+ if_e	neg	local08, #1
+	mov	result1, local08
+	mov	local10, result1 wz
+ if_e	jmp	#LR__0360
+LR__0361
+LR__0362
+	cmp	local05, #0 wz
+ if_e	mov	local05, local03
+	mov	local11, local05
+	add	local11, #6
+	mov	local12, local01
+	rdword	local13, local11
+	add	local12, #6
+	wrword	local13, local12
+	mov	arg02, local01 wz
+ if_e	mov	result1, #0
+ if_ne	sub	arg02, local03
+ if_ne	shr	arg02, #4
+ if_ne	mov	result1, arg02
+	mov	local14, result1
+	wrword	local14, local11
+	cmp	local05, local03 wz
+ if_e	jmp	#LR__0365
+	mov	arg01, local05
+	call	#__system___gc_nextBlockPtr
+	cmp	result1, local01 wz
+ if_ne	jmp	#LR__0364
+	mov	local15, local05
+	rdword	local16, local15
+	mov	local17, local01
+	rdword	local10, local17
+	add	local16, local10
+	wrword	local16, local15
+	wrword	#0, local04
+	mov	arg01, local01
+	call	#__system___gc_nextBlockPtr
+	mov	local06, result1
+	cmps	local06, local02 wcz
+ if_ae	jmp	#LR__0363
+	mov	local18, local06
+	add	local18, #4
+	mov	arg02, local05 wz
+ if_e	mov	result1, #0
+ if_ne	sub	arg02, local03
+ if_ne	shr	arg02, #4
+ if_ne	mov	result1, arg02
+	mov	local14, result1
+	wrword	local14, local18
+LR__0363
+	rdword	local13, local12
+	wrword	local13, local11
+	wrword	#0, local12
+	mov	local01, local05
+LR__0364
+LR__0365
+	mov	arg01, local01
+	call	#__system___gc_nextBlockPtr
+	mov	local19, result1 wz
+ if_e	jmp	#LR__0367
+	cmps	local19, local02 wcz
+ if_ae	jmp	#LR__0367
+	mov	arg01, local19
+	mov	local08, #0
+	add	arg01, #2
+	rdword	local09, arg01
+	cmp	local09, ##27791 wz
+ if_e	neg	local08, #1
+	mov	result1, local08 wz
+ if_e	jmp	#LR__0367
+	mov	local05, local01
+	mov	local01, local19
+	mov	local20, local05
+	rdword	local21, local20
+	mov	local22, local01
+	rdword	local10, local22
+	add	local21, local10
+	wrword	local21, local20
+	mov	local23, local01
+	add	local23, #6
+	mov	local24, local05
+	rdword	local13, local23
+	add	local24, #6
+	wrword	local13, local24
+	mov	local25, local01
+	add	local25, #2
+	wrword	#170, local25
+	wrword	#0, local23
+	mov	local13, local01
+	mov	arg01, local13
+	call	#__system___gc_nextBlockPtr
+	mov	local10, result1
+	mov	local06, local10 wz
+ if_e	jmp	#LR__0366
+	cmps	local06, local02 wcz
+ if_ae	jmp	#LR__0366
+	mov	local26, local06
+	add	local26, #4
+	mov	local13, local03
+	mov	local10, local05
+	mov	arg01, local13
+	mov	arg02, local10 wz
+ if_e	mov	result1, #0
+ if_ne	sub	arg02, arg01
+ if_ne	shr	arg02, #4
+ if_ne	mov	result1, arg02
+	mov	local14, result1
+	wrword	local14, local26
+LR__0366
+LR__0367
+	mov	result1, local06
+	mov	ptra, fp
+	call	#popregs_
+__system___gc_dofree_ret
+	ret
+
+__system____topofstack
+	mov	COUNT_, #0
+	call	#pushregs_
+	add	ptra, #12
+	add	fp, #4
+	wrlong	arg01, fp
+	mov	result1, fp
+	sub	fp, #4
+	mov	ptra, fp
+	call	#popregs_
+__system____topofstack_ret
+	ret
+
+__system___gc_docollect
+	mov	COUNT_, #12
+	call	#pushregs_
+	call	#__system___gc_ptrs
+	mov	local01, result2
+	mov	local02, result1
+	mov	arg01, local02
+	call	#__system___gc_nextBlockPtr
+	mov	local03, result1 wz
+	cogid	result1
+	mov	local04, result1
+ if_e	jmp	#LR__0369
+LR__0368
+	cmps	local03, local01 wcz
+ if_ae	jmp	#LR__0369
+	mov	local05, local03
+	add	local05, #2
+	rdword	local06, local05
+	andn	local06, #32
+	wrword	local06, local05
+	mov	arg01, local03
+	call	#__system___gc_nextBlockPtr
+	mov	local03, result1 wz
+ if_ne	jmp	#LR__0368
+LR__0369
+	mov	local07, #0
+	mov	arg01, #0
+	call	#__system____topofstack
+	mov	local08, result1
+	mov	arg01, local07
+	mov	arg02, local08
+	call	#__system___gc_markhub
+	call	#__system___gc_markcog
+	mov	arg01, local02
+	call	#__system___gc_nextBlockPtr
+	mov	local09, result1 wz
+ if_ne	jmp	#LR__0370
+	mov	arg01, ##@LR__0419
+	call	#__system___gc_errmsg
+	jmp	#LR__0376
+LR__0370
+LR__0371
+	mov	local03, local09
+	mov	arg01, local03
+	call	#__system___gc_nextBlockPtr
+	mov	local09, result1
+	mov	local10, local03
+	add	local10, #2
+	rdword	local11, local10
+	test	local11, #32 wz
+ if_ne	jmp	#LR__0374
+	mov	local12, local11
+	and	local12, #16 wz
+ if_ne	jmp	#LR__0374
+	mov	local07, local11
+	and	local07, #15
+	mov	local11, local07
+	cmp	local11, local04 wz
+ if_e	jmp	#LR__0372
+	cmp	local11, #14 wz
+ if_ne	jmp	#LR__0373
+LR__0372
+	mov	local07, local03
+	mov	arg01, local07
+	call	#__system___gc_dofree
+	mov	local12, result1
+	mov	local09, local12
+LR__0373
+LR__0374
+	cmp	local09, #0 wz
+ if_e	jmp	#LR__0375
+	cmps	local09, local01 wcz
+ if_b	jmp	#LR__0371
+LR__0375
+LR__0376
+	mov	ptra, fp
+	call	#popregs_
+__system___gc_docollect_ret
+	ret
+
+__system___gc_markhub
+	mov	COUNT_, #10
+	call	#pushregs_
+	mov	local01, arg01
+	mov	local02, arg02
+	call	#__system___gc_ptrs
+	mov	local03, result1
+	mov	local04, result2
+LR__0377
+	cmps	local01, local02 wcz
+ if_ae	jmp	#LR__0378
+	rdlong	arg03, local01
+	add	local01, #4
+	mov	arg01, local03
+	mov	arg02, local04
+	call	#__system___gc_isvalidptr
+	mov	local05, result1 wz
+ if_e	jmp	#LR__0377
+	mov	arg01, local05
+	mov	local06, #0
+	add	arg01, #2
+	rdword	local07, arg01
+	cmp	local07, ##27791 wz
+ if_e	neg	local06, #1
+	mov	result1, local06
+	mov	local08, result1 wz
+ if_ne	jmp	#LR__0377
+	mov	local09, local05
+	add	local09, #2
+	rdword	local10, local09
+	andn	local10, #15
+	or	local10, #46
+	wrword	local10, local09
+	jmp	#LR__0377
+LR__0378
+	mov	ptra, fp
+	call	#popregs_
+__system___gc_markhub_ret
+	ret
+
+__system___gc_markcog
+	mov	COUNT_, #7
+	call	#pushregs_
+	call	#__system___gc_ptrs
+	mov	local01, result1
+	mov	local02, result2
+	mov	local03, #0
+LR__0379
+	mov	local04, #496
+	sub	local04, local03
+	mov	local05, #496
+	add	local05, local04
+	'.live	local05
+	alts	local05, #0
+	mov	local06, local05
+	mov	arg02, local02
+	mov	arg01, local01
+	mov	arg03, local06
+	call	#__system___gc_isvalidptr
+	mov	local06, result1 wz
+ if_e	jmp	#LR__0380
+	add	local06, #2
+	rdword	local07, local06
+	or	local07, #32
+	wrword	local07, local06
+LR__0380
+	add	local03, #1
+	cmps	local03, #496 wcz
+ if_b	jmp	#LR__0379
+	mov	ptra, fp
+	call	#popregs_
+__system___gc_markcog_ret
+	ret
+
+__system___strrev
+	rdbyte	_var01, arg01 wz
+ if_e	jmp	#__system___strrev_ret
+	mov	_var02, arg01
+	loc	pa,	#(@LR__0382-@LR__0381)
+	call	#FCACHE_LOAD_
+LR__0381
+	rdbyte	_var01, _var02 wz
+ if_ne	add	_var02, #1
+ if_ne	jmp	#LR__0381
+LR__0382
+	sub	_var02, #1
+LR__0383
+	cmps	_var02, arg01 wcz
+ if_be	jmp	#LR__0384
+	rdbyte	_var03, arg01
+	rdbyte	_var04, _var02
+	wrbyte	_var04, arg01
+	wrbyte	_var03, _var02
+	add	arg01, #1
+	sub	_var02, #1
+	jmp	#LR__0383
+LR__0384
+__system___strrev_ret
+	ret
+
+__system___fmtpad
+	mov	COUNT_, #12
+	call	#pushregs_
+	mov	local01, arg01
+	mov	local02, arg02
+	mov	local03, arg04
+	getbyte	local04, local02, #1
+	shr	local02, #22
+	and	local02, #3 wz
+	mov	local05, #0
+ if_e	mov	local02, #1
+	test	local02, local03 wz
+ if_e	mov	result1, #0
+ if_e	jmp	#LR__0388
+	sub	local04, arg03
+	mov	local06, local04
+	cmps	local06, #0 wcz
+ if_be	mov	result1, #0
+ if_be	jmp	#LR__0388
+	cmp	local02, #3 wz
+ if_ne	jmp	#LR__0385
+	cmp	local03, #1 wz
+	wrz	local07
+	add	local06, local07
+	abs	local06, local06 wc
+	shr	local06, #1
+ if_b	neg	local06, local06
+LR__0385
+	cmps	local06, #0 wcz
+ if_be	jmp	#LR__0387
+	mov	local08, local06
+LR__0386
+	mov	local09, local01
+	rdlong	local07, local09
+	add	local09, #4
+	rdlong	local10, local09
+	mov	arg01, #32
+	mov	local11, objptr
+	mov	objptr, local07
+	call	local10
+	mov	objptr, local11
+	mov	local12, result1
+	cmps	local12, #0 wcz
+ if_b	mov	result1, local12
+ if_b	jmp	#LR__0388
+	add	local05, local12
+	djnz	local08, #LR__0386
+LR__0387
+	mov	result1, local05
+LR__0388
+	mov	ptra, fp
+	call	#popregs_
+__system___fmtpad_ret
+	ret
+
+__system___uitoa
+	mov	COUNT_, #9
+	call	#pushregs_
+	mov	local01, arg01
+	mov	local02, arg02
+	mov	local03, arg03
+	mov	local04, arg04
+	mov	local05, arg05 wz
+	mov	local06, local01
+	mov	local07, #0
+ if_ne	mov	local08, #55
+ if_e	mov	local08, #87
+LR__0389
+	mov	muldiva_, local02
+	mov	muldivb_, local03
+	call	#unsdivide_
+	mov	local09, muldiva_
+	cmp	local09, #10 wcz
+ if_b	add	local09, #48
+ if_ae	add	local09, local08
+	wrbyte	local09, local06
+	mov	muldiva_, local02
+	mov	muldivb_, local03
+	add	local06, #1
+	call	#unsdivide_
+	mov	local02, muldivb_
+	add	local07, #1
+	cmp	local02, #0 wcz
+ if_a	jmp	#LR__0389
+	cmp	local07, local04 wcz
+ if_b	jmp	#LR__0389
+	wrbyte	#0, local06
+	mov	arg01, local01
+	call	#__system___strrev
+	mov	result1, local07
+	mov	ptra, fp
+	call	#popregs_
+__system___uitoa_ret
+	ret
+
+__system__disassemble_0187
+	mov	COUNT_, #25
+	call	#pushregs_
+	mov	local01, arg01
+	mov	local02, arg02
+	mov	local03, arg03
+	mov	local04, arg04
+	mov	local05, arg05
+	mov	arg01, local05
+	call	#__system___float_fromint
+	mov	local06, result1
+	mov	local07, #0
+	mov	local08, #1
+	mov	arg01, local01
+	mov	arg02, #0
+	mov	arg03, #1
+	call	#__system___float_cmp
+ if_e	wrlong	#0, local02
+	mov	local09, result1 wz
+ if_e	wrlong	#0, local03
+ if_e	jmp	#LR__0401
+	mov	arg01, local01
+	call	#__system____builtin_ilogb
+	mov	local10, result1
+	cmp	local05, #10 wz
+ if_ne	jmp	#LR__0390
+	mov	local11, local10
+	shl	local11, #1
+	add	local11, local10
+	mov	muldiva_, local11
+	mov	muldivb_, #10
+	call	#divide_
+	mov	local12, muldivb_
+	mov	local10, local12
+	mov	local13, #9
+	jmp	#LR__0391
+LR__0390
+	mov	local13, #24
+LR__0391
+LR__0392
+	cmps	local07, #8 wcz
+	add	local07, #1
+ if_ae	jmp	#LR__0393
+	mov	arg01, ##1065353216
+	mov	arg02, local06
+	mov	arg03, local10
+	call	#__system___float_pow_n
+	mov	local14, result1
+	mov	arg01, local01
+	mov	arg02, local14
+	call	#__system___float_div
+	mov	local15, result1
+	mov	arg01, local15
+	mov	local08, #1
+	mov	arg02, ##1065353216
+	mov	arg03, #1
+	call	#__system___float_cmp
+	mov	local09, result1
+	cmps	local09, #0 wcz
+ if_b	sub	local10, #1
+ if_b	jmp	#LR__0392
+	mov	arg01, local15
+	mov	arg02, local06
+	neg	local08, #1
+	neg	arg03, #1
+	call	#__system___float_cmp
+	mov	local09, result1
+	cmps	local09, #0 wcz
+ if_ae	add	local10, #1
+ if_ae	jmp	#LR__0392
+LR__0393
+	mov	arg01, local15
+	call	#__system____builtin_ilogb
+	mov	local16, result1
+	mov	local17, local15
+	mov	local18, local17
+	and	local18, ##8388607
+	bith	local18, #23
+	shl	local18, local16
+	cmp	local05, #2 wz
+ if_e	shl	local04, #2
+	mov	local19, #0
+	cmps	local04, #0 wcz
+ if_ae	jmp	#LR__0394
+	mov	local20, local10
+	sub	local20, local04
+	mov	local04, local20
+	cmps	local04, #0 wcz
+ if_b	jmp	#LR__0400
+	jmp	#LR__0395
+LR__0394
+	add	local04, #1
+LR__0395
+	fles	local04, local13 wcz
+	mov	local21, #1
+LR__0396
+	cmp	local19, ##8388608 wcz
+ if_ae	jmp	#LR__0397
+	cmps	local04, #0 wcz
+	sub	local04, #1
+ if_be	jmp	#LR__0397
+	mov	local22, local18
+	shr	local22, #23
+	mov	arg01, local22
+	call	#__system___float_fromuns
+	mov	local23, result1
+	and	local18, ##8388607
+	qmul	local19, local05
+	getqx	arg01
+	qmul	local21, local05
+	getqx	local21
+	qmul	local18, local05
+	getqx	local18
+	call	#__system___float_fromuns
+	mov	arg01, result1
+	mov	local08, local23
+	mov	arg02, local08
+	call	#__system___float_add
+	mov	local09, result1
+	mov	arg01, local09
+	mov	arg02, #0
+	call	#__system___float_tointeger
+	mov	local24, result1
+	mov	local19, local24
+	jmp	#LR__0396
+LR__0397
+	mov	local20, local05
+	shl	local20, #23
+	abs	local25, local20 wc
+	shr	local25, #1
+ if_b	neg	local25, local25
+	cmp	local18, local25 wcz
+ if_a	jmp	#LR__0398
+	mov	local08, local05
+	shl	local08, #23
+	abs	local09, local08 wc
+	shr	local09, #1
+ if_b	neg	local09, local09
+	cmp	local18, local09 wz
+ if_ne	jmp	#LR__0399
+	mov	local24, local19
+	and	local24, #1 wz
+ if_e	jmp	#LR__0399
+LR__0398
+	mov	local20, local19
+	mov	local25, local19
+	add	local25, #1
+	mov	local19, local25
+	cmp	local19, local21 wz
+ if_e	mov	local20, local10
+ if_e	add	local20, #1
+ if_e	mov	local10, local20
+LR__0399
+LR__0400
+	wrlong	local19, local02
+	wrlong	local10, local03
+LR__0401
+	mov	ptra, fp
+	call	#popregs_
+__system__disassemble_0187_ret
+	ret
+
+__system__emitsign_0189
+	mov	_var01, #0
+	cmp	arg02, #0 wz
+ if_ne	wrbyte	arg02, arg01
+ if_ne	mov	_var01, #1
+ if_ne	add	arg01, #1
+	cmp	arg03, #0 wz
+ if_e	jmp	#LR__0402
+	wrbyte	#48, arg01
+	add	arg01, #1
+	wrbyte	arg03, arg01
+	add	_var01, #2
+LR__0402
+	mov	result1, _var01
+__system__emitsign_0189_ret
+	ret
+
+__system__pack_0257
+	mov	COUNT_, #10
+	call	#pushregs_
+	mov	local01, arg01
+	mov	local02, arg02
+	mov	local03, arg03
+	mov	local04, arg04
+	add	local03, #127
+	test	local04, #4 wz
+ if_e	jmp	#LR__0403
+	cmp	local01, #0 wz
+ if_e	decod	local01, #22
+	bith	local01, #247
+	jmp	#LR__0412
+LR__0403
+	test	local04, #2 wz
+ if_ne	mov	local01, ##2139095040
+ if_ne	mov	local02, #0
+ if_ne	jmp	#LR__0411
+	mov	local05, local04
+	test	local05, #8 wz
+ if_ne	mov	local01, #0
+ if_ne	jmp	#LR__0410
+	cmps	local03, #255 wcz
+ if_ae	mov	local01, ##2139095040
+ if_ae	mov	local02, #0
+ if_ae	jmp	#LR__0409
+	cmps	local03, #0 wcz
+ if_a	jmp	#LR__0407
+	shr	local02, #1
+	mov	local06, local01
+	and	local06, #1
+	shl	local06, #31
+	or	local02, local06
+	shr	local01, #1
+	loc	pa,	#(@LR__0405-@LR__0404)
+	call	#FCACHE_LOAD_
+LR__0404
+	cmps	local03, #0 wcz
+ if_ae	jmp	#LR__0406
+	cmp	local01, #0 wz
+ if_e	jmp	#LR__0406
+	mov	local07, local02
+	and	local07, #1
+	add	local03, #1
+	shr	local02, #1
+	mov	local08, local01
+	and	local08, #1
+	shl	local08, #31
+	or	local02, local08
+	or	local02, local07
+	shr	local01, #1
+	jmp	#LR__0404
+LR__0405
+LR__0406
+	cmps	local03, #0 wcz
+ if_ae	jmp	#LR__0408
+	cmp	local02, #0 wz
+	wrnz	local02
+	jmp	#LR__0408
+LR__0407
+	andn	local01, ##-8388608
+	shl	local03, #23
+	or	local01, local03
+LR__0408
+LR__0409
+LR__0410
+LR__0411
+LR__0412
+	test	local01, #1 wz
+ if_ne	or	local02, #1
+	mov	local09, local02
+	mov	local10, #0
+	add	local02, ##2147483647
+	cmp	local02, local09 wcz
+ if_b	mov	local10, #1
+	add	local01, local10
+	test	local04, #1 wz
+ if_ne	bith	local01, #31
+	mov	result1, local01
+	mov	ptra, fp
+	call	#popregs_
+__system__pack_0257_ret
+	ret
+
+___struct_s_vfs_file_t_putchar
+	mov	COUNT_, #4
+	call	#pushregs_
+	add	objptr, #20
+	rdlong	local01, objptr wz
+	sub	objptr, #20
+ if_e	mov	result1, #0
+ if_e	jmp	#LR__0413
+	add	objptr, #20
+	rdlong	local01, objptr
+	sub	objptr, #20
+	rdlong	local02, local01
+	add	local01, #4
+	rdlong	local03, local01
+	mov	arg02, objptr
+	mov	local04, objptr
+	mov	objptr, local02
+	call	local03
+	mov	objptr, local04
+	cmps	result1, #0 wcz
+ if_b	mov	local01, #0
+ if_ae	mov	local01, #1
+	mov	result1, local01
+LR__0413
+	mov	ptra, fp
+	call	#popregs_
+___struct_s_vfs_file_t_putchar_ret
+	ret
+
+___struct_s_vfs_file_t_getchar
+	mov	COUNT_, #4
+	call	#pushregs_
+	add	objptr, #24
+	rdlong	local01, objptr wz
+	sub	objptr, #24
+ if_e	neg	result1, #1
+ if_e	jmp	#LR__0414
+'         return getcf(__this);
+	add	objptr, #24
+	rdlong	local01, objptr
+	sub	objptr, #24
+	rdlong	local02, local01
+	add	local01, #4
+	rdlong	local03, local01
+	mov	arg01, objptr
+	mov	local04, objptr
+	mov	objptr, local02
+	call	local03
+	mov	objptr, local04
+LR__0414
+	mov	ptra, fp
+	call	#popregs_
+___struct_s_vfs_file_t_getchar_ret
+	ret
+
+___struct__bas_wrap_sender_tx
+	mov	COUNT_, #4
+	call	#pushregs_
+	rdlong	local01, objptr
+	rdlong	local02, local01
+	add	local01, #4
+	rdlong	local03, local01
+	mov	local04, objptr
+	mov	objptr, local02
+	call	local03
+	mov	objptr, local04
+	mov	result1, #1
+	mov	ptra, fp
+	call	#popregs_
+___struct__bas_wrap_sender_tx_ret
+	ret
+
+LR__0415
+	byte	"inf"
+	byte	0
+LR__0416
+	byte	"nan"
+	byte	0
+LR__0417
+	byte	" !!! corrupted heap??? !!! "
+	byte	0
+LR__0418
+	byte	" !!! out of heap memory !!! "
+	byte	0
+LR__0419
+	byte	" !!! corrupted heap !!! "
+	byte	0
+LR__0420
+	byte	"hello",10
+	byte	0
+LR__0421
+	byte	"HELLO",10
+	byte	0
+LR__0422
+	byte	"???"
+	byte	0
+	alignl
+_dat_
+	byte	$00[12376]
+	byte	$05, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	long	@@@_dat_ + 12808
+	long	@@@_dat_ + 12816
+	byte	$00, $00, $00, $00
+	long	@@@_dat_ + 12824
+	long	@@@_dat_ + 12832
+	byte	$00[8]
+	byte	$01, $00, $00, $00, $06, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	long	@@@_dat_ + 12840
+	long	@@@_dat_ + 12848
+	byte	$00, $00, $00, $00
+	long	@@@_dat_ + 12856
+	long	@@@_dat_ + 12864
+	byte	$00[8]
+	byte	$01, $00, $00, $00, $06, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	long	@@@_dat_ + 12872
+	long	@@@_dat_ + 12880
+	byte	$00, $00, $00, $00
+	long	@@@_dat_ + 12888
+	long	@@@_dat_ + 12896
+	byte	$00[316]
+	long	@@@__system___tx
+	byte	$00, $00, $00, $00
+	long	@@@__system___rx
+	byte	$00, $00, $00, $00
+	long	@@@__rxtxioctl_0011
+	byte	$00, $00, $00, $00
+	long	@@@___dummy_flush_0012
+	byte	$00, $00, $00, $00
+	long	@@@__system___tx
+	byte	$00, $00, $00, $00
+	long	@@@__system___rx
+	byte	$00, $00, $00, $00
+	long	@@@__rxtxioctl_0011
+	byte	$00, $00, $00, $00
+	long	@@@___dummy_flush_0012
+	byte	$00, $00, $00, $00
+	long	@@@__system___tx
+	byte	$00, $00, $00, $00
+	long	@@@__system___rx
+	byte	$00, $00, $00, $00
+	long	@@@__rxtxioctl_0011
+	byte	$00, $00, $00, $00
+	long	@@@___dummy_flush_0012
+	alignl
+_hn008_spin2_dat_
+'-' st_font                 file "st4font.def"
+	byte	$00[55]
+	byte	$ff, $ff, $00, $00, $00, $00, $00, $00, $00, $18, $18, $18, $18, $18, $18, $18
+	byte	$18[9]
+	byte	$00[7]
+	byte	$ff, $ff, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18
+	byte	$ff, $ff, $00, $00, $00, $00, $00, $00, $00, $18, $18, $18, $18, $18, $18, $18
+	byte	$1f, $1f, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18
+	byte	$f8, $f8, $18, $18, $18, $18, $18, $18, $18, $00, $00, $00, $00, $00, $00, $00
+	byte	$1f, $1f, $18, $18, $18, $18, $18, $18, $18, $00, $00, $00, $00, $00, $00, $00
+	byte	$f8, $f8, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18
+	byte	$1f, $1f, $00, $00, $00, $00, $00, $00, $00, $18, $18, $18, $18, $18, $18, $18
+	byte	$f8, $f8, $00, $00, $00, $00, $00, $00, $00, $18, $18, $18, $18, $18, $18, $18
+	byte	$ff, $ff, $18, $18, $18, $18, $18, $18, $18, $00, $00, $18, $3c, $7e, $66, $66
+	byte	$66, $7e, $7e, $66, $66, $66, $66, $30, $18, $00, $00, $7e, $7e, $06, $06, $3e
+	byte	$3e, $06, $06, $06, $06, $7e, $7e, $18, $0c, $30, $18, $3c, $7e, $66, $66, $06
+	byte	$06, $06, $06, $66, $66, $7e, $3c, $00, $00, $30, $18, $66, $66, $66, $6e, $6e
+	byte	$7e, $7e, $76, $76, $66, $66, $66, $00, $00, $30, $18, $7c, $7e, $06, $06, $0e
+	byte	$1c, $38, $70, $60, $60, $7e, $3e, $00, $00, $30, $18, $7e, $7e, $30, $30, $18
+	byte	$18, $0c, $0c, $06, $06, $7e, $7e, $00, $00, $18, $18, $00, $7e, $7e, $30, $30
+	byte	$18, $18, $0c, $0c, $06, $7e, $7e, $00, $00, $30, $18, $3c, $7e, $66, $66, $66
+	byte	$66[5]
+	byte	$7e, $3c, $00, $00, $00, $00, $06, $06, $06, $06, $16, $1e, $0e, $06, $06, $06
+	byte	$7e, $7e, $00, $00, $00, $00, $00, $00, $00, $3c, $7c, $60, $7c, $7e, $66, $66
+	byte	$7e, $7c, $30, $18, $00, $00, $00, $00, $00, $3c, $7e, $66, $66, $7e, $06, $06
+	byte	$7e, $7c, $18, $0c, $00, $00, $30, $18, $00, $3c, $3e, $06, $06, $06, $06, $06
+	byte	$7e, $7c, $00, $00, $00, $00, $30, $18, $00, $3e, $7e, $66, $66, $66, $66, $66
+	byte	$66, $66, $00, $00, $00, $00, $30, $18, $00, $7c, $7e, $06, $0e, $3c, $70, $60
+	byte	$7e, $3e, $00, $00, $00, $00, $30, $18, $00, $7e, $7e, $30, $18, $18, $0c, $0c
+	byte	$7e, $7e, $00, $00, $00, $00, $18, $18, $00, $7e, $7e, $30, $18, $18, $0c, $0c
+	byte	$7e, $7e, $00, $00, $00, $00, $30, $18, $00, $3c, $7e, $66, $66, $66, $66, $66
+	byte	$7e, $3c, $00, $00, $00, $00, $1c, $1c, $18, $18, $38, $3c, $1c, $18, $18, $18
+	byte	$3c, $3c, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00[6]
+	byte	$18[8]
+	byte	$00, $00, $18, $18, $00, $00, $00, $00, $66, $66, $66, $66, $00, $00, $00, $00
+	byte	$00[9]
+	byte	$66, $66, $ff, $ff, $66, $66, $ff, $ff, $66, $66, $00, $00, $00, $00, $18, $18
+	byte	$7c, $7e, $06, $06, $3e, $7c, $60, $60, $7e, $3e, $18, $18, $00, $00, $00, $66
+	byte	$66, $30, $30, $18, $18, $0c, $0c, $66, $66, $00, $00, $00, $00, $00, $3c, $7e
+	byte	$66, $66, $3c, $1c, $1c, $fc, $fe, $66, $66, $fe, $fc, $00, $00, $00, $00, $18
+	byte	$18, $18, $18, $18, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $30
+	byte	$18, $1c, $0c, $0c, $0c, $0c, $0c, $0c, $1c, $18, $30, $00, $00, $00, $00, $0c
+	byte	$18, $38, $30, $30, $30, $30, $30, $30, $38, $18, $0c, $00, $00, $00, $00, $00
+	byte	$66, $66, $3c, $3c, $ff, $ff, $3c, $3c, $66, $66, $00, $00, $00, $00, $00, $00
+	byte	$00, $18, $18, $18, $7e, $7e, $18, $18, $18, $00, $00, $00, $00, $00, $00, $00
+	byte	$00[6]
+	byte	$18[5]
+	byte	$0c, $04, $00, $00, $00, $00, $00, $00, $7e, $7e, $00, $00, $00, $00, $00, $00
+	byte	$00[13]
+	byte	$18, $18, $18, $00, $00, $00, $00, $60, $60, $60, $30, $30, $18, $18, $0c, $0c
+	byte	$06, $06, $06, $00, $00, $00, $00, $3c, $7e, $66, $66, $66, $76, $6e, $66, $66
+	byte	$66, $7e, $3c, $00, $00, $00, $00, $18, $18, $1c, $1c, $18, $18, $18, $18, $18
+	byte	$18, $7e, $7e, $00, $00, $00, $00, $3c, $7e, $66, $66, $30, $30, $18, $18, $0c
+	byte	$0c, $7e, $7e, $00, $00, $00, $00, $7e, $7e, $30, $30, $18, $18, $30, $30, $66
+	byte	$66, $7e, $3c, $00, $00, $00, $00, $30, $30, $38, $38, $3c, $3c, $36, $36, $7e
+	byte	$7e, $30, $30, $00, $00, $00, $00, $7e, $7e, $06, $06, $3e, $7e, $60, $60, $60
+	byte	$66, $7e, $3c, $00, $00, $00, $00, $38, $3c, $0e, $06, $06, $3e, $7e, $66, $66
+	byte	$66, $7e, $3c, $00, $00, $00, $00, $7e, $7e, $60, $60, $30, $30, $18, $18, $0c
+	byte	$0c, $0c, $0c, $00, $00, $00, $00, $3c, $7e, $66, $66, $3c, $3c, $66, $66, $66
+	byte	$66, $7e, $3c, $00, $00, $00, $00, $3c, $7e, $66, $66, $7e, $7c, $60, $60, $60
+	byte	$70, $3c, $1c, $00, $00, $00, $00, $00, $00, $00, $18, $18, $18, $00, $00, $00
+	byte	$18, $18, $18, $00, $00, $00, $00, $00, $00, $00, $18, $18, $18, $00, $00, $18
+	byte	$18, $18, $18, $0c, $04, $00, $00, $00, $70, $38, $1c, $0e, $07, $0e, $1c, $38
+	byte	$70, $00, $00, $00, $00, $00, $00, $00, $00, $00, $7e, $7e, $00, $00, $7e, $7e
+	byte	$00[8]
+	byte	$0e, $1c, $38, $70, $e0, $70, $38, $1c, $0e, $00, $00, $00, $00, $00, $00, $3c
+	byte	$7e, $66, $66, $30, $30, $18, $18, $18, $00, $18, $18, $00, $00, $00, $00, $3c
+	byte	$7e, $66, $66, $66, $66, $36, $06, $66, $66, $7e, $3c, $00, $00, $00, $00, $18
+	byte	$3c, $7e, $66, $66, $66, $7e, $7e, $66, $66, $66, $66, $00, $00, $00, $00, $3e
+	byte	$7e, $66, $66, $7e, $3e, $66, $66, $66, $66, $7e, $3e, $00, $00, $00, $00, $3c
+	byte	$7e, $66, $66, $06, $06, $06, $06, $66, $66, $7e, $3c, $00, $00, $00, $00, $3e
+	byte	$7e, $66, $66, $66, $66, $66, $66, $66, $66, $7e, $3e, $00, $00, $00, $00, $7e
+	byte	$7e, $06, $06, $3e, $3e, $06, $06, $06, $06, $7e, $7e, $00, $00, $00, $00, $7e
+	byte	$7e, $06, $06, $3e, $3e, $06, $06, $06, $06, $06, $06, $00, $00, $00, $00, $7c
+	byte	$7e, $06, $06, $76, $76, $66, $66, $66, $66, $7e, $3c, $00, $00, $00, $00, $66
+	byte	$66, $66, $66, $7e, $7e, $66, $66, $66, $66, $66, $66, $00, $00, $00, $00, $7e
+	byte	$7e, $18, $18, $18, $18, $18, $18, $18, $18, $7e, $7e, $00, $00, $00, $00, $60
+	byte	$60[7]
+	byte	$66, $66, $7e, $3c, $00, $00, $00, $00, $66, $66, $36, $36, $1e, $1e, $36, $36
+	byte	$66, $66, $c6, $c6, $00, $00, $00, $00, $06, $06, $06, $06, $06, $06, $06, $06
+	byte	$06, $06, $7e, $7e, $00, $00, $00, $00, $c6, $c6, $ee, $ee, $fe, $d6, $d6, $c6
+	byte	$c6, $c6, $c6, $c6, $00, $00, $00, $00, $66, $66, $66, $6e, $6e, $7e, $7e, $76
+	byte	$76, $66, $66, $66, $00, $00, $00, $00, $3c, $7e, $66, $66, $66, $66, $66, $66
+	byte	$66, $66, $7e, $3c, $00, $00, $00, $00, $3e, $7e, $66, $66, $66, $66, $7e, $3e
+	byte	$06, $06, $06, $06, $00, $00, $00, $00, $3c, $7e, $66, $66, $66, $66, $66, $66
+	byte	$66, $56, $3e, $6c, $00, $00, $00, $00, $3e, $7e, $66, $66, $66, $7e, $3e, $36
+	byte	$66, $66, $c6, $c6, $00, $00, $00, $00, $7c, $7e, $06, $06, $0e, $1c, $38, $70
+	byte	$60, $60, $7e, $3e, $00, $00, $00, $00, $7e, $7e, $18, $18, $18, $18, $18, $18
+	byte	$18, $18, $18, $18, $00, $00, $00, $00, $66, $66, $66, $66, $66, $66, $66, $66
+	byte	$66, $66, $7e, $3c, $00, $00, $00, $00, $66, $66, $66, $66, $66, $66, $66, $66
+	byte	$3c, $3c, $18, $18, $00, $00, $00, $00, $c6, $c6, $c6, $c6, $c6, $d6, $d6, $fe
+	byte	$fe, $ee, $c6, $82, $00, $00, $00, $00, $66, $66, $66, $3c, $3c, $18, $18, $3c
+	byte	$3c, $66, $66, $66, $00, $00, $00, $00, $66, $66, $66, $66, $66, $3c, $3c, $18
+	byte	$18, $18, $18, $18, $00, $00, $00, $00, $7e, $7e, $30, $30, $18, $18, $0c, $0c
+	byte	$06, $06, $7e, $7e, $00, $00, $00, $00, $3c, $3c, $0c, $0c, $0c, $0c, $0c, $0c
+	byte	$0c, $0c, $3c, $3c, $00, $00, $00, $00, $06, $06, $0c, $0c, $18, $18, $30, $30
+	byte	$60, $60, $c0, $c0, $00, $00, $00, $00, $3c, $3c, $30, $30, $30, $30, $30, $30
+	byte	$30, $30, $3c, $3c, $00, $00, $00, $00, $18, $18, $3c, $3c, $66, $66, $00, $00
+	byte	$00[18]
+	byte	$fe, $fe, $00, $00, $00, $00, $0c, $0c, $18, $18, $00, $00, $00, $00, $00, $00
+	byte	$00[9]
+	byte	$3c, $7c, $60, $7c, $7e, $66, $66, $7e, $7c, $00, $00, $00, $00, $06, $06, $06
+	byte	$3e, $7e, $66, $66, $66, $66, $66, $7e, $3e, $00, $00, $00, $00, $00, $00, $00
+	byte	$3c, $3e, $06, $06, $06, $06, $06, $7e, $7c, $00, $00, $00, $00, $60, $60, $60
+	byte	$7c, $7e, $66, $66, $66, $66, $66, $7e, $7c, $00, $00, $00, $00, $00, $00, $00
+	byte	$3c, $7e, $66, $66, $7e, $06, $06, $7e, $7c, $00, $00, $00, $00, $70, $78, $18
+	byte	$18, $7e, $7e, $18, $18, $18, $18, $18, $18, $00, $00, $00, $00, $00, $00, $00
+	byte	$7c, $7e, $66, $66, $66, $66, $7e, $7c, $60, $7e, $3e, $00, $00, $06, $06, $06
+	byte	$3e, $7e, $66, $66, $66, $66, $66, $66, $66, $00, $00, $00, $00, $18, $18, $00
+	byte	$1c, $1c, $18, $18, $18, $18, $18, $3c, $3c, $00, $00, $00, $00, $30, $30, $00
+	byte	$30[9]
+	byte	$3e, $1e, $00, $00, $06, $06, $06, $36, $36, $1e, $1e, $1e, $36, $36, $66, $66
+	byte	$00, $00, $00, $00, $1c, $1c, $18, $18, $18, $18, $18, $18, $18, $18, $3c, $3c
+	byte	$00[7]
+	byte	$6c, $fe, $fe, $d6, $d6, $c6, $c6, $c6, $c6, $00, $00, $00, $00, $00, $00, $00
+	byte	$3e, $7e, $66, $66, $66, $66, $66, $66, $66, $00, $00, $00, $00, $00, $00, $00
+	byte	$3c, $7e, $66, $66, $66, $66, $66, $7e, $3c, $00, $00, $00, $00, $00, $00, $00
+	byte	$3e, $7e, $66, $66, $66, $66, $66, $7e, $3e, $06, $06, $00, $00, $00, $00, $00
+	byte	$7c, $7e, $66, $66, $66, $66, $66, $7e, $7c, $60, $60, $00, $00, $00, $00, $00
+	byte	$3e, $7e, $66, $06, $06, $06, $06, $06, $06, $00, $00, $00, $00, $00, $00, $00
+	byte	$7c, $7e, $06, $0e, $3c, $70, $60, $7e, $3e, $00, $00, $00, $00, $00, $18, $18
+	byte	$7e, $7e, $18, $18, $18, $18, $18, $78, $70, $00, $00, $00, $00, $00, $00, $00
+	byte	$66[7]
+	byte	$7e, $7c, $00, $00, $00, $00, $00, $00, $00, $66, $66, $66, $66, $66, $3c, $3c
+	byte	$18, $18, $00, $00, $00, $00, $00, $00, $00, $c6, $c6, $d6, $d6, $fe, $fe, $ee
+	byte	$c6, $82, $00, $00, $00, $00, $00, $00, $00, $66, $66, $3c, $3c, $18, $3c, $3c
+	byte	$66, $66, $00, $00, $00, $00, $00, $00, $00, $66, $66, $66, $66, $66, $66, $7e
+	byte	$7c, $60, $7e, $3e, $00, $00, $00, $00, $00, $7e, $7e, $30, $18, $18, $0c, $0c
+	byte	$7e, $7e, $00, $00, $00, $00, $30, $18, $18, $18, $18, $0c, $0c, $18, $18, $18
+	byte	$18, $30, $00, $00, $00, $00, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18
+	byte	$18, $18, $00, $00, $00, $00, $0c, $18, $18, $18, $18, $30, $30, $18, $18, $18
+	byte	$18, $0c, $00, $00, $00, $00, $6c, $7e, $36, $00, $00, $00, $00, $00, $00, $00
+	byte	$00[9]
+	byte	$18, $18, $18, $18, $18, $18, $00, $00, $00, $00, $00
+'-' vga_font				file "vgafont.def"
+	byte	$00[19]
+	byte	$7e, $81, $a5, $81, $81, $bd, $99, $81, $81, $7e, $00, $00, $00, $00, $00, $00
+	byte	$7e, $ff, $db, $ff, $ff, $c3, $e7, $ff, $ff, $7e, $00, $00, $00, $00, $00, $00
+	byte	$00, $36, $7f, $7f, $7f, $7f, $3e, $1c, $08, $00, $00, $00, $00, $00, $00, $00
+	byte	$00, $08, $1c, $3e, $7f, $3e, $1c, $08, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$18, $3c, $3c, $e7, $e7, $e7, $18, $18, $3c, $00, $00, $00, $00, $00, $00, $00
+	byte	$18, $3c, $7e, $ff, $ff, $7e, $18, $18, $3c, $00, $00, $00, $00, $00, $00, $00
+	byte	$00, $00, $00, $18, $3c, $3c, $18, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff
+	byte	$ff, $ff, $ff, $e7, $c3, $c3, $e7, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00
+	byte	$00, $00, $3c, $66, $42, $42, $66, $3c, $00, $00, $00, $00, $00, $ff, $ff, $ff
+	byte	$ff, $ff, $c3, $99, $bd, $bd, $99, $c3, $ff, $ff, $ff, $ff, $ff, $00, $00, $00
+	byte	$78, $70, $58, $4c, $1e, $33, $33, $33, $33, $1e, $00, $00, $00, $00, $00, $00
+	byte	$3c, $66, $66, $66, $66, $3c, $18, $7e, $18, $18, $00, $00, $00, $00, $00, $00
+	byte	$fc, $cc, $fc, $0c, $0c, $0c, $0c, $0e, $0f, $07, $00, $00, $00, $00, $00, $00
+	byte	$fe, $c6, $fe, $c6, $c6, $c6, $c6, $e6, $e7, $67, $03, $00, $00, $00, $00, $00
+	byte	$18, $18, $db, $3c, $e7, $3c, $db, $18, $18, $00, $00, $00, $00, $00, $00, $01
+	byte	$03, $07, $0f, $1f, $7f, $1f, $0f, $07, $03, $01, $00, $00, $00, $00, $00, $40
+	byte	$60, $70, $78, $7c, $7f, $7c, $78, $70, $60, $40, $00, $00, $00, $00, $00, $00
+	byte	$18, $3c, $7e, $18, $18, $18, $7e, $3c, $18, $00, $00, $00, $00, $00, $00, $00
+	byte	$66[7]
+	byte	$00, $66, $66, $00, $00, $00, $00, $00, $00, $fe, $db, $db, $db, $de, $d8, $d8
+	byte	$d8, $d8, $d8, $00, $00, $00, $00, $3e, $63, $06, $1c, $36, $63, $63, $36, $1c
+	byte	$30, $63, $3e, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $7f
+	byte	$7f, $7f, $7f, $00, $00, $00, $00, $00, $00, $18, $3c, $7e, $18, $18, $18, $7e
+	byte	$3c, $18, $7e, $00, $00, $00, $00, $00, $00, $18, $3c, $7e, $18, $18, $18, $18
+	byte	$18, $18, $18, $00, $00, $00, $00, $00, $00, $18, $18, $18, $18, $18, $18, $18
+	byte	$7e, $3c, $18, $00, $00, $00, $00, $00, $00, $00, $00, $18, $30, $7f, $30, $18
+	byte	$00[11]
+	byte	$0c, $06, $7f, $06, $0c, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00, $03, $03, $03, $7f, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$14, $36, $7f, $36, $14, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $08
+	byte	$1c, $1c, $3e, $3e, $7f, $7f, $00, $00, $00, $00, $00, $00, $00, $00, $00, $7f
+	byte	$7f, $3e, $3e, $1c, $1c, $08, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00[14]
+	byte	$18, $3c, $3c, $3c, $18, $18, $18, $00, $18, $18, $00, $00, $00, $00, $66, $66
+	byte	$66, $24, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00, $36, $36, $7f, $36, $36, $36, $7f, $36, $36, $00, $00, $00, $00, $18, $18
+	byte	$3e, $63, $43, $03, $3e, $60, $60, $61, $63, $3e, $18, $18, $00, $00, $00, $00
+	byte	$00, $00, $43, $63, $30, $18, $0c, $06, $63, $61, $00, $00, $00, $00, $00, $00
+	byte	$1c, $36, $36, $1c, $6e, $3b, $33, $33, $33, $6e, $00, $00, $00, $00, $00, $00
+	byte	$0c, $0c, $0c, $06, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$30, $18, $0c, $0c, $0c, $0c, $0c, $0c, $18, $30, $00, $00, $00, $00, $00, $00
+	byte	$0c, $18, $30, $30, $30, $30, $30, $30, $18, $0c, $00, $00, $00, $00, $00, $00
+	byte	$00, $00, $00, $66, $3c, $ff, $3c, $66, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00, $00, $00, $18, $18, $7e, $18, $18, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00[8]
+	byte	$18, $18, $18, $0c, $00, $00, $00, $00, $00, $00, $00, $00, $00, $7f, $00, $00
+	byte	$00[16]
+	byte	$18, $18, $00, $00, $00, $00, $00, $00, $00, $00, $40, $60, $30, $18, $0c, $06
+	byte	$03, $01, $00, $00, $00, $00, $00, $00, $1c, $36, $63, $63, $6b, $6b, $63, $63
+	byte	$36, $1c, $00, $00, $00, $00, $00, $00, $18, $1c, $1e, $18, $18, $18, $18, $18
+	byte	$18, $7e, $00, $00, $00, $00, $00, $00, $3e, $63, $60, $30, $18, $0c, $06, $03
+	byte	$63, $7f, $00, $00, $00, $00, $00, $00, $3e, $63, $60, $60, $3c, $60, $60, $60
+	byte	$63, $3e, $00, $00, $00, $00, $00, $00, $30, $38, $3c, $36, $33, $7f, $30, $30
+	byte	$30, $78, $00, $00, $00, $00, $00, $00, $7f, $03, $03, $03, $3f, $60, $60, $60
+	byte	$63, $3e, $00, $00, $00, $00, $00, $00, $1c, $06, $03, $03, $3f, $63, $63, $63
+	byte	$63, $3e, $00, $00, $00, $00, $00, $00, $7f, $63, $60, $60, $30, $18, $0c, $0c
+	byte	$0c, $0c, $00, $00, $00, $00, $00, $00, $3e, $63, $63, $63, $3e, $63, $63, $63
+	byte	$63, $3e, $00, $00, $00, $00, $00, $00, $3e, $63, $63, $63, $7e, $60, $60, $60
+	byte	$30, $1e, $00, $00, $00, $00, $00, $00, $00, $00, $00, $18, $18, $00, $00, $00
+	byte	$18, $18, $00, $00, $00, $00, $00, $00, $00, $00, $00, $18, $18, $00, $00, $00
+	byte	$18, $18, $0c, $00, $00, $00, $00, $00, $00, $60, $30, $18, $0c, $06, $0c, $18
+	byte	$30, $60, $00, $00, $00, $00, $00, $00, $00, $00, $00, $7e, $00, $00, $7e, $00
+	byte	$00[9]
+	byte	$06, $0c, $18, $30, $60, $30, $18, $0c, $06, $00, $00, $00, $00, $00, $00, $3e
+	byte	$63, $63, $30, $18, $18, $18, $00, $18, $18, $00, $00, $00, $00, $00, $00, $00
+	byte	$3e, $63, $63, $7b, $7b, $7b, $3b, $03, $3e, $00, $00, $00, $00, $00, $00, $08
+	byte	$1c, $36, $63, $63, $7f, $63, $63, $63, $63, $00, $00, $00, $00, $00, $00, $3f
+	byte	$66, $66, $66, $3e, $66, $66, $66, $66, $3f, $00, $00, $00, $00, $00, $00, $3c
+	byte	$66, $43, $03, $03, $03, $03, $43, $66, $3c, $00, $00, $00, $00, $00, $00, $1f
+	byte	$36, $66, $66, $66, $66, $66, $66, $36, $1f, $00, $00, $00, $00, $00, $00, $7f
+	byte	$66, $46, $16, $1e, $16, $06, $46, $66, $7f, $00, $00, $00, $00, $00, $00, $7f
+	byte	$66, $46, $16, $1e, $16, $06, $06, $06, $0f, $00, $00, $00, $00, $00, $00, $3c
+	byte	$66, $43, $03, $03, $7b, $63, $63, $66, $5c, $00, $00, $00, $00, $00, $00, $63
+	byte	$63, $63, $63, $7f, $63, $63, $63, $63, $63, $00, $00, $00, $00, $00, $00, $3c
+	byte	$18[8]
+	byte	$3c, $00, $00, $00, $00, $00, $00, $78, $30, $30, $30, $30, $30, $33, $33, $33
+	byte	$1e, $00, $00, $00, $00, $00, $00, $67, $66, $66, $36, $1e, $1e, $36, $66, $66
+	byte	$67, $00, $00, $00, $00, $00, $00, $0f, $06, $06, $06, $06, $06, $06, $46, $66
+	byte	$7f, $00, $00, $00, $00, $00, $00, $63, $77, $7f, $7f, $6b, $63, $63, $63, $63
+	byte	$63, $00, $00, $00, $00, $00, $00, $63, $67, $6f, $7f, $7b, $73, $63, $63, $63
+	byte	$63, $00, $00, $00, $00, $00, $00, $3e, $63, $63, $63, $63, $63, $63, $63, $63
+	byte	$3e, $00, $00, $00, $00, $00, $00, $3f, $66, $66, $66, $3e, $06, $06, $06, $06
+	byte	$0f, $00, $00, $00, $00, $00, $00, $3e, $63, $63, $63, $63, $63, $63, $6b, $7b
+	byte	$3e, $30, $70, $00, $00, $00, $00, $3f, $66, $66, $66, $3e, $36, $66, $66, $66
+	byte	$67, $00, $00, $00, $00, $00, $00, $3e, $63, $63, $06, $1c, $30, $60, $63, $63
+	byte	$3e, $00, $00, $00, $00, $00, $00, $7e, $7e, $5a, $18, $18, $18, $18, $18, $18
+	byte	$3c, $00, $00, $00, $00, $00, $00, $63, $63, $63, $63, $63, $63, $63, $63, $63
+	byte	$3e, $00, $00, $00, $00, $00, $00, $63, $63, $63, $63, $63, $63, $63, $36, $1c
+	byte	$08, $00, $00, $00, $00, $00, $00, $63, $63, $63, $63, $6b, $6b, $6b, $7f, $77
+	byte	$36, $00, $00, $00, $00, $00, $00, $63, $63, $36, $3e, $1c, $1c, $3e, $36, $63
+	byte	$63, $00, $00, $00, $00, $00, $00, $66, $66, $66, $66, $3c, $18, $18, $18, $18
+	byte	$3c, $00, $00, $00, $00, $00, $00, $7f, $63, $61, $30, $18, $0c, $06, $43, $63
+	byte	$7f, $00, $00, $00, $00, $00, $00, $3c, $0c, $0c, $0c, $0c, $0c, $0c, $0c, $0c
+	byte	$3c, $00, $00, $00, $00, $00, $00, $00, $01, $03, $07, $0e, $1c, $38, $70, $60
+	byte	$40, $00, $00, $00, $00, $00, $00, $3c, $30, $30, $30, $30, $30, $30, $30, $30
+	byte	$3c, $00, $00, $00, $1c, $36, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00[17]
+	byte	$ff, $00, $00, $0c, $18, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00[9]
+	byte	$1e, $30, $3e, $33, $33, $33, $6e, $00, $00, $00, $00, $00, $00, $07, $06, $06
+	byte	$1e, $36, $66, $66, $66, $66, $3e, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$3e, $63, $03, $03, $03, $63, $3e, $00, $00, $00, $00, $00, $00, $38, $30, $30
+	byte	$3c, $36, $33, $33, $33, $33, $6e, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$3e, $63, $7f, $03, $03, $63, $3e, $00, $00, $00, $00, $00, $00, $38, $6c, $4c
+	byte	$0c, $1e, $0c, $0c, $0c, $0c, $1e, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$6e, $33, $33, $33, $33, $33, $3e, $30, $33, $1e, $00, $00, $00, $07, $06, $06
+	byte	$36, $6e, $66, $66, $66, $66, $67, $00, $00, $00, $00, $00, $00, $18, $18, $00
+	byte	$1c, $18, $18, $18, $18, $18, $3c, $00, $00, $00, $00, $00, $00, $60, $60, $00
+	byte	$70, $60, $60, $60, $60, $60, $60, $66, $66, $3c, $00, $00, $00, $07, $06, $06
+	byte	$66, $36, $1e, $1e, $36, $66, $67, $00, $00, $00, $00, $00, $00, $1c, $18, $18
+	byte	$18[6]
+	byte	$3c, $00, $00, $00, $00, $00, $00, $00, $00, $00, $37, $7f, $6b, $6b, $6b, $6b
+	byte	$63, $00, $00, $00, $00, $00, $00, $00, $00, $00, $3b, $66, $66, $66, $66, $66
+	byte	$66, $00, $00, $00, $00, $00, $00, $00, $00, $00, $3e, $63, $63, $63, $63, $63
+	byte	$3e, $00, $00, $00, $00, $00, $00, $00, $00, $00, $3b, $66, $66, $66, $66, $66
+	byte	$3e, $06, $06, $0f, $00, $00, $00, $00, $00, $00, $6e, $33, $33, $33, $33, $33
+	byte	$3e, $30, $30, $78, $00, $00, $00, $00, $00, $00, $3b, $6e, $66, $06, $06, $06
+	byte	$0f, $00, $00, $00, $00, $00, $00, $00, $00, $00, $3e, $63, $06, $1c, $30, $63
+	byte	$3e, $00, $00, $00, $00, $00, $00, $08, $0c, $0c, $3f, $0c, $0c, $0c, $0c, $6c
+	byte	$38, $00, $00, $00, $00, $00, $00, $00, $00, $00, $33, $33, $33, $33, $33, $33
+	byte	$6e, $00, $00, $00, $00, $00, $00, $00, $00, $00, $63, $63, $63, $63, $63, $36
+	byte	$1c, $00, $00, $00, $00, $00, $00, $00, $00, $00, $63, $63, $6b, $6b, $6b, $7f
+	byte	$36, $00, $00, $00, $00, $00, $00, $00, $00, $00, $63, $36, $1c, $1c, $1c, $36
+	byte	$63, $00, $00, $00, $00, $00, $00, $00, $00, $00, $63, $63, $63, $63, $63, $63
+	byte	$7e, $60, $30, $1f, $00, $00, $00, $00, $00, $00, $7f, $33, $18, $0c, $06, $63
+	byte	$7f, $00, $00, $00, $00, $00, $00, $70, $18, $18, $18, $0e, $18, $18, $18, $18
+	byte	$70, $00, $00, $00, $00, $00, $00, $18, $18, $18, $18, $18, $18, $18, $18, $18
+	byte	$18, $00, $00, $00, $00, $00, $00, $0e, $18, $18, $18, $70, $18, $18, $18, $18
+	byte	$0e, $00, $00, $00, $6e, $3b, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00[10]
+	byte	$08, $1c, $36, $63, $63, $63, $7f, $00, $00, $00, $00, $00, $00, $3c, $66, $43
+	byte	$03, $03, $03, $03, $43, $66, $3c, $18, $30, $1e, $00, $00, $00, $00, $33, $00
+	byte	$33[6]
+	byte	$6e, $00, $00, $00, $00, $00, $60, $30, $18, $00, $3e, $63, $7f, $03, $03, $63
+	byte	$3e, $00, $00, $00, $00, $00, $08, $1c, $36, $00, $1e, $30, $3e, $33, $33, $33
+	byte	$6e, $00, $00, $00, $00, $00, $00, $00, $33, $00, $1e, $30, $3e, $33, $33, $33
+	byte	$6e, $00, $00, $00, $00, $00, $1c, $36, $1c, $00, $33, $33, $33, $33, $33, $33
+	byte	$6e, $00, $00, $00, $00, $00, $60, $30, $18, $00, $3e, $63, $03, $03, $03, $63
+	byte	$3e, $00, $00, $00, $00, $00, $00, $00, $00, $00, $3e, $63, $03, $03, $03, $63
+	byte	$3e, $18, $30, $1e, $00, $00, $00, $1c, $58, $78, $38, $18, $1c, $1e, $1a, $18
+	byte	$3c, $00, $00, $00, $00, $00, $00, $00, $63, $00, $3e, $63, $7f, $03, $03, $63
+	byte	$3e, $00, $00, $00, $66, $33, $00, $3e, $63, $63, $63, $63, $63, $63, $63, $63
+	byte	$3e, $00, $00, $00, $00, $00, $cc, $66, $33, $00, $3e, $63, $63, $63, $63, $63
+	byte	$3e, $00, $00, $00, $00, $00, $18, $3c, $66, $00, $1c, $18, $18, $18, $18, $18
+	byte	$3c, $00, $00, $00, $30, $18, $00, $7f, $63, $61, $30, $18, $0c, $06, $43, $63
+	byte	$7f, $00, $00, $00, $00, $63, $00, $08, $1c, $36, $63, $63, $7f, $63, $63, $63
+	byte	$63, $00, $00, $00, $30, $18, $00, $3c, $66, $43, $03, $03, $03, $03, $43, $66
+	byte	$3c, $00, $00, $00, $30, $18, $00, $7f, $66, $46, $16, $1e, $16, $06, $46, $66
+	byte	$7f, $00, $00, $00, $0c, $06, $00, $0f, $06, $06, $06, $06, $06, $06, $46, $66
+	byte	$7f, $00, $00, $00, $30, $18, $00, $1c, $18, $18, $18, $18, $18, $18, $18, $18
+	byte	$3c, $00, $00, $00, $00, $00, $08, $1c, $36, $00, $3e, $63, $63, $63, $63, $63
+	byte	$3e, $00, $00, $00, $00, $00, $00, $00, $63, $00, $3e, $63, $63, $63, $63, $63
+	byte	$3e, $00, $00, $00, $00, $00, $00, $6f, $46, $26, $06, $06, $06, $06, $46, $66
+	byte	$7f, $00, $00, $00, $00, $00, $00, $6e, $4c, $2c, $0c, $0c, $0c, $0c, $0c, $0c
+	byte	$1e, $00, $00, $00, $30, $18, $00, $3e, $63, $63, $06, $1c, $30, $60, $63, $63
+	byte	$3e, $00, $00, $00, $00, $00, $60, $30, $18, $00, $3e, $63, $06, $1c, $30, $63
+	byte	$3e, $00, $00, $00, $00, $63, $00, $3e, $63, $63, $63, $63, $63, $63, $63, $63
+	byte	$3e, $00, $00, $00, $00, $63, $00, $63, $63, $63, $63, $63, $63, $63, $63, $63
+	byte	$3e, $00, $00, $00, $6c, $38, $00, $7e, $7e, $5a, $18, $18, $18, $18, $18, $18
+	byte	$3c, $00, $00, $00, $00, $00, $60, $48, $2c, $0c, $3f, $0c, $0c, $0c, $0c, $6c
+	byte	$38, $00, $00, $00, $00, $00, $00, $0f, $26, $36, $1e, $0e, $07, $07, $46, $66
+	byte	$7f, $00, $00, $00, $00, $00, $00, $00, $00, $63, $36, $1c, $1c, $36, $63, $00
+	byte	$00[6]
+	byte	$36, $1c, $08, $00, $3e, $63, $03, $03, $03, $63, $3e, $00, $00, $00, $00, $00
+	byte	$30, $18, $0c, $00, $1e, $30, $3e, $33, $33, $33, $6e, $00, $00, $00, $00, $00
+	byte	$60, $30, $18, $00, $1c, $18, $18, $18, $18, $18, $3c, $00, $00, $00, $00, $00
+	byte	$60, $30, $18, $00, $3e, $63, $63, $63, $63, $63, $3e, $00, $00, $00, $00, $00
+	byte	$30, $18, $0c, $00, $33, $33, $33, $33, $33, $33, $6e, $00, $00, $00, $00, $00
+	byte	$00, $08, $1c, $36, $63, $63, $7f, $63, $63, $63, $63, $18, $0c, $78, $00, $00
+	byte	$00, $00, $00, $00, $1e, $30, $3e, $33, $33, $33, $6e, $18, $0c, $78, $36, $1c
+	byte	$00, $7f, $63, $61, $30, $18, $0c, $06, $43, $63, $7f, $00, $00, $00, $00, $00
+	byte	$36, $1c, $08, $00, $7f, $33, $18, $0c, $06, $63, $7f, $00, $00, $00, $00, $00
+	byte	$00, $7f, $66, $46, $16, $1e, $16, $06, $46, $66, $7f, $18, $0c, $78, $00, $00
+	byte	$00, $00, $00, $00, $3e, $63, $7f, $03, $03, $63, $3e, $18, $0c, $78, $00, $00
+	byte	$00, $3c, $66, $03, $1f, $03, $0f, $03, $03, $66, $3c, $00, $00, $00, $00, $00
+	byte	$60, $30, $18, $00, $7f, $33, $18, $0c, $06, $63, $7f, $00, $00, $00, $6c, $38
+	byte	$00, $3c, $66, $43, $03, $03, $03, $03, $43, $66, $3c, $00, $00, $00, $00, $00
+	byte	$00, $00, $00, $00, $3e, $63, $06, $1c, $30, $63, $3e, $18, $30, $1e, $00, $00
+	byte	$00[6]
+	byte	$6c, $36, $1b, $36, $6c, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$1b, $36, $6c, $36, $1b, $00, $00, $00, $88, $22, $88, $22, $88, $22, $88, $22
+	byte	$88, $22, $88, $22, $88, $22, $88, $22, $aa, $55, $aa, $55, $aa, $55, $aa, $55
+	byte	$aa, $55, $aa, $55, $aa, $55, $aa, $55, $bb, $ee, $bb, $ee, $bb, $ee, $bb, $ee
+	byte	$bb, $ee, $bb, $ee, $bb, $ee, $bb, $ee, $18, $18, $18, $18, $18, $18, $18, $18
+	byte	$18[15]
+	byte	$1f, $18, $18, $18, $18, $18, $18, $18, $18, $30, $18, $00, $08, $1c, $36, $63
+	byte	$63, $7f, $63, $63, $63, $63, $00, $00, $00, $1c, $36, $00, $08, $1c, $36, $63
+	byte	$63, $7f, $63, $63, $63, $63, $00, $00, $00, $36, $1c, $00, $7f, $66, $46, $16
+	byte	$1e, $16, $06, $46, $66, $7f, $00, $00, $00, $00, $00, $00, $3e, $63, $63, $06
+	byte	$1c, $30, $60, $63, $63, $3e, $18, $30, $1e, $6c, $6c, $6c, $6c, $6c, $6f, $60
+	byte	$6f, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c
+	byte	$6c[9]
+	byte	$00[5]
+	byte	$7f, $60, $6f, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c
+	byte	$6f, $60, $7f, $00, $00, $00, $00, $00, $00, $00, $00, $18, $18, $00, $7f, $63
+	byte	$61, $30, $18, $0c, $06, $43, $63, $7f, $00, $00, $00, $00, $00, $00, $18, $18
+	byte	$00, $7f, $33, $18, $0c, $06, $63, $7f, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00, $00, $1f, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18
+	byte	$18, $18, $f8, $00, $00, $00, $00, $00, $00, $00, $00, $18, $18, $18, $18, $18
+	byte	$18, $18, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00, $00, $ff, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18
+	byte	$18, $18, $f8, $18, $18, $18, $18, $18, $18, $18, $18, $00, $00, $00, $00, $00
+	byte	$00, $00, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $18, $18, $18, $18, $18
+	byte	$18, $18, $ff, $18, $18, $18, $18, $18, $18, $18, $18, $63, $3e, $00, $08, $1c
+	byte	$36, $63, $63, $7f, $63, $63, $63, $63, $00, $00, $00, $00, $00, $00, $63, $3e
+	byte	$00, $1e, $30, $3e, $33, $33, $33, $6e, $00, $00, $00, $6c, $6c, $6c, $6c, $6c
+	byte	$ec, $0c, $fc, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$fc, $0c, $ec, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c
+	byte	$ef, $00, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$ff, $00, $ef, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c
+	byte	$ec, $0c, $ec, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $00, $00, $00, $00, $00
+	byte	$ff, $00, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $6c, $6c, $6c, $6c, $6c
+	byte	$ef, $00, $ef, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $00, $00, $00, $00, $00
+	byte	$63, $3e, $63, $63, $63, $63, $3e, $63, $00, $00, $00, $00, $00, $00, $30, $7e
+	byte	$30, $3c, $36, $33, $33, $33, $33, $6e, $00, $00, $00, $00, $00, $00, $1f, $36
+	byte	$66, $66, $6f, $66, $66, $66, $36, $1f, $00, $00, $00, $36, $1c, $00, $1f, $36
+	byte	$66[6]
+	byte	$36, $1f, $00, $00, $00, $00, $63, $00, $7f, $66, $46, $16, $1e, $16, $06, $46
+	byte	$66, $7f, $00, $00, $00, $6c, $38, $00, $38, $30, $30, $3c, $36, $33, $33, $33
+	byte	$33, $6e, $00, $00, $00, $36, $1c, $00, $63, $67, $6f, $7f, $7b, $73, $63, $63
+	byte	$63, $63, $00, $00, $00, $30, $18, $00, $3c, $18, $18, $18, $18, $18, $18, $18
+	byte	$18, $3c, $00, $00, $00, $3c, $66, $00, $3c, $18, $18, $18, $18, $18, $18, $18
+	byte	$18, $3c, $00, $00, $00, $00, $00, $36, $1c, $08, $00, $3e, $63, $7f, $03, $03
+	byte	$63, $3e, $00, $00, $00, $18, $18, $18, $18, $18, $18, $18, $1f, $00, $00, $00
+	byte	$00[12]
+	byte	$f8, $18, $18, $18, $18, $18, $18, $18, $18, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+	byte	$ff[9]
+	byte	$00[7]
+	byte	$ff[9]
+	byte	$00, $00, $00, $7e, $7e, $5a, $18, $18, $18, $18, $18, $18, $3c, $18, $30, $1e
+	byte	$1c, $36, $1c, $63, $63, $63, $63, $63, $63, $63, $63, $63, $3e, $00, $00, $00
+	byte	$ff[7]
+	byte	$00[9]
+	byte	$30, $18, $00, $3e, $63, $63, $63, $63, $63, $63, $63, $63, $3e, $00, $00, $00
+	byte	$00, $00, $00, $1e, $33, $33, $33, $1b, $33, $63, $63, $63, $33, $00, $00, $00
+	byte	$1c, $36, $00, $3e, $63, $63, $63, $63, $63, $63, $63, $63, $3e, $00, $00, $00
+	byte	$30, $18, $00, $63, $67, $6f, $7f, $7b, $73, $63, $63, $63, $63, $00, $00, $00
+	byte	$00, $00, $60, $30, $18, $00, $3b, $66, $66, $66, $66, $66, $66, $00, $00, $00
+	byte	$00, $00, $36, $1c, $08, $00, $3b, $66, $66, $66, $66, $66, $66, $00, $00, $00
+	byte	$36, $1c, $00, $3e, $63, $63, $06, $1c, $30, $60, $63, $63, $3e, $00, $00, $00
+	byte	$00, $00, $36, $1c, $08, $00, $3e, $63, $06, $1c, $30, $63, $3e, $00, $00, $00
+	byte	$30, $18, $00, $3f, $66, $66, $66, $3e, $36, $66, $66, $66, $6f, $00, $00, $00
+	byte	$30, $18, $00, $63, $63, $63, $63, $63, $63, $63, $63, $63, $3e, $00, $00, $00
+	byte	$00, $00, $60, $30, $18, $00, $3b, $6e, $66, $06, $06, $06, $0f, $00, $00, $00
+	byte	$66, $33, $00, $63, $63, $63, $63, $63, $63, $63, $63, $63, $3e, $00, $00, $00
+	byte	$00, $00, $60, $30, $18, $00, $63, $63, $63, $63, $63, $63, $7e, $60, $30, $1f
+	byte	$30, $18, $00, $66, $66, $66, $66, $3c, $18, $18, $18, $18, $3c, $00, $00, $00
+	byte	$00, $00, $00, $08, $0c, $0c, $3f, $0c, $0c, $0c, $0c, $6c, $38, $18, $30, $1e
+	byte	$30, $18, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00[8]
+	byte	$7f, $00, $00, $00, $00, $00, $00, $00, $66, $33, $00, $00, $00, $00, $00, $00
+	byte	$00[21]
+	byte	$0c, $06, $3c, $36, $1c, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00, $00, $00, $63, $3e, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00, $00, $00, $00, $3e, $63, $06, $1c, $36, $63, $63, $36, $1c, $30, $63, $3e
+	byte	$00[8]
+	byte	$18, $00, $7e, $00, $18, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00[8]
+	byte	$18, $30, $1e, $00, $00, $00, $1c, $36, $36, $1c, $00, $00, $00, $00, $00, $00
+	byte	$00, $00, $00, $00, $63, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00, $00, $00, $18, $18, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00[5]
+	byte	$cc, $66, $33, $00, $33, $33, $33, $33, $33, $33, $6e, $00, $00, $00, $36, $1c
+	byte	$00, $3f, $66, $66, $66, $3e, $36, $66, $66, $66, $6f, $00, $00, $00, $00, $00
+	byte	$36, $1c, $08, $00, $3b, $6e, $66, $06, $06, $06, $0f, $00, $00, $00, $00, $00
+	byte	$00, $00, $00, $7e, $7e, $7e, $7e, $7e, $7e, $7e, $00, $00, $00, $00, $00, $00
+	byte	$00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+'-' 
+'-' ataripalette            file "ataripalettep2.def"
+	byte	$00[5]
+	byte	$11, $11, $11, $00, $22, $22, $22, $00, $33, $33, $33, $00, $44, $44, $44, $00
+	byte	$55, $55, $55, $00, $66, $66, $66, $00, $77, $77, $77, $00, $88, $88, $88, $00
+	byte	$99, $99, $99, $00, $aa, $aa, $aa, $00, $bb, $bb, $bb, $00, $cc, $cc, $cc, $00
+	byte	$dd, $dd, $dd, $00, $ee, $ee, $ee, $00, $ff, $ff, $ff, $00, $00, $0a, $20, $00
+	byte	$00, $14, $40, $00, $00, $1e, $60, $00, $00, $28, $80, $00, $00, $32, $9f, $00
+	byte	$00, $3c, $bf, $00, $00, $46, $df, $00, $00, $50, $ff, $00, $1c, $63, $ff, $00
+	byte	$39, $77, $ff, $00, $55, $8a, $ff, $00, $71, $9e, $ff, $00, $8e, $b1, $ff, $00
+	byte	$aa, $c5, $ff, $00, $c6, $d8, $ff, $00, $e3, $ec, $ff, $00, $00, $00, $20, $00
+	byte	$00, $00, $40, $00, $00, $00, $60, $00, $00, $00, $80, $00, $00, $00, $9f, $00
+	byte	$00, $00, $bf, $00, $00, $00, $df, $00, $00, $00, $ff, $00, $1c, $1c, $ff, $00
+	byte	$39, $39, $ff, $00, $55, $55, $ff, $00, $71, $71, $ff, $00, $8e, $8e, $ff, $00
+	byte	$aa, $aa, $ff, $00, $c6, $c6, $ff, $00, $e3, $e3, $ff, $00, $10, $00, $20, $00
+	byte	$20, $00, $40, $00, $30, $00, $60, $00, $40, $00, $80, $00, $50, $00, $9f, $00
+	byte	$60, $00, $bf, $00, $70, $00, $df, $00, $80, $00, $ff, $00, $8e, $1c, $ff, $00
+	byte	$9c, $39, $ff, $00, $aa, $55, $ff, $00, $b8, $71, $ff, $00, $c7, $8e, $ff, $00
+	byte	$d5, $aa, $ff, $00, $e3, $c6, $ff, $00, $f1, $e3, $ff, $00, $20, $00, $20, $00
+	byte	$40, $00, $40, $00, $60, $00, $60, $00, $80, $00, $80, $00, $9f, $00, $9f, $00
+	byte	$bf, $00, $bf, $00, $df, $00, $df, $00, $ff, $00, $ff, $00, $ff, $1c, $ff, $00
+	byte	$ff, $39, $ff, $00, $ff, $55, $ff, $00, $ff, $71, $ff, $00, $ff, $8e, $ff, $00
+	byte	$ff, $aa, $ff, $00, $ff, $c6, $ff, $00, $ff, $e3, $ff, $00, $20, $00, $10, $00
+	byte	$40, $00, $20, $00, $60, $00, $30, $00, $80, $00, $40, $00, $9f, $00, $50, $00
+	byte	$bf, $00, $60, $00, $df, $00, $70, $00, $ff, $00, $80, $00, $ff, $1c, $8e, $00
+	byte	$ff, $39, $9c, $00, $ff, $55, $aa, $00, $ff, $71, $b8, $00, $ff, $8e, $c7, $00
+	byte	$ff, $aa, $d5, $00, $ff, $c6, $e3, $00, $ff, $e3, $f1, $00, $20, $00, $00, $00
+	byte	$40, $00, $00, $00, $60, $00, $00, $00, $80, $00, $00, $00, $9f, $00, $00, $00
+	byte	$bf, $00, $00, $00, $df, $00, $00, $00, $ff, $00, $00, $00, $ff, $1c, $1c, $00
+	byte	$ff, $39, $39, $00, $ff, $55, $55, $00, $ff, $71, $71, $00, $ff, $8e, $8e, $00
+	byte	$ff, $aa, $aa, $00, $ff, $c6, $c6, $00, $ff, $e3, $e3, $00, $20, $08, $00, $00
+	byte	$40, $10, $00, $00, $60, $18, $00, $00, $80, $20, $00, $00, $9f, $28, $00, $00
+	byte	$bf, $30, $00, $00, $df, $38, $00, $00, $ff, $40, $00, $00, $ff, $55, $1c, $00
+	byte	$ff, $6a, $39, $00, $ff, $80, $55, $00, $ff, $95, $71, $00, $ff, $aa, $8e, $00
+	byte	$ff, $bf, $aa, $00, $ff, $d5, $c6, $00, $ff, $ea, $e3, $00, $20, $10, $00, $00
+	byte	$40, $20, $00, $00, $60, $30, $00, $00, $80, $40, $00, $00, $9f, $50, $00, $00
+	byte	$bf, $60, $00, $00, $df, $70, $00, $00, $ff, $80, $00, $00, $ff, $8e, $1c, $00
+	byte	$ff, $9c, $39, $00, $ff, $aa, $55, $00, $ff, $b8, $71, $00, $ff, $c7, $8e, $00
+	byte	$ff, $d5, $aa, $00, $ff, $e3, $c6, $00, $ff, $f1, $e3, $00, $20, $18, $00, $00
+	byte	$40, $30, $00, $00, $60, $48, $00, $00, $80, $60, $00, $00, $9f, $78, $00, $00
+	byte	$bf, $90, $00, $00, $df, $a8, $00, $00, $ff, $c0, $00, $00, $ff, $c7, $1c, $00
+	byte	$ff, $ce, $39, $00, $ff, $d5, $55, $00, $ff, $dc, $71, $00, $ff, $e3, $8e, $00
+	byte	$ff, $ea, $aa, $00, $ff, $f1, $c6, $00, $ff, $f8, $e3, $00, $18, $20, $00, $00
+	byte	$30, $40, $00, $00, $48, $60, $00, $00, $60, $80, $00, $00, $78, $9f, $00, $00
+	byte	$90, $bf, $00, $00, $a8, $df, $00, $00, $c0, $ff, $00, $00, $c7, $ff, $1c, $00
+	byte	$ce, $ff, $39, $00, $d5, $ff, $55, $00, $dc, $ff, $71, $00, $e3, $ff, $8e, $00
+	byte	$ea, $ff, $aa, $00, $f1, $ff, $c6, $00, $f8, $ff, $e3, $00, $00, $20, $00, $00
+	byte	$00, $40, $00, $00, $00, $60, $00, $00, $00, $80, $00, $00, $00, $9f, $00, $00
+	byte	$00, $bf, $00, $00, $00, $df, $00, $00, $00, $ff, $00, $00, $1c, $ff, $1c, $00
+	byte	$39, $ff, $39, $00, $55, $ff, $55, $00, $71, $ff, $71, $00, $8e, $ff, $8e, $00
+	byte	$aa, $ff, $aa, $00, $c6, $ff, $c6, $00, $e3, $ff, $e3, $00, $00, $20, $0a, $00
+	byte	$00, $40, $14, $00, $00, $60, $1e, $00, $00, $80, $28, $00, $00, $9f, $32, $00
+	byte	$00, $bf, $3c, $00, $00, $df, $46, $00, $00, $ff, $50, $00, $1c, $ff, $63, $00
+	byte	$39, $ff, $77, $00, $55, $ff, $8a, $00, $71, $ff, $9e, $00, $8e, $ff, $b1, $00
+	byte	$aa, $ff, $c5, $00, $c6, $ff, $d8, $00, $e3, $ff, $ec, $00, $00, $20, $14, $00
+	byte	$00, $40, $28, $00, $00, $60, $3c, $00, $00, $80, $50, $00, $00, $9f, $64, $00
+	byte	$00, $bf, $78, $00, $00, $df, $8c, $00, $00, $ff, $a0, $00, $1c, $ff, $ab, $00
+	byte	$39, $ff, $b5, $00, $55, $ff, $c0, $00, $71, $ff, $ca, $00, $8e, $ff, $d5, $00
+	byte	$aa, $ff, $df, $00, $c6, $ff, $ea, $00, $e3, $ff, $f4, $00, $00, $20, $20, $00
+	byte	$00, $40, $40, $00, $00, $60, $60, $00, $00, $80, $80, $00, $00, $9f, $9f, $00
+	byte	$00, $bf, $bf, $00, $00, $df, $df, $00, $00, $ff, $ff, $00, $1c, $ff, $ff, $00
+	byte	$39, $ff, $ff, $00, $55, $ff, $ff, $00, $71, $ff, $ff, $00, $8e, $ff, $ff, $00
+	byte	$aa, $ff, $ff, $00, $c6, $ff, $ff, $00, $e3, $ff, $ff, $00, $00, $14, $20, $00
+	byte	$00, $28, $40, $00, $00, $3c, $60, $00, $00, $50, $80, $00, $00, $64, $9f, $00
+	byte	$00, $78, $bf, $00, $00, $8c, $df, $00, $00, $a0, $ff, $00, $1c, $ab, $ff, $00
+	byte	$39, $b5, $ff, $00, $55, $c0, $ff, $00, $71, $ca, $ff, $00, $8e, $d5, $ff, $00
+	byte	$aa, $df, $ff, $00, $c6, $ea, $ff, $00, $e3, $f4, $ff
+'-' 
+'-' hdmi            setcmod #$100                           'enable HDMI mode
+	byte	$3c, $00, $66, $fd
+'-'                 drvl    #7<<6 + hdmi_base               'enable HDMI pins
+	byte	$58, $e0, $67, $fd
+'-'                 wrpin   ##%10110_1111_0111_10_00000_0, #7<<6 + hdmi_base      ' a '123 ohm BITDAC for pins
+	byte	$7b, $0b, $80, $ff, $f0, $01, $0f, $fc
+'-'                 setxfrq ##$0CCCCCCC+1                   'set streamer freq to 1/10th clk (25 MHz)
+	byte	$66, $66, $86, $ff, $1d, $9a, $65, $fd
+'-' 
+'-'                 setq    #8
+	byte	$28, $10, $64, $fd
+'-'                 rdlong  framebuf,  ptra++               'read pointers
+	byte	$61, $0b, $05, $fb
+'-' 
+'-'                 setq2   #255
+	byte	$29, $fe, $65, $fd
+'-'                 rdlong  $000, paletteptr                'read palette
+	byte	$8b, $00, $00, $fb
+'-' 
+'-' '' Blank lines before the frame
+'-' 
+'-' p101            setq    #9
+	byte	$28, $12, $64, $fd
+'-'                 rdlong  m_bs,modeptr                    'read timings
+	byte	$8a, $e0, $00, $fb
+'-'                 add     frames,#1
+	byte	$01, $fe, $04, $f1
+'-' 				rdlong  fontstart,fontnumptr
+	byte	$8d, $08, $01, $fb
+'-' 				add     fontstart,fontbuf
+	byte	$86, $08, $01, $f1
+'-'                 rdlong  cursorx, cursorptr
+	byte	$89, $00, $01, $fb
+'-'                 getbyte cursory, cursorx,#1
+	byte	$80, $02, $e9, $f8
+'-'                 getbyte cursorsh,cursorx,#2
+	byte	$80, $fc, $f0, $f8
+'-'                 and     cursorx,#255
+	byte	$ff, $00, $05, $f5
+'-' 
+'-'                 mov     borderptr2,borderptr
+	byte	$87, $1c, $01, $f6
+'-'                 rdlong  border,borderptr2
+	byte	$8e, $de, $00, $fb
+'-'                 add     borderptr2,#4
+	byte	$04, $1c, $05, $f1
+'-'                 shl     border,#8
+	byte	$08, $de, $64, $f0
+'-' 
+'-'                 rdlong  t1,commandptr
+	byte	$8c, $28, $01, $fb
+'-'                 add     commandptr,#4
+	byte	$04, $18, $05, $f1
+'-'                 rdlong  t2,commandptr
+	byte	$8c, $2a, $01, $fb
+'-'                 sub     commandptr,#4
+	byte	$04, $18, $85, $f1
+'-'                 cmp     t1,#257  wcz
+	byte	$01, $29, $1d, $f2
+'-'          if_lt  wrlut   t2,t1
+	byte	$94, $2a, $31, $cc
+'-'                 mov     t1, #257
+	byte	$01, $29, $05, $f6
+'-'                 wrlong  t1,commandptr
+	byte	$8c, $28, $61, $fc
+'-'                 mov     hsync0,sync_000                 'vsync off
+	byte	$6b, $22, $01, $f6
+'-'                 mov     hsync1,sync_001
+	byte	$6c, $24, $01, $f6
+'-'                 callpa  i_upporch ,#blank
+	byte	$43, $ee, $44, $fb
+'-'                 wrbyte  #0,vblankptr
+	byte	$88, $00, $48, $fc
+'-' 
+'-' '' Upper border.
+'-' 
+'-'                 testb   frames,#4 wz                    'cursor blinks at framerate/16, todo: define
+	byte	$04, $fe, $0c, $f4
+'-'          if_z   mov     cursorx,#101
+	byte	$65, $00, $05, $a6
+'-' 
+'-' 
+'-'                 mov     ii, i_vborder
+	byte	$76, $1e, $01, $f6
+'-' 
+'-' up_border       call    #hsync
+	byte	$04, $01, $b0, $fd
+'-'                 xcont   m_vi,border
+	byte	$6f, $e6, $c0, $fc
+'-'                 djnz    ii,#up_border
+	byte	$fd, $1f, $6d, $fb
+'-' 
+'-' '' 480 active lines
+'-' 
+'-'                 mov     ii,#480
+	byte	$e0, $1f, $05, $f6
+'-'                 mov     linenum,#0
+	byte	$00, $f6, $04, $f6
+'-' 
+'-' line1           mov     cursorpos2,cursorx
+	byte	$80, $06, $01, $f6
+'-' 
+'-'                 getnib  fontline,linenum,#0             'fontline is 0 to 15, a line in font def
+	byte	$7b, $26, $41, $f8
+'-'                 mov     framebuf2,framebuf              'compute a line start in the framebuffer, which is (line div 16)*100
+	byte	$85, $20, $01, $f6
+'-'                 mov     linestart,linenum
+	byte	$7b, $f4, $00, $f6
+'-'                 shr     linestart,#4
+	byte	$04, $f4, $44, $f0
+'-'                 cmp     linestart,cursory wz
+	byte	$81, $f4, $08, $f2
+'-'          if_nz  mov     cursorpos2,#120
+	byte	$78, $06, $05, $56
+'-'                 mul     linestart,#400
+	byte	$90, $f5, $04, $fa
+'-'                 add     framebuf2,linestart
+	byte	$7a, $20, $01, $f1
+'-'                 call    #hsync
+	byte	$cc, $00, $b0, $fd
+'-'                 cmp     fontline,#0 wz
+	byte	$00, $26, $0d, $f2
+'-'          if_nz  jmp     #p102                          'if fontline >0, display it
+	byte	$0c, $00, $90, $5d
+'-' 
+'-'                 rdlong  border,borderptr2
+	byte	$8e, $de, $00, $fb
+'-'                 add     borderptr2,#4
+	byte	$04, $1c, $05, $f1
+'-'                 shl     border,#8
+	byte	$08, $de, $64, $f0
+'-' 
+'-' p102            xcont   m_border,border                 'display a left border
+	byte	$6f, $e8, $c0, $fc
+'-'                 cmp     fontline,cursorsh wcz
+	byte	$7e, $26, $19, $f2
+'-'          if_c   mov     cursorpos,#101
+	byte	$65, $04, $05, $c6
+'-'         if_nc   mov     cursorpos,cursorpos2
+	byte	$83, $04, $01, $36
+'-'                 add     cursorpos,#1
+	byte	$01, $04, $05, $f1
+'-'                 mov     t2,fontstart
+	byte	$84, $2a, $01, $f6
+'-'                 add     t2,fontline
+	byte	$93, $2a, $01, $f1
+'-' 
+'-'                 rep     @p103,#100                      'display 100 chars
+	byte	$64, $26, $dc, $fc
+'-' ''---------------------------------------------------------------------------------------
+'-'                         rdlong  char,framebuf2                                                      '2
+	byte	$90, $2c, $01, $fb
+'-'                         getbyte backcolor,char,#2                                                   '4
+	byte	$96, $2e, $f1, $f8
+'-'                         getbyte charcolor,char,#3                                                   '6
+	byte	$96, $30, $f9, $f8
+'-'                         getbyte char,char, #0                                                       '8
+	byte	$96, $2c, $e1, $f8
+'-'                         add     framebuf2,#4                                                        '10
+	byte	$04, $20, $05, $f1
+'-'                         shl     char,#4                                                             '12
+	byte	$04, $2c, $65, $f0
+'-'                         add     char,t2                                                             '14
+	byte	$95, $2c, $01, $f1
+'-'                         rdbyte  t1,char                                                             '16
+	byte	$96, $28, $c1, $fa
+'-'                         sub     cursorpos,#1 wz                                                     '18
+	byte	$01, $04, $8d, $f1
+'-'                 if_z    xor     t1, #$FF                                                            '20
+	byte	$ff, $28, $65, $a5
+'-'                         xcont   m_lut1,t1                                                           '22
+	byte	$94, $ea, $c0, $fc
+'-' 
+'-'                         rdlut   t1,backcolor                                                        '25
+	byte	$97, $28, $a1, $fa
+'-'                         wrlut   t1,lutaddr                                                          '28
+	byte	$7d, $28, $31, $fc
+'-'                         add     lutaddr,#1                                                          '30
+	byte	$01, $fa, $04, $f1
+'-' 
+'-'                         rdlut   t1,charcolor                                                        '33
+	byte	$98, $28, $a1, $fa
+'-'                         wrlut   t1,lutaddr                                                          '46
+	byte	$7d, $28, $31, $fc
+'-'                         sub     lutaddr,#1                                                          '38
+	byte	$01, $fa, $84, $f1
+'-' 
+'-'                         xor     m_lut1,a00010000                                                    '40
+	byte	$7c, $ea, $60, $f5
+'-'                         xor     lutaddr,#32                                                         '42    .....    38 left
+	byte	$20, $fa, $64, $f5
+'-' 
+'-' '' rep end ----------------------------------------------------------------------------
+'-' 
+'-' 
+'-' p103            xcont   m_border,border                     'display a right border
+	byte	$6f, $e8, $c0, $fc
+'-' 
+'-'                 add     linenum, #1
+	byte	$01, $f6, $04, $f1
+'-'                 djnz    ii,#line1
+	byte	$d3, $1f, $6d, $fb
+'-' 
+'-' '' end of active screen
+'-'                 wrlong  #1,vblankptr
+	byte	$88, $02, $68, $fc
+'-'                 mov     ii,i_vborder                         'lower border
+	byte	$76, $1e, $01, $f6
+'-' 
+'-' 
+'-'                 rdlong  border,borderptr2
+	byte	$8e, $de, $00, $fb
+'-'                 add     borderptr2,#4
+	byte	$04, $1c, $05, $f1
+'-'                 shl     border,#8
+	byte	$08, $de, $64, $f0
+'-' down_border     call    #hsync
+	byte	$28, $00, $b0, $fd
+'-'                 xcont   m_vi,border
+	byte	$6f, $e6, $c0, $fc
+'-'                 djnz    ii,#down_border
+	byte	$fd, $1f, $6d, $fb
+'-'                 callpa  i_downporch ,#blank                  'bottom blanks
+	byte	$04, $f2, $44, $fb
+'-' 
+'-'                 mov     hsync0,sync_222                      'vsync on
+	byte	$6d, $22, $01, $f6
+'-'                 mov     hsync1,sync_223
+	byte	$6e, $24, $01, $f6
+'-'                 callpa  i_vsync,#blank                       'vertical sync blanks
+	byte	$01, $f0, $44, $fb
+'-'                 jmp     #p101                                'loop
+	byte	$94, $fe, $9f, $fd
+'-' 
+'-' '' Subroutines
+'-' 
+'-' blank           call    #hsync                          'blank lines
+	byte	$08, $00, $b0, $fd
+'-'                 xcont   m_vi,hsync0
+	byte	$91, $e6, $c0, $fc
+'-'         _ret_   djnz    pa,#blank
+	byte	$fd, $ed, $6f, $0b
+'-' 
+'-' hsync           xcont   m_bs,hsync0                     'horizontal sync
+	byte	$91, $e0, $c0, $fc
+'-'                 xzero   m_sn,hsync1
+	byte	$92, $e2, $b0, $fc
+'-'         _ret_   xcont   m_bv,hsync0
+	byte	$91, $e4, $c0, $0c
+'-' 
+'-' '' consts and vars
+'-' 
+'-' sync_000        long    %1101010100_1101010100_1101010100_10    '
+	byte	$52, $4d, $35, $d5
+'-' sync_001        long    %1101010100_1101010100_0010101011_10    '        hsync
+	byte	$ae, $42, $35, $d5
+'-' sync_222        long    %0101010100_0101010100_0101010100_10    'vsync
+	byte	$52, $45, $15, $55
+'-' sync_223        long    %0101010100_0101010100_1010101011_10    'vsync + hsync
+	byte	$ae, $4a, $15, $55
+'-' 
+'-' border          long    %00000000_00011010_00101100_00000000
+	byte	$00, $2c, $1a, $00
+'-' 
+'-' m_bs            long    $70810000 + hdmi_base<<17 + 16          'before sync
+	byte	$10, $00, $e1, $70
+'-' m_sn            long    $70810000 + hdmi_base<<17 + 80          'sync
+	byte	$50, $00, $e1, $70
+'-' m_bv            long    $70810000 + hdmi_base<<17 + 20          'before visible
+	byte	$14, $00, $e1, $70
+'-' m_vi            long    $70810000 + hdmi_base<<17 + 1024        'visible 1024
+	byte	$00, $04, $e1, $70
+'-' m_border        long    $70810000 + hdmi_base<<17 + 112         'immediate 112
+	byte	$70, $00, $e1, $70
+'-' m_lut1          long    $00800000 + hdmi_base<<17 + 8          ' imm+lut, 1 char
+	byte	$08, $00, $e0, $00
+'-' i_vborder       long    48
+	byte	$30, $00, $00, $00
+'-' i_upporch       long    16
+	byte	$10, $00, $00, $00
+'-' i_vsync         long    16
+	byte	$10, $00, $00, $00
+'-' i_downporch     long    16
+	byte	$10, $00, $00, $00
+'-' 
+'-' linestart       long    0
+	byte	$00, $00, $00, $00
+'-' linenum         long    0
+	byte	$00, $00, $00, $00
+'-' a00010000       long    $00010000
+	byte	$00, $00, $01, $00
+'-' lutaddr         long    256
+	byte	$00, $01, $00, $00
+'-' 
+'-' cursorsh        long    14
+	byte	$0e, $00, $00, $00
+'-' frames          long    0
+	byte	$00, $00, $00, $00
+'-' cursorx         long    0
+	byte	$00, $00, $00, $00
+'-' cursory         long    0
+	byte	$00, $00, $00, $00
+'-' cursorpos       long    0
+	byte	$00, $00, $00, $00
+'-' cursorpos2      long    0
+	byte	$00, $00, $00, $00
+'-' fontstart	    long 	0
+	byte	$00, $00, $00, $00
+	alignl
+__system__dat_
+	byte	$00[8]
+	byte	$03, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+__heap_base
+	long	0[1026]
+objmem
+	long	0[1]
+	org	COG_BSS_START
+__asfloat_0110_v_0109
+	res	1
+__system__asFloat_0252_fi_0251
+	res	1
+__system__asInt_0254_fi_0253
+	res	1
+_var01
+	res	1
+_var02
+	res	1
+_var03
+	res	1
+_var04
+	res	1
+_var05
+	res	1
+_var06
+	res	1
+_var07
+	res	1
+_var08
+	res	1
+_var09
+	res	1
+_var10
+	res	1
+arg01
+	res	1
+arg02
+	res	1
+arg03
+	res	1
+arg04
+	res	1
+arg05
+	res	1
+local01
+	res	1
+local02
+	res	1
+local03
+	res	1
+local04
+	res	1
+local05
+	res	1
+local06
+	res	1
+local07
+	res	1
+local08
+	res	1
+local09
+	res	1
+local10
+	res	1
+local11
+	res	1
+local12
+	res	1
+local13
+	res	1
+local14
+	res	1
+local15
+	res	1
+local16
+	res	1
+local17
+	res	1
+local18
+	res	1
+local19
+	res	1
+local20
+	res	1
+local21
+	res	1
+local22
+	res	1
+local23
+	res	1
+local24
+	res	1
+local25
+	res	1
+local26
+	res	1
+local27
+	res	1
+local28
+	res	1
+local29
+	res	1
+local30
+	res	1
+local31
+	res	1
+local32
+	res	1
+local33
+	res	1
+local34
+	res	1
+local35
+	res	1
+local36
+	res	1
+local37
+	res	1
+local38
+	res	1
+local39
+	res	1
+local40
+	res	1
+local41
+	res	1
+local42
+	res	1
+local43
+	res	1
+local44
+	res	1
+local45
+	res	1
+local46
+	res	1
+local47
+	res	1
+local48
+	res	1
+local49
+	res	1
+local50
+	res	1
+local51
+	res	1
+local52
+	res	1
+local53
+	res	1
+local54
+	res	1
+local55
+	res	1
+local56
+	res	1
+muldiva_
+	res	1
+muldivb_
+	res	1
+	fit	480
