@@ -1,6 +1,6 @@
 '********************************************************************************************
 ' Nostalgic HDMI for P2 - 1 cog version
-' Version 0.07 alpha - 07.03.2021
+' Version 0.09 alpha -24.03.2021
 ' 1 cog, 100x30 text with border, 8x16 font
 ' (c) 2012-2021 Piotr Kardasz pik33@o2.pl
 ' MIT license: see end of file
@@ -56,7 +56,8 @@ long command_ptr
 long fontnum_ptr
 long cog
 long bordercolor[32]
-long buf[3000]
+'long buf[3000]
+'
 byte cursor_x
 byte cursor_y
 byte cursor_sh
@@ -66,7 +67,7 @@ long write_background
 byte colors[16]
 long vblank
 byte n_string[12]  ' string buffer for inttostr and hextostr
-long timings[10]
+long timings[11]
 long cmd1
 long cmd2
 long fontnum
@@ -97,11 +98,7 @@ s8:=string("1234567890")
 
 
 
-start(256)
-
-
-
-
+start(192)
 
 j:=0
 
@@ -119,8 +116,8 @@ repeat
 
   outtextxy (50-(strsize(s2)>>1),12,s2)
   waitvbl(50)
-
-  repeat  k from 0 to 49
+  
+  repeat  k from 0 to 29
     repeat i from 0 to 99
       setfontcolor (i,12,40)
     waitvbl(10)
@@ -130,37 +127,48 @@ repeat
   repeat j from 0 to 29
     scrolldown()
     waitvbl(2)
-    
-  cls(c_green,0)    
+
+  cls(c_green,0)
 
   setcursorpos(0,27)
+  write(string("The driver fits in "))
+  write(inttostr(long[0]))
+  writeln (string(" longs."))
+  writeln(string(" "))
   writeln(string("This is MS-DOS like font style..."))
   writeln(string(" "))
   write(string("C:\>"))
   cursoron()
-  
+
   waitvbl(600)
-  
+
+  writeln(string("showfont "))
+  waitvbl(60)
   writeln(string(" "))
-  writeln(string(" "))
-  
-  
-  write(string(" "))
+
+
+  crlf()
   repeat j from 0 to 15
     write(string("        "))
     repeat i from 0 to 15
       teststring[0]:=16*j+i
       if (16*j+i)==0
-        teststring[0]:=32 
+        teststring[0]:=32
       teststring[1]:=0
       write(inttohex(16*j+i,2))
       write(string(" "))
       write(@teststring)
       write(string(","))
-    writeln(string(" "))
+    crlf()
     waitvbl(2)
+  crlf()
+  crlf()
+  write(string("C:\>"))
 
+    
   waitvbl(1200)
+  write(string("mode 0"))
+  waitvbl(60)
 
   setmode(0)
   defchar(0,2,0,255,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
@@ -169,17 +177,17 @@ repeat
   cls(0,15)
   setbordercolors(0,0,0)
   cursoroff()
-  outtextxy(0,0,string("  File    Options    View    Special"))
+  outtextxy(0,0,string(" File  Options  View  Special"))
   repeat i from 0 to 99
     teststring[i]:=2
-  teststring[100]:=0  
+  teststring[100]:=0
   outtextxy(0,1,@teststring)
   teststring[0]:=10
   repeat i from 1 to 80
     teststring[i]:=3
   teststring[81]:=9
   teststring[82]:=0
-   
+
   setcursorpos(8,5)
   writeln(@teststring)
   repeat j from 0 to 7
@@ -187,7 +195,7 @@ repeat
     repeat i from 0 to 15
       teststring[0]:=16*j+i
       if (16*j+i)==0
-        teststring[0]:=32 
+        teststring[0]:=32
       teststring[1]:=0
       write(inttohex(16*j+i,2))
       write(string(" "))
@@ -201,27 +209,26 @@ repeat
   teststring[81]:=$B
   teststring[82]:=0
   setcursorpos(8,14)
-  writeln(@teststring)  
-  
+  writeln(@teststring)
+
   writeln(string(" "))
   writeln(string("     ... but Atari ST-like mono font can also be used."))
   writeln(string("         We also switched the graphics mode to PAL like 50 Hz, 624 lines."))
   writeln(string(" "))
   setwritecolors(c_red,c_white)
   writeln(string("         Although the font is mono style, we are still in the color mode here."))
-  
 
 
-  waitvbl(2000)  
-  
+
+  waitvbl(2000)
+
 '-----------------
-  setmode(256)  
-  fontnum:=2048
+
   setscreencolors (151,145)
 
 
   repeat i from 0 to 2999
-    buf[i]:=(buf[i] &$FF_FF_FF_00) | (i & $FF)
+    long[buf_ptr+4*i]:=(long[buf_ptr+4*i] &$FF_FF_FF_00) | (i & $FF)
 
   waitvbl(100)
 
@@ -250,7 +257,7 @@ repeat
 
 
   repeat i from 0 to 2999
-    buf[i]:=(buf[i] &$FF_FF_00_00) | (i & $FF)
+   long[buf_ptr+4*i]:=(long[buf_ptr+4*i] &$FF_FF_00_00) | (i & $FF)
 
   waitvbl(100)
 
@@ -304,7 +311,8 @@ repeat
 
 
   waitvbl(100)
-
+  setmode(256)
+  fontnum:=2048
   cursoron()
   cls(15,0)
   setcursorpos(0,0)
@@ -338,6 +346,7 @@ repeat
   writeln(string("yellow"))
   setwritecolors(c_white,0)
   writeln(string("white"))
+  write(string("Clock frequency: "))
   writeln(inttostr(clkfreq))
 
   repeat i from 0 to 15
@@ -347,13 +356,13 @@ repeat
         setbackcolor(2*i+51,j+8,16*i+j)
 
   waitvbl(1000)
-  
+
     teststring[100]:=0
   repeat i from 0 to 99
     teststring[i]:=32
   repeat i from 21 to 29
     outtextxyc(0,i,@teststring,c_white,c_black)
-  
+
   setcursorpos(0,25)
   waitvbl(120)
   setwritecolors(c_white,c_black)
@@ -381,8 +390,8 @@ repeat
   teststring[0]:=$C9
   teststring[50]:=$C9
 
-  teststring[49]:=$BB  
-  teststring[99]:=$BB  
+  teststring[49]:=$BB
+  teststring[99]:=$BB
   teststring[100]:=0
 
   outtextxyc(0,0,@teststring,c_lightcyan, c_blue)
@@ -390,9 +399,9 @@ repeat
   outtextxyc(23,0,string(" C:\ "),c_blue, c_lightcyan)
   repeat i from 1 to 98
     teststring[i]:=32
-  teststring[43]:=$B3  
-  teststring[32]:=$B3  
-  teststring[22]:=$B3  
+  teststring[43]:=$B3
+  teststring[32]:=$B3
+  teststring[22]:=$B3
   teststring[0]:=$BA
   teststring[49]:=$BA
   teststring[50]:=$BA
@@ -404,13 +413,13 @@ repeat
   teststring[0]:=$C8
   teststring[50]:=$C8
 
-  teststring[49]:=$BC  
-  teststring[99]:=$BC  
+  teststring[49]:=$BC
+  teststring[99]:=$BC
   teststring[100]:=0
 
-  outtextxyc(0,20,@teststring,c_lightcyan, c_blue)  
-  outtextxy(56,2,string("The Propeller Commander, Version 0.00"))  
-  outtextxy(60,3,string("Copyleft ("))  
+  outtextxyc(0,20,@teststring,c_lightcyan, c_blue)
+  outtextxy(56,2,string("The Propeller Commander, Version 0.00"))
+  outtextxy(60,3,string("Copyleft ("))
   teststring[0]:=1
   teststring[1]:=0
   outtextxy(70,3,@teststring)
@@ -420,15 +429,15 @@ repeat
     teststring[i]:=$CD
   teststring[50]:=0
   teststring[0]:=$CC
-  teststring[49]:=$B9 
+  teststring[49]:=$B9
   outtextxy(50,5,@teststring)
   outtextxy(50,14,@teststring)
 
-  outtextxy(65,7,string("524,288 Bytes Memory")) 
-  i:=$80000-@charcolor
+  outtextxy(65,7,string("524,288 Bytes Memory"))
+  i:=$80000-@end
   outtextxy(66,8,inttostr(i / 1000))
-  outtextxy(69,8,string(",")) 
-  outtextxy(70,8,inttostr(i // 1000)) 
+  outtextxy(69,8,string(","))
+  outtextxy(70,8,inttostr(i // 1000))
   outtextxy(74,8,string("Bytes Free"))
   outtextxy(56,9,string("32,212,254,720 total bytes on drive C:"))
   outtextxy(57,10,string("3,989,123,640 bytes free on drive C:"))
@@ -456,10 +465,10 @@ repeat
   outtextxy(28,11,string("1128"))
   outtextxy(26,12,string("105321"))
   outtextxy(27,13,string("30831"))
-  outtextxy(29,14,string("856"))  
-  outtextxy(27,15,string("31248"))  
-  outtextxy(28,16,string("2316"))  
-  outtextxy(27,17,string("17531"))  
+  outtextxy(29,14,string("856"))
+  outtextxy(27,15,string("31248"))
+  outtextxy(28,16,string("2316"))
+  outtextxy(27,17,string("17531"))
   outtextxy(1,2,string("PropDOS"))
   outtextxy(1,3,string("BASIC"))
   outtextxy(1,4,string("Spin"))
@@ -486,19 +495,19 @@ repeat
   teststring[32]:=$C1
   teststring[43]:=$C1
   outtextxy(0,18,@teststring)
-  outtextxy(1,19,string("pc.exe                105321    2021.03.23 12:34"))           
+  outtextxy(1,19,string("pc.exe                105321    2021.03.23 12:34"))
 
 
 
   waitvbl(12000)
 
-  
+
 
 ''******************************** End of demo ****************************
 ''-----------------------------------------------------------------------
-pub defchar(fontnum,char,b0,b1,b2,b3,b4,b5,b6,b7,b8,b9,b10,b11,b12,b13,b14,b15) :s
+pub defchar(fn,ch,b0,b1,b2,b3,b4,b5,b6,b7,b8,b9,b10,b11,b12,b13,b14,b15) :s
 
-s:=@st_font+fontnum+char*16
+s:=@st_font+fn+ch*16
 byte[s+00]:=b0
 byte[s+01]:=b1
 byte[s+02]:=b2
@@ -588,7 +597,7 @@ pub setscreencolors(ff,bb) | c ,i
 c:=ff<<24+bb<<16
 
 repeat i from 0 to 2999
-   buf[i]:= (buf[i] & $FFFF) |  c
+   long[buf_ptr+4*i]:= (long[buf_ptr+4*i] & $FFFF) |  c
 
 
 pub setbordercolors(r,g,b) |color, i
@@ -611,8 +620,8 @@ place:=(x)+(y*100)
 if (place>2999)
   place:=2999
 
-color:=(buf[place] &$FFFFFF) | (c<<24)
-buf[place]:=color
+color:=(long[buf_ptr+4*place] &$FFFFFF) | (c<<24)
+long[buf_ptr+4*place]:=color
 
 
 pub setbackcolor(x,y,c) | place, color
@@ -624,8 +633,8 @@ place:=(x)+(y*100)
 if (place>2999)
   place:=2999
 
-color:=(buf[place] &$FF00FFFF) | (c<<16)
-buf[place]:=color
+color:=(long[buf_ptr+4*place] &$FF00FFFF) | (c<<16)
+long[buf_ptr+4*place]:=color
 
 
 
@@ -667,7 +676,7 @@ pub outtextxy(x,y,text) | iii
 ''--------- Output a string at position x,y - set the colors first
 
 repeat iii from 0 to strsize(text)-1
-  buf[100*y+x+iii]:=(buf[100*y+x+iii] & $FFFFFF00)  | byte[text+iii]
+  long[buf_ptr+4*(100*y+x+iii)]:=(long[buf_ptr+4*(100*y+x+iii)] & $FFFFFF00)  | byte[text+iii]
 
 pub outtextxyc(x,y,text,f,b) | iii,c
 
@@ -675,16 +684,16 @@ pub outtextxyc(x,y,text,f,b) | iii,c
 
 c:=f<<24+b<<16
 repeat iii from 0 to strsize(text)-1
-  buf[100*y+x+iii]:=(buf[100*y+x+iii] & $FFFFFF00)  | byte[text+iii]
-  buf[100*y+x+iii]:=(buf[100*y+x+iii] & $0000FFFF)  | c
+  long[buf_ptr+4*(100*y+x+iii)]:=(long[buf_ptr+4*(100*y+x+iii)] & $FFFFFF00)  | byte[text+iii]
+  long[buf_ptr+4*(100*y+x+iii)]:=(long[buf_ptr+4*(100*y+x+iii)] & $0000FFFF)  | c
 
 pub putchar(achar) | c
 
 ''---------- Output a char at the cursor position, move the cursor
 
 c:=write_color<<24+write_background<<16
-buf[100*cursor_y+cursor_x]:=buf[100*cursor_y+cursor_x] &$FFFF | c
-buf[100*cursor_y+cursor_x]:=(buf[100*cursor_y+cursor_x] & $FFFFFF00)  | (achar & $000000FF)
+long[buf_ptr+4*(100*cursor_y+cursor_x)]:=long[4*(buf_ptr+100*cursor_y+cursor_x)] &$FFFF | c
+long[buf_ptr+4*(100*cursor_y+cursor_x)]:=(long[4*(buf_ptr+100*cursor_y+cursor_x)] & $FFFFFF00)  | (achar & $000000FF)
 cursor_x+=1
 if cursor_x==100
   cursor_x:=0
@@ -713,7 +722,7 @@ repeat while ncy>29
 
 repeat iii from 0 to strsize(text)-1
 
-  buf[100*cursor_y+cursor_x+iii]:=buf[100*cursor_y+cursor_x+iii] &$FFFF | c
+  long[buf_ptr+4*(100*cursor_y+cursor_x+iii)]:=long[buf_ptr+4*(100*cursor_y+cursor_x+iii)] &$FFFF | c
 
 outtextxy(cursor_x,cursor_y,text)
 
@@ -736,24 +745,24 @@ pub cls(fc,bc)   :c
 ''---------- Clear the screen, set its foreground/background color
 
 c:=fc<<24+bc<<16+$20
-longfill(@buf,c,3000)
+longfill(buf_ptr,c,3000)
  setwritecolors(fc,bc)
 
 pub scrollup() | i
 
 ''-----------  Scroll the screen one line up
 
-longmove(@buf,@buf+400,2900)
+longmove(buf_ptr,buf_ptr+400,2900)
 repeat i from 2900 to 2999
-  buf[i]:=(buf[i] & $FFFF0000) | 32
+  long[buf_ptr+4*i]:=(long[buf_ptr+4*i] & $FFFF0000) | 32
 
 pub scrolldown() | i
 
 ''----------- Scroll the screen one line down
 
-longmove(@buf+400,@buf,2900)
+longmove(buf_ptr+400,buf_ptr,2900)
 repeat i from 0 to 99
-  buf[i]:=(buf[i] & $FFFF0000) | 32
+  long[buf_ptr+4*i]:=(long[buf_ptr+4*i] & $FFFF0000) | 32
 
 pub crlf()
 
@@ -764,8 +773,8 @@ cursor_y+=1
 if cursor_y>29
   scrollup()
   cursor_y:=29
-  
-''---------- Backspace  
+
+''---------- Backspace
 
 pub bksp()
 
@@ -776,7 +785,7 @@ if cursor_x==255
   if cursor_y==255
     cursor_y:=0
     scrollup()
-    
+
 outtextxy(cursor_x,cursor_y,string(" "))
 
 
@@ -843,6 +852,10 @@ return q
 
 pub setmode(mode)
 
+'' mode:nt_bb_cc_vv_hh
+'' hh - h.zoom, vv-v.zoom, cc-c.depth, 
+'' bb - borders/total pixels, 00-wide/1140, 01 medium/1026, 10 narrow/912, 11 no border, 1024 px PAL, 800 px NTSC
+
 if (mode==0)
 
   timings[0]:= $70810000 + hdmi_base<<17 + 16          'before sync
@@ -855,6 +868,7 @@ if (mode==0)
   timings[7]:= 16
   timings[8]:= 16
   timings[9]:= 16
+  timings[10]:= 0
 
   clkfreq:=354693878
   org
@@ -862,7 +876,7 @@ if (mode==0)
   end
 
 
-if (mode==1)   ' 1026 px per line
+if (mode==64)   ' 1026 px per line
 
   timings[0]:= $70810000 + hdmi_base<<17 + 30          'before sync
   timings[1]:= $70810000 + hdmi_base<<17 + 80          'sync
@@ -874,6 +888,7 @@ if (mode==1)   ' 1026 px per line
   timings[7]:= 32
   timings[8]:= 32
   timings[9]:= 32
+  timings[10]:= 64
 
   clkfreq:=319215686
   org
@@ -881,7 +896,7 @@ if (mode==1)   ' 1026 px per line
   end
 
 
-if (mode==2) ' 912 pixes per line     ' 283_751_600 80x PAL  - real settings: 64 908 283750000 - 0.9999944
+if (mode==128) ' 912 pixes per line     ' 283_751_600 80x PAL  - real settings: 64 908 283750000 - 0.9999944
 
   timings[0]:= $70810000 + hdmi_base<<17 + 16           'before sync
   timings[1]:= $70810000 + hdmi_base<<17 + 64           'sync
@@ -892,13 +907,34 @@ if (mode==2) ' 912 pixes per line     ' 283_751_600 80x PAL  - real settings: 64
   timings[6]:= 8
   timings[7]:= 32
   timings[8]:= 64
-
   timings[9]:= 32
+  timings[10]:=128
 
   clkfreq:=283750000
   org
   hubset ##%1_111111__11_1000_1011__1111_1011     '64,908->63,907->110010_11_1000_1011
   end
+  
+if (mode==192) ' borderless 1024x576
+
+  timings[0]:= $70810000 + hdmi_base<<17 + 16          'before sync
+  timings[1]:= $70810000 + hdmi_base<<17 + 80          'sync
+  timings[2]:= $70810000 + hdmi_base<<17 + 20          'before visible
+  timings[3]:= $70810000 + hdmi_base<<17 + 1024        'visible 1024
+  timings[4]:= 0                                      'no border
+  timings[5]:= $20880000 + hdmi_base<<17 + 8           'imm+lut, 1 char
+  timings[6]:= 0
+  timings[7]:= 16
+  timings[8]:= 16
+  timings[9]:= 16
+  timings[10]:= 192
+
+  clkfreq:=354693878
+  org
+  hubset ##%1_110000__11_0110_1100__1111_1011     '49,877->48,876->110000_11_0110_1100
+  end
+  
+  
 
 if (mode==256)
 
@@ -912,13 +948,14 @@ if (mode==256)
   timings[7]:= 8
   timings[8]:= 12
   timings[9]:= 8
+  timings[10]:= 256
 
   clkfreq:=357959184
   org
   hubset ##%1_110000__11_0110_0100__1111_1011     '49,869->48,868->110000_11_0110_0100
   end
 
-if (mode==257)  '1026 px
+if (mode==320)  '1026 px
 
   timings[0]:= $70810000 + hdmi_base<<17 + 80          'before sync
   timings[1]:= $70810000 + hdmi_base<<17 + 50          'sync
@@ -930,13 +967,14 @@ if (mode==257)  '1026 px
   timings[7]:= 8
   timings[8]:= 12
   timings[9]:= 8
-
+  timings[10]:= 320
+  
   clkfreq:=322162162
   org
   hubset ##%1_100100__10_0101_0011__1111_1011     '37,596_.36,595->100100_10_0101_0011
   end
 
-if (mode==258)  '912 px
+if (mode==384)  '912 px
 
   timings[0]:= $70810000 + hdmi_base<<17 + 24          'before sync
   timings[1]:= $70810000 + hdmi_base<<17 + 48         'sync
@@ -948,13 +986,35 @@ if (mode==258)  '912 px
   timings[7]:= 8
   timings[8]:= 12
   timings[9]:= 8
+  timings[10]:= 384
+   
 
   clkfreq:=286363636
   org
   hubset ##%1_010101__01_0011_1010__1111_1011     '22,315->21,314->010101_01_0011_1010
   end
 
+if (mode==448)  '1026 px borderless 848x480
 
+  timings[0]:= $70810000 + hdmi_base<<17 + 24          'before sync
+  timings[1]:= $70810000 + hdmi_base<<17 + 48         'sync
+  timings[2]:= $70810000 + hdmi_base<<17 + 24          'before visible
+  timings[3]:= $70810000 + hdmi_base<<17 + 816         'visible 816
+  timings[4]:= $70810000 + hdmi_base<<17 + 8           'immediate 8
+  timings[5]:= $20880000 + hdmi_base<<17 + 8           'imm+lut, 1 char
+  timings[6]:= 0
+  timings[7]:= 10
+  timings[8]:= 16
+  timings[9]:= 10
+  timings[10]:= 448
+   
+
+  clkfreq:=286363636
+  org
+  hubset ##%1_010101__01_0011_1010__1111_1011     '22,315->21,314->010101_01_0011_1010
+  end
+
+setbordercolors (0,0,0)
 
 
 pub start(mode):result | c1
@@ -972,7 +1032,7 @@ pub start(mode):result | c1
 
 border_ptr:=@bordercolor
 font_ptr:=@st_font
-buf_ptr:=@buf
+buf_ptr:=$7C000-3000    'todo: the buf ptr depends on mode
 vblank_ptr:=@vblank
 cursor_ptr:=@cursor_x
 mode_ptr:=@timings
@@ -1055,7 +1115,7 @@ return cmd2a
 
 dat
 st_font                 file "st4font.def"
-vga_font				file "vgafont.def"
+vga_font                                file "vgafont.def"
 
 dat
 
@@ -1065,7 +1125,8 @@ ataripalette            file "ataripalettep2.def"
 
 DAT             org
 
-hdmi            setcmod #$100                           'enable HDMI mode
+hdmi            wrlong  #charcolor,#0
+                setcmod #$100                           'enable HDMI mode
                 drvl    #7<<6 + hdmi_base               'enable HDMI pins
                 wrpin   ##%10110_1111_0111_10_00000_0, #7<<6 + hdmi_base      ' a '123 ohm BITDAC for pins
                 setxfrq ##$0CCCCCCC+1                   'set streamer freq to 1/10th clk (25 MHz)
@@ -1078,11 +1139,13 @@ hdmi            setcmod #$100                           'enable HDMI mode
 
 '' Blank lines before the frame
 
-p101            setq    #9
+p101            setq    #10
                 rdlong  m_bs,modeptr                    'read timings
-                add     frames,#1
-				rdlong  fontstart,fontnumptr
-				add     fontstart,fontbuf
+                testb   i_modenum,#16 wc
+         if_c   jmp #p200								' jump to graphics mode       
+p901                add     frames,#1
+                                rdlong  fontstart,fontnumptr
+                                add     fontstart,fontbuf
                 rdlong  cursorx, cursorptr
                 getbyte cursory, cursorx,#1
                 getbyte cursorsh,cursorx,#2
@@ -1109,10 +1172,12 @@ p101            setq    #9
 '' Upper border.
 
                 testb   frames,#4 wz                    'cursor blinks at framerate/16, todo: define
-         if_z   mov     cursorx,#101
+         if_z   mov     cursorx,#129
 
 
-                mov     ii, i_vborder
+                 mov     ii, i_vborder wz
+                 if_z mov ii,a576     
+                 if_z jmp #p111
 
 up_border       call    #hsync
                 xcont   m_vi,border
@@ -1121,7 +1186,7 @@ up_border       call    #hsync
 '' 480 active lines
 
                 mov     ii,#480
-                mov     linenum,#0
+p111            mov     linenum,#0
 
 line1           mov     cursorpos2,cursorx
 
@@ -1130,8 +1195,10 @@ line1           mov     cursorpos2,cursorx
                 mov     linestart,linenum
                 shr     linestart,#4
                 cmp     linestart,cursory wz
-         if_nz  mov     cursorpos2,#120
-                mul     linestart,#400
+         if_nz  mov     cursorpos2,#129
+                cmp m_border, #0 wz
+        if_nz        mul     linestart,#400
+        if_z         shl linestart,#9
                 add     framebuf2,linestart
                 call    #hsync
                 cmp     fontline,#0 wz
@@ -1141,15 +1208,17 @@ line1           mov     cursorpos2,cursorx
                 add     borderptr2,#4
                 shl     border,#8
 
-p102            xcont   m_border,border                 'display a left border
+p102            cmp m_border, #0 wz
+       if_nz    xcont   m_border,border                 'display a left border
+       if_z     mov repnum,#128
+       if_nz    mov repnum, #100
                 cmp     fontline,cursorsh wcz
-         if_c   mov     cursorpos,#101
+         if_c   mov     cursorpos,#129
         if_nc   mov     cursorpos,cursorpos2
                 add     cursorpos,#1
                 mov     t2,fontstart
                 add     t2,fontline
-
-                rep     @p103,#100                      'display 100 chars
+                rep     @p103,repnum                      'display 100 chars
 ''---------------------------------------------------------------------------------------
                         rdlong  char,framebuf2                                                      '2
                         getbyte backcolor,char,#2                                                   '4
@@ -1161,9 +1230,9 @@ p102            xcont   m_border,border                 'display a left border
                         rdbyte  t1,char                                                             '16
                         sub     cursorpos,#1 wz                                                     '18
                 if_z    xor     t1, #$FF                                                            '20
-                
-                
-                        mergeb  t1  
+
+
+                        mergeb  t1
                         xcont   m_lut1,t1                                                           '22
 
                         rdlut   t1,backcolor                                                        '25
@@ -1180,28 +1249,67 @@ p102            xcont   m_border,border                 'display a left border
 '' rep end ----------------------------------------------------------------------------
 
 
-p103            xcont   m_border,border                     'display a right border
+p103            cmp m_border,#0 wz
+                if_nz xcont   m_border,border                     'display a right border
 
                 add     linenum, #1
                 djnz    ii,#line1
 
 '' end of active screen
                 wrlong  #1,vblankptr
-                mov     ii,i_vborder                         'lower border
-
-
-                rdlong  border,borderptr2
-                add     borderptr2,#4
-                shl     border,#8
-down_border     call    #hsync
-                xcont   m_vi,border
-                djnz    ii,#down_border
-                callpa  i_downporch ,#blank                  'bottom blanks
+                mov     ii,i_vborder wz                         'lower border
+          if_z jmp #p112
+                  
+                 rdlong  border,borderptr2
+                 add     borderptr2,#4
+                 shl     border,#8
+down_border      call    #hsync
+                 xcont   m_vi,border
+                 djnz    ii,#down_border
+p112             callpa  i_downporch ,#blank                  'bottom blanks
 
                 mov     hsync0,sync_222                      'vsync on
                 mov     hsync1,sync_223
                 callpa  i_vsync,#blank                       'vertical sync blanks
                 jmp     #p101                                'loop
+                
+                
+p200			
+
+
+                rep     @p203,pixels                      'display 100 chars
+''---------------------------------------------------------------------------------------
+                        rdlong  char,framebuf2                                                      '2
+                        getbyte backcolor,char,#2                                                   '4
+                        getbyte charcolor,char,#3                                                   '6
+                        getbyte char,char, #0                                                       '8
+                        add     framebuf2,#4                                                        '10
+                        shl     char,#4                                                             '12
+                        add     char,t2                                                             '14
+                        rdbyte  t1,char                                                             '16
+                        sub     cursorpos,#1 wz                                                     '18
+                if_z    xor     t1, #$FF                                                            '20
+
+
+                        mergeb  t1
+                        xcont   m_lut1,t1                                                           '22
+
+                        rdlut   t1,backcolor                                                        '25
+                        wrlut   t1,lutaddr                                                          '28
+                        add     lutaddr,#1                                                          '30
+
+                        rdlut   t1,charcolor                                                        '33
+                        wrlut   t1,lutaddr                                                          '46
+                        sub     lutaddr,#1                                                          '38
+
+                        xor     m_lut1,a00010000                                                    '40
+                        xor     lutaddr,#32                                                         '42    .....    38 left
+
+'' rep end ----------------------------------------------------------------------------
+
+
+
+p203                jmp    #p901             
 
 '' Subroutines
 
@@ -1232,6 +1340,7 @@ i_vborder       long    48
 i_upporch       long    16
 i_vsync         long    16
 i_downporch     long    16
+i_modenum       long    0
 
 linestart       long    0
 linenum         long    0
@@ -1244,8 +1353,11 @@ cursorx         long    0
 cursory         long    0
 cursorpos       long    0
 cursorpos2      long    0
-fontstart	    long 	0
-
+fontstart       long    0
+spritex			long    0
+spritey         long    0
+pixels          long    1024
+a576 long 576
 framebuf        res     1
 fontbuf         res     1
 borderptr       res     1
@@ -1254,7 +1366,7 @@ cursorptr       res     1
 modeptr         res     1
 paletteptr      res     1
 commandptr      res     1
-fontnumptr  	res 	1
+fontnumptr      res     1
 borderptr2      res     1
 ii              res     1
 framebuf2       res     1
@@ -1266,10 +1378,12 @@ t2              res     1
 char            res     1
 backcolor       res     1
 charcolor       res     1
+repnum res 1
 
                 fit     496                     '
 
-
+dat
+end             long 0
 {{
 ------------ MIT License ---------------
 }}
