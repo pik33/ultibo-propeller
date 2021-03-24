@@ -1,0 +1,427 @@
+con
+
+_clkfreq        = 200000000      'start safe, hubset will do the rest
+hdmi_base       = 48             'must be a multiple of 8
+
+
+obj
+
+v: "hn009"
+
+pub demo() | random, i, j, k, s1,s2,s3,s4,s5,s6,s7,s8
+
+s1:=string("A HDMI Nostalgic 100x30 text with border driver demo")
+s2:=string("It uses 8x16 font")
+s3:=string("This is a P2 so every letter can have its own foreground and background color")
+s4:=string("Every line can have its own border color")
+s5:=string("This time the hub RAM is used for the color buffer")
+s6:=string("You can set colors for all the screen using one function call")
+s7:=string("You can set border color for all the screen using one function call, too")
+s8:=string("1234567890")
+
+
+
+v.start(192,hdmi_base)
+
+j:=0
+
+repeat
+
+  v.cursoroff()
+  v.cls(151,145)
+  v.waitvbl(60)
+
+  v.setbordercolors (0,0,0)
+  v.waitvbl(100)
+
+  v.outtextxy (50-(strsize(s1)>>1),10,s1)
+  v.waitvbl(50)
+
+  v.outtextxy (50-(strsize(s2)>>1),12,s2)
+  v.waitvbl(50)
+  
+  repeat  k from 0 to 29
+    repeat i from 0 to 99
+      v.setfontcolor (i,12,40)
+    v.waitvbl(10)
+    repeat i from 0 to 99
+      v.setfontcolor (i,12,235)
+    v.waitvbl(10)
+  repeat j from 0 to 29
+    v.scrolldown()
+    v.waitvbl(2)
+
+  v.cls(c_green,0)
+
+  v.setcursorpos(0,27)
+  v.write(string("The driver fits in "))
+  v.write(inttostr(long[0]))
+  v.writeln (string(" longs."))
+  v.writeln(string(" "))
+  v.writeln(string("This is MS-DOS like font style..."))
+  v.writeln(string(" "))
+  v.write(string("C:\>"))
+  v.cursoron()
+
+  v.waitvbl(600)
+
+  v.writeln(string("showfont "))
+  v.waitvbl(60)
+  v.writeln(string(" "))
+
+
+  v.crlf()
+  v.repeat j from 0 to 15
+    v.write(string("        "))
+    repeat i from 0 to 15
+      teststring[0]:=16*j+i
+      if (16*j+i)==0
+        teststring[0]:=32
+      teststring[1]:=0
+      v.write(inttohex(16*j+i,2))
+      v.write(string(" "))
+      v.write(@teststring)
+      v.write(string(","))
+    v.crlf()
+    v.waitvbl(2)
+  v.crlf()
+  v.crlf()
+  v.write(string("C:\>"))
+
+    
+  v.waitvbl(1200)
+  v.write(string("mode 0"))
+  v.waitvbl(60)
+
+  v.setmode(0)
+  v.defchar(0,2,0,255,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+  v.fontnum:=0
+
+ v. cls(0,15)
+ v. setbordercolors(0,0,0)
+ v. cursoroff()
+  v.outtextxy(0,0,string(" File  Options  View  Special"))
+  repeat i from 0 to 99
+    teststring[i]:=2
+  teststring[100]:=0
+  v.outtextxy(0,1,@teststring)
+  teststring[0]:=10
+  repeat i from 1 to 80
+    teststring[i]:=3
+  teststring[81]:=9
+  teststring[82]:=0
+
+  v.setcursorpos(8,5)
+  v.writeln(@teststring)
+  repeat j from 0 to 7
+    v.write(string("        "))
+    repeat i from 0 to 15
+      teststring[0]:=16*j+i
+      if (16*j+i)==0
+        teststring[0]:=32
+      teststring[1]:=0
+      v.write(inttohex(16*j+i,2))
+      v.write(string(" "))
+      v.write(@teststring)
+      v.write(string(","))
+    v.writeln(string(""))
+    v.waitvbl(2)
+  teststring[0]:=$C
+  repeat i from 1 to 80
+    teststring[i]:=3
+  teststring[81]:=$B
+  teststring[82]:=0
+  v.setcursorpos(8,14)
+  v.writeln(@teststring)
+
+  v.writeln(string(" "))
+  v.writeln(string("     ... but Atari ST-like mono font can also be used."))
+  v.writeln(string("         We also switched the graphics mode to PAL like 50 Hz, 624 lines."))
+  v.writeln(string(" "))
+  v.setwritecolors(c_red,c_white)
+  v.writeln(string("         Although the font is mono style, we are still in the color mode here."))
+
+
+
+  v.waitvbl(2000)
+
+'-----------------
+
+  v.setscreencolors (151,145)
+
+
+  repeat i from 0 to 99
+    repeat j from 0 to 29
+      v.putcharxy(i,j,(i+100*j) & $FF)
+
+  waitvbl(100)
+
+  repeat j from 0 to 29
+    v.scrolldown()
+    v.waitvbl(1)
+
+  v.cls(151,145)
+
+  v.outtextxy (50-(strsize(s3)>>1),10,s3)
+  v.waitvbl(20)
+  repeat k from 0 to 20
+    repeat i from 0 to 99
+      j:=(i+k)//16
+      v.setfontcolor(i,10,colors[j])
+      v.setbackcolor(i,10,colors[(j+4)//16])
+    v.waitvbl(10)
+  repeat i from 0 to 99
+    v.setfontcolor(i,10,153)
+    v.setbackcolor(i,10,145)
+
+  v.outtextxy (50-(strsize(s4)>>1),12,s4)
+  v.waitvbl(20)
+  v.outtextxy (50-(strsize(s5)>>1),14,s5)
+  v.waitvbl(200)
+
+
+  repeat i from 0 to 99
+    repeat j from 0 to 29
+      v.putcharxy(i,j,(i+100*j) & $FF))
+
+  waitvbl(100)
+
+  repeat k from 0 to 99
+    repeat i from 0 to 31
+      v.setbordercolor(i,getrnd() & 255,getrnd() & 255,getrnd()& 255)
+    repeat j from 0 to 29
+      repeat i from 0 to 99
+        v.setfontcolor(i,j,getrnd()&255)
+        v.setbackcolor(i,j,getrnd()&255)
+    waitvbl(1)
+
+  v.waitvbl(500)
+
+  v.cls(151,145)
+  v.setscreencolors (151,145)
+  v.setbordercolors(0,0,0)
+
+  v.outtextxy (50-(strsize(s6)>>1),10,s6)
+  v.waitvbl(50)
+
+
+  v.random:=getrnd()
+
+  repeat j from 0 to 15
+
+    v. waitvbl(25)
+    v.setscreencolors (getrnd() & 255,getrnd() & 255)
+
+ v.setscreencolors (151,145)
+
+  v.outtextxy (50-(strsize(s7)>>1),12,s7)
+  v.waitvbl(50)
+
+  repeat j from 0 to 15
+    v.waitvbl(25)
+    v.setbordercolors (getrnd() & 255,getrnd() & 255,getrnd() & 255)
+
+  v.waitvbl(25)
+  v.setbordercolors(0,0,0)
+'
+  repeat j from 0 to 29
+   v.scrollup()
+   v.waitvbl(2)
+
+
+  repeat i from 0 to 29
+    v.waitvbl(2)
+    v.cls(141,145)
+    v.outtextxy(i,i,s1)
+
+
+  v.waitvbl(100)
+  v.setmode(256)
+  v.fontnum:=2048
+  v.cursoron()
+  v.cls(15,0)
+  v.setcursorpos(0,0)
+  v.setwritecolors(c_blue,0)
+  v.writeln(string("blue"))
+  v.setwritecolors(c_green,0)
+  v.writeln(string("green"))
+  v.setwritecolors(c_cyan,0)
+  v.writeln(string("cyan"))
+  v.setwritecolors(c_red,0)
+  v.writeln(string("red"))
+  v.setwritecolors(c_magenta,0)
+  v.writeln(string("magenta"))
+  v.setwritecolors(c_brown,0)
+  v.writeln(string("brown"))
+  v.setwritecolors(c_lightgray,0)
+  v.writeln(string("light gray"))
+  v.setwritecolors(c_darkgray,0)
+  v.writeln(string("dark gray"))
+  v.setwritecolors(c_lightblue,0)
+  v.writeln(string("light blue"))
+  v.setwritecolors(c_lightgreen,0)
+  v.writeln(string("light green"))
+  v.setwritecolors(c_lightcyan,0)
+  v.writeln(string("light cyan"))
+  v.setwritecolors(c_lightred,0)
+  v.writeln(string("light red"))
+  v.setwritecolors(c_lightmagenta,0)
+  v.writeln(string("light magenta"))
+  v.setwritecolors(c_yellow,0)
+  v.writeln(string("yellow"))
+  v.setwritecolors(c_white,0)
+  v.writeln(string("white"))
+  v.write(string("Clock frequency: "))
+ v. writeln(inttostr(clkfreq))
+
+  repeat i from 0 to 15
+    repeat j from 0 to 15
+      repeat k from 0 to 1
+        v.setbackcolor(2*i+50,j+8,16*i+j)
+        v.setbackcolor(2*i+51,j+8,16*i+j)
+
+  v.waitvbl(1000)
+
+    teststring[100]:=0
+  repeat i from 0 to 99
+    teststring[i]:=32
+  repeat i from 21 to 29
+    v.outtextxyc(0,i,@teststring,c_white,c_black)
+
+  v.setcursorpos(0,25)
+  v.waitvbl(120)
+  v.setwritecolors(c_white,c_black)
+  v.write(string("C:\>"))
+  v.waitvbl(120)
+  v.write(string("p"))
+  v.waitvbl(10)
+  v.write(string("c"))
+  v.waitvbl(10)
+  v.writeln(string(" "))
+  v.waitvbl(120)
+  v.write(string("The Propeller Commander, Copyleft ("))
+  v.teststring[0]:=1
+  v.teststring[1]:=0
+  v.write(@teststring)
+  v.writeln(string(") 2021 pik33@o2.pl"))
+  v.waitvbl(60)
+  v.writeln(string(" "))
+  v.write(string("C:\>"))
+
+  v.setwritecolors(c_lightcyan,c_blue)
+
+  repeat i from 1 to 98
+    teststring[i]:=$CD
+  teststring[0]:=$C9
+  teststring[50]:=$C9
+
+  teststring[49]:=$BB
+  teststring[99]:=$BB
+  teststring[100]:=0
+
+  v.outtextxyc(0,0,@teststring,c_lightcyan, c_blue)
+  v.outtextxyc(71,0,string(" Status "),c_lightcyan, c_blue)
+  v.outtextxyc(23,0,string(" C:\ "),c_blue, c_lightcyan)
+  repeat i from 1 to 98
+    v.teststring[i]:=32
+  v.teststring[43]:=$B3
+  v.teststring[32]:=$B3
+  v.teststring[22]:=$B3
+  v.teststring[0]:=$BA
+  v.teststring[49]:=$BA
+  v.teststring[50]:=$BA
+  v.teststring[99]:=$BA
+  repeat i from 1 to 19
+    v.outtextxyc(0,i,@teststring,c_lightcyan, c_blue)
+  repeat i from 1 to 98
+    teststring[i]:=$CD
+  teststring[0]:=$C8
+  teststring[50]:=$C8
+
+  teststring[49]:=$BC
+  teststring[99]:=$BC
+  teststring[100]:=0
+
+  v.outtextxyc(0,20,@teststring,c_lightcyan, c_blue)
+  v.outtextxy(56,2,string("The Propeller Commander, Version 0.00"))
+  v.outtextxy(60,3,string("Copyleft ("))
+  teststring[0]:=1
+  teststring[1]:=0
+  v.outtextxy(70,3,@teststring)
+  v.outtextxy(71,3,string(") 2021 pik33@o2.pl"))
+
+  repeat i from 1 to 48
+    teststring[i]:=$CD
+    teststring[50]:=0
+    teststring[0]:=$CC
+    teststring[49]:=$B9
+    v.outtextxy(50,5,@teststring)
+    v.outtextxy(50,14,@teststring)
+
+  v.outtextxy(65,7,string("524,288 Bytes Memory"))
+  i:=$80000-@end
+  v.outtextxy(66,8,inttostr(i / 1000))
+  v.outtextxy(69,8,string(","))
+  v.outtextxy(70,8,inttostr(i // 1000))
+  v.outtextxy(74,8,string("Bytes Free"))
+  v.outtextxy(56,9,string("32,212,254,720 total bytes on drive C:"))
+  v.outtextxy(57,10,string("3,989,123,640 bytes free on drive C:"))
+  v.outtextxy(58,11,string("123 files use 128,956,384 bytes in"))
+  v.outtextxy(74,12,string("C:"))
+  v.outtextxy(58,17,string("No 'dirinfo' file in this directory"))
+
+  v.outtextxyc(9,1,string("Name"),c_yellow,c_blue)
+  v.outtextxyc(25,1,string("Size"),c_yellow,c_blue)
+  v.outtextxyc(36,1,string("Date"),c_yellow,c_blue)
+  v.outtextxyc(45,1,string("Time"),c_yellow,c_blue)
+  v.outtextxy(44,2,string("12:34"))
+  v.outtextxy(33,2,string("2021.03.23"))
+  teststring[0]:=16
+  teststring[1]:=0
+  repeat i from 2 to 8
+    v.outtextxy(23,i,@teststring)
+  teststring[0]:=17
+  repeat i from 2 to 8
+    v.outtextxy(31,i,@teststring)
+  repeat i from 2 to 8
+    v.outtextxy(24,i,string("SUB-DIR"))
+  v.outtextxy(27,9,string("21356"))
+  v.outtextxy(27,10,string("12564"))
+  v.outtextxy(28,11,string("1128"))
+  v.outtextxy(26,12,string("105321"))
+  v.outtextxy(27,13,string("30831"))
+  v.outtextxy(29,14,string("856"))
+  v.outtextxy(27,15,string("31248"))
+  v.outtextxy(28,16,string("2316"))
+  v.outtextxy(27,17,string("17531"))
+  v.outtextxy(1,2,string("PropDOS"))
+  v.outtextxy(1,3,string("BASIC"))
+  v.outtextxy(1,4,string("Spin"))
+  v.outtextxy(1,5,string("Windows"))
+  v.outtextxy(1,6,string("Atari             emu"))
+  v.outtextxy(1,7,string("Amiga             emu"))
+  v.outtextxy(1,8,string("Propeller"))
+  v.outtextxy(1,9,string("DOS               SYS"))
+  v.outtextxy(1,10,string("DUP               SYS"))
+  v.outtextxy(1,11,string("Autoexec          BAT"))
+  v.outtextxy(1,12,string("pc                exe"))
+  v.outtextxy(1,13,string("win               com"))
+  v.outtextxy(1,14,string("DOOM              BAT"))
+  v.outtextxy(1,15,string("command           com"))
+  v.outtextxy(1,16,string("config            sys"))
+  v.outtextxy(1,17,string("msdos             sys"))
+
+  repeat i from 0 to 49
+    teststring[i]:=$C4
+  teststring[50]:=0
+  teststring[0]:=$BA
+  teststring[49]:=$BA
+  teststring[22]:=$C1
+  teststring[32]:=$C1
+  teststring[43]:=$C1
+  v.outtextxy(0,18,@teststring)
+  v.outtextxy(1,19,string("pc.exe                105321    2021.03.23 12:34"))
+
+
+
+  v.waitvbl(12000)

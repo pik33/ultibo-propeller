@@ -1,6 +1,6 @@
 '********************************************************************************************
 ' Nostalgic HDMI for P2 - 1 cog version
-' Version 0.09 alpha -24.03.2021
+' Version 0.10 alpha -24.03.2021
 ' 1 cog, 100x30 text with border, 8x16 font
 ' (c) 2012-2021 Piotr Kardasz pik33@o2.pl
 ' MIT license: see end of file
@@ -54,9 +54,10 @@ long mode_ptr
 long palette_ptr
 long command_ptr
 long fontnum_ptr
+long hdmibase
 long cog
 long bordercolor[32]
-
+long buflen
 byte cursor_x
 byte cursor_y
 byte cursor_sh
@@ -67,10 +68,12 @@ byte colors[16]
 long vblank
 byte n_string[12]  ' string buffer for inttostr and hextostr
 long timings[11]
+long cpl           'char/pixels per line
+long lines
 long cmd1
 long cmd2
 long fontnum
-byte teststring[129]
+
 {{
 m_bs        - before sync,             16      80
 m_sn        - sync                     80     160
@@ -84,10 +87,14 @@ i_vsync     - vsync                    16      12
 i_downporch - down non visible         16       8
 }}
 
-pub dummy()
+pub dummy2()
 '' this is not a main program.
+''------------------------------------------------------------------------
+pub setfontnum(afontnum)
 
-''-----------------------------------------------------------------------
+fontnum:=afontnum
+
+''------------------------------------------------------------------------
 pub defchar(fn,ch,b0,b1,b2,b3,b4,b5,b6,b7,b8,b9,b10,b11,b12,b13,b14,b15) :s
 
 s:=@st_font+fn+ch*16
@@ -179,7 +186,7 @@ pub setscreencolors(ff,bb) | c ,i
 
 c:=ff<<24+bb<<16
 
-repeat i from 0 to 2999
+repeat i from 0 to buflen-1
    long[buf_ptr+4*i]:= (long[buf_ptr+4*i] & $FFFF) |  c
 
 
@@ -187,7 +194,7 @@ pub setbordercolors(r,g,b) |color, i
 
 ''---------- Set border color for all screen - rgb
 
-color:=r<<16+g<<8+b
+color:=r<<16+g<<8+b  ''' todo!!! border buffer has to be defined like a main buffer
 
 repeat i from 0 to 31
   bordercolor[i]:=color
@@ -198,10 +205,10 @@ pub setfontcolor(x,y,c) |   place, color
 
 ''---------- Set the colors for the character at line (0..29) and position (0..99)
 
-place:=(x)+(y*100)
+place:=(x)+(y*cpl)
 
-if (place>2999)
-  place:=2999
+if (place>buflen-1)
+  place:=buflen-1
 
 color:=(long[buf_ptr+4*place] &$FFFFFF) | (c<<24)
 long[buf_ptr+4*place]:=color
@@ -211,10 +218,10 @@ pub setbackcolor(x,y,c) | place, color
 
 ''---------- Set the background color at line (0..29) and position (0..99)
 
-place:=(x)+(y*100)
+place:=(x)+(y*cpl)
 
-if (place>2999)
-  place:=2999
+if (place>buflen-1)
+  place:=buflen-1
 
 color:=(long[buf_ptr+4*place] &$FF00FFFF) | (c<<16)
 long[buf_ptr+4*place]:=color
@@ -259,7 +266,7 @@ pub outtextxy(x,y,text) | iii
 ''--------- Output a string at position x,y - set the colors first
 
 repeat iii from 0 to strsize(text)-1
-  long[buf_ptr+4*(100*y+x+iii)]:=(long[buf_ptr+4*(100*y+x+iii)] & $FFFFFF00)  | byte[text+iii]
+  long[buf_ptr+4*(cpl*y+x+iii)]:=(long[buf_ptr+4*(cpl*y+x+iii)] & $FFFFFF00)  | byte[text+iii]
 
 pub outtextxyc(x,y,text,f,b) | iii,c
 
@@ -267,25 +274,31 @@ pub outtextxyc(x,y,text,f,b) | iii,c
 
 c:=f<<24+b<<16
 repeat iii from 0 to strsize(text)-1
-  long[buf_ptr+4*(100*y+x+iii)]:=(long[buf_ptr+4*(100*y+x+iii)] & $FFFFFF00)  | byte[text+iii]
-  long[buf_ptr+4*(100*y+x+iii)]:=(long[buf_ptr+4*(100*y+x+iii)] & $0000FFFF)  | c
+  long[buf_ptr+4*(cpl*y+x+iii)]:=(long[buf_ptr+4*(cpl*y+x+iii)] & $FFFFFF00)  | byte[text+iii]
+  long[buf_ptr+4*(cpl*y+x+iii)]:=(long[buf_ptr+4*(cpl*y+x+iii)] & $0000FFFF)  | c
 
 pub putchar(achar) | c
 
 ''---------- Output a char at the cursor position, move the cursor
 
 c:=write_color<<24+write_background<<16
-long[buf_ptr+4*(100*cursor_y+cursor_x)]:=long[4*(buf_ptr+100*cursor_y+cursor_x)] &$FFFF | c
-long[buf_ptr+4*(100*cursor_y+cursor_x)]:=(long[4*(buf_ptr+100*cursor_y+cursor_x)] & $FFFFFF00)  | (achar & $000000FF)
+long[buf_ptr+4*(cpl*cursor_y+cursor_x)]:=long[4*(buf_ptr+cpl*cursor_y+cursor_x)] &$FFFF | c
+long[buf_ptr+4*(cpl*cursor_y+cursor_x)]:=(long[4*(buf_ptr+cpl*cursor_y+cursor_x)] & $FFFFFF00)  | (achar & $000000FF)
 cursor_x+=1
-if cursor_x==100
+if cursor_x==cpl
   cursor_x:=0
   cursor_y+=1
-  if cursor_y>29
+  if cursor_y>lines-1
     scrollup()
-    cursor_y:=29
+    cursor_y:=lines-1
 
+pub putcharxy(x,y,achar) | c
 
+''---------- Output a char at the cursor position, move the cursor
+
+c:=write_color<<24+write_background<<16
+long[buf_ptr+4*(cpl*y+x)]:=long[4*(buf_ptr+cpl*y+x)] &$FFFF | c
+long[buf_ptr+4*(cpl*y+x)]:=(long[4*(buf_ptr+cpl*y+x)] & $FFFFFF00)  | (achar & $000000FF)
 
 pub write(text) | iii,c,ncx,ncy
 
@@ -295,17 +308,17 @@ c:=write_color<<24+write_background<<16
 'debug(uhex_long(write_color))
 ncy:=cursor_y
 ncx:=cursor_x+strsize(text)
-repeat while ncx>99
-  ncx-=100
+repeat while ncx>cpl-1
+  ncx-=cpl
   ncy+=1
-repeat while ncy>29
+repeat while ncy>lines-1
   ncy-=1
   scrollup()
   cursor_y-=1
 
 repeat iii from 0 to strsize(text)-1
 
-  long[buf_ptr+4*(100*cursor_y+cursor_x+iii)]:=long[buf_ptr+4*(100*cursor_y+cursor_x+iii)] &$FFFF | c
+  long[buf_ptr+4*(cpl*cursor_y+cursor_x+iii)]:=long[buf_ptr+4*(cpl*cursor_y+cursor_x+iii)] &$FFFF | c
 
 outtextxy(cursor_x,cursor_y,text)
 
@@ -319,32 +332,32 @@ pub writeln(text)
 write(text)
 cursor_x:=0
 cursor_y+=1
-if (cursor_y>29)
+if (cursor_y>lines-1)
   scrollup()
-  cursor_y:=29
+  cursor_y:=lines-1
 
 pub cls(fc,bc)   :c
 
 ''---------- Clear the screen, set its foreground/background color
 
 c:=fc<<24+bc<<16+$20
-longfill(buf_ptr,c,3000)
+longfill(buf_ptr,c,buflen)
  setwritecolors(fc,bc)
 
 pub scrollup() | i
 
 ''-----------  Scroll the screen one line up
 
-longmove(buf_ptr,buf_ptr+400,2900)
-repeat i from 2900 to 2999
+longmove(buf_ptr,buf_ptr+4*cpl,buflen-cpl)
+repeat i from buflen-cpl to buflen-1
   long[buf_ptr+4*i]:=(long[buf_ptr+4*i] & $FFFF0000) | 32
 
 pub scrolldown() | i
 
 ''----------- Scroll the screen one line down
 
-longmove(buf_ptr+400,buf_ptr,2900)
-repeat i from 0 to 99
+longmove(buf_ptr+cpl*4,buf_ptr,buflen-cpl)
+repeat i from 0 to cpl-1
   long[buf_ptr+4*i]:=(long[buf_ptr+4*i] & $FFFF0000) | 32
 
 pub crlf()
@@ -353,9 +366,9 @@ pub crlf()
 
 cursor_x:=0
 cursor_y+=1
-if cursor_y>29
+if cursor_y>lines-1
   scrollup()
-  cursor_y:=29
+  cursor_y:=lines-1
 
 ''---------- Backspace
 
@@ -363,7 +376,7 @@ pub bksp()
 
 cursor_x-=1
 if cursor_x==255
-  cursor_x:=99
+  cursor_x:=cpl-1
   cursor_y-=1
   if cursor_y==255
     cursor_y:=0
@@ -434,6 +447,11 @@ return q
 
 
 pub setmode(mode)
+
+
+buflen:=3000
+cpl:=100
+lines:=30
 
 '' mode:nt_bb_cc_vv_hh
 '' hh - h.zoom, vv-v.zoom, cc-c.depth, 
@@ -516,7 +534,10 @@ if (mode==192) ' borderless 1024x576
   org
   hubset ##%1_110000__11_0110_1100__1111_1011     '49,877->48,876->110000_11_0110_1100
   end
-  
+ 
+  buflen:=4608
+  cpl:=128
+  lines:=36
   
 
 if (mode==256)
@@ -600,7 +621,7 @@ if (mode==448)  '1026 px borderless 848x480
 setbordercolors (0,0,0)
 
 
-pub start(mode):result | c1
+pub start(mode,base):result | c1
 
 ' mode=0 - start at PAL timings, 624 lines
 ' mode=256 - start at NTSC timings, 524 lines
@@ -615,7 +636,10 @@ pub start(mode):result | c1
 
 border_ptr:=@bordercolor
 font_ptr:=@st_font
-buf_ptr:=$7C000-3000    'todo: the buf ptr depends on mode
+
+setmode(mode)
+  
+buf_ptr:=$7C000-4*buflen    'todo: the buf ptr depends on mode
 vblank_ptr:=@vblank
 cursor_ptr:=@cursor_x
 mode_ptr:=@timings
@@ -624,6 +648,7 @@ command_ptr:=@cmd1
 fontnum_ptr:=@fontnum
 
 fontnum:=2048  ' ST type font
+hdmibase:=base
 
 ' initialize a cursor
 
@@ -653,29 +678,18 @@ colors[$F]:= c_white
 ' set timings
 ' We can have 1140,1026 or 912 pixes per line
 
-setmode(mode)
 
 
-
-  {{
-m_bs        - before sync,             16      80
-m_sn        - sync                     80     160
-m_bv        - before visible           20      84
-m_vi        - visible                1024     816
-m_border    - left and right borders  112       8
-m_lut1      - pixels per char           8       8
-i_vborder   - up and down border       48       8
-i_upporch   - up non visible           16       8
-i_vsync     - vsync                    16      12
-i_downporch - down non visible         16       8
-    }}
 
 cmd1:=257 ' set idle
 cog:=coginit(16,@hdmi, @buf_ptr)
 waitms(20)
 cls(c_green,c_black)
 setwritecolors(c_green,c_black)
-
+writeln(inttostr(mode))
+writeln(inttostr(cpl))
+writeln(inttohex(buf_ptr,8))
+waitvbl(1200)
 return cog
 
 {{ todo
@@ -708,17 +722,23 @@ ataripalette            file "ataripalettep2.def"
 
 DAT             org
 
-hdmi            wrlong  #charcolor,#0
-                setcmod #$100                           'enable HDMI mode
-                drvl    #7<<6 + hdmi_base               'enable HDMI pins
-                wrpin   ##%10110_1111_0111_10_00000_0, #7<<6 + hdmi_base      ' a '123 ohm BITDAC for pins
-                setxfrq ##$0CCCCCCC+1                   'set streamer freq to 1/10th clk (25 MHz)
-
-                setq    #8
+hdmi            setq    #9
                 rdlong  framebuf,  ptra++               'read pointers
 
                 setq2   #255
                 rdlong  $000, paletteptr                'read palette
+
+                wrlong  #charcolor,#0
+                setcmod #$100                           'enable HDMI mode
+                mov     ii,#7
+                shl     ii,#6
+                add     ii,hbase
+                 drvl    ii                               ' #7<<6 + hdmi_base               'enable HDMI pins
+                 wrpin   ##%10110_1111_0111_10_00000_0, ii  '#7<<6 + hdmi_base      ' a '123 ohm BITDAC for pins
+         '       drvl    #7<<6 + 48              'enable HDMI pins
+          '      wrpin   ##%10110_1111_0111_10_00000_0, #7<<6 + 48     ' a '123 ohm BITDAC for pins
+                setxfrq ##$0CCCCCCC+1                   'set streamer freq to 1/10th clk (25 MHz)
+
 
 '' Blank lines before the frame
 
@@ -937,6 +957,7 @@ cursory         long    0
 cursorpos       long    0
 cursorpos2      long    0
 fontstart       long    0
+ 
 spritex			long    0
 spritey         long    0
 pixels          long    1024
@@ -949,8 +970,11 @@ cursorptr       res     1
 modeptr         res     1
 paletteptr      res     1
 commandptr      res     1
+
 fontnumptr      res     1
+hbase           res     1
 borderptr2      res     1
+
 ii              res     1
 framebuf2       res     1
 hsync0          res     1

@@ -54,6 +54,7 @@ long mode_ptr
 long palette_ptr
 long command_ptr
 long fontnum_ptr
+long hdmibase
 long cog
 long bordercolor[32]
 
@@ -70,7 +71,7 @@ long timings[11]
 long cmd1
 long cmd2
 long fontnum
-byte teststring[129]
+
 {{
 m_bs        - before sync,             16      80
 m_sn        - sync                     80     160
@@ -84,8 +85,12 @@ i_vsync     - vsync                    16      12
 i_downporch - down non visible         16       8
 }}
 
-pub dummy()
+pub dummy2()
 '' this is not a main program.
+
+pub setfontnum(afontnum)
+
+fontnum:=afontnum
 
 ''-----------------------------------------------------------------------
 pub defchar(fn,ch,b0,b1,b2,b3,b4,b5,b6,b7,b8,b9,b10,b11,b12,b13,b14,b15) :s
@@ -285,7 +290,13 @@ if cursor_x==100
     scrollup()
     cursor_y:=29
 
+pub putcharxy(x,y,achar) | c
 
+''---------- Output a char at the cursor position, move the cursor
+
+c:=write_color<<24+write_background<<16
+long[buf_ptr+4*(100*y+x)]:=long[4*(buf_ptr+100*y+x)] &$FFFF | c
+long[buf_ptr+4*(100*y+x)]:=(long[4*(buf_ptr+100*y+x)] & $FFFFFF00)  | (achar & $000000FF)
 
 pub write(text) | iii,c,ncx,ncy
 
@@ -600,7 +611,7 @@ if (mode==448)  '1026 px borderless 848x480
 setbordercolors (0,0,0)
 
 
-pub start(mode):result | c1
+pub start(mode,base):result | c1
 
 ' mode=0 - start at PAL timings, 624 lines
 ' mode=256 - start at NTSC timings, 524 lines
@@ -624,6 +635,7 @@ command_ptr:=@cmd1
 fontnum_ptr:=@fontnum
 
 fontnum:=2048  ' ST type font
+hdmibase:=base
 
 ' initialize a cursor
 
@@ -708,17 +720,23 @@ ataripalette            file "ataripalettep2.def"
 
 DAT             org
 
-hdmi            wrlong  #charcolor,#0
-                setcmod #$100                           'enable HDMI mode
-                drvl    #7<<6 + hdmi_base               'enable HDMI pins
-                wrpin   ##%10110_1111_0111_10_00000_0, #7<<6 + hdmi_base      ' a '123 ohm BITDAC for pins
-                setxfrq ##$0CCCCCCC+1                   'set streamer freq to 1/10th clk (25 MHz)
-
-                setq    #8
+hdmi            setq    #9
                 rdlong  framebuf,  ptra++               'read pointers
 
                 setq2   #255
                 rdlong  $000, paletteptr                'read palette
+
+                wrlong  #charcolor,#0
+                setcmod #$100                           'enable HDMI mode
+                mov     ii,#7
+                shl     ii,#6
+                add     ii,hbase
+                 drvl    ii                               ' #7<<6 + hdmi_base               'enable HDMI pins
+                 wrpin   ##%10110_1111_0111_10_00000_0, ii  '#7<<6 + hdmi_base      ' a '123 ohm BITDAC for pins
+         '       drvl    #7<<6 + 48              'enable HDMI pins
+          '      wrpin   ##%10110_1111_0111_10_00000_0, #7<<6 + 48     ' a '123 ohm BITDAC for pins
+                setxfrq ##$0CCCCCCC+1                   'set streamer freq to 1/10th clk (25 MHz)
+
 
 '' Blank lines before the frame
 
@@ -937,6 +955,7 @@ cursory         long    0
 cursorpos       long    0
 cursorpos2      long    0
 fontstart       long    0
+ 
 spritex			long    0
 spritey         long    0
 pixels          long    1024
@@ -949,8 +968,11 @@ cursorptr       res     1
 modeptr         res     1
 paletteptr      res     1
 commandptr      res     1
+
 fontnumptr      res     1
+hbase           res     1
 borderptr2      res     1
+
 ii              res     1
 framebuf2       res     1
 hsync0          res     1

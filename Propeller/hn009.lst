@@ -1,0 +1,178 @@
+
+00000                 | 
+00000                 | #line 1 "D:/programowanie/20210307-ultibo-propeller/ultibo-propeller/Propeller/hn009.p2asm"
+00000                 | ' 
+00000                 | ' 
+00000                 | ' hdmi_base       = 48             'must be a multiple of 8
+00000                 | con
+00000                 | 	hdmi_base = 48
+00000                 | ' _clkfreq        = 200000000      'start safe, hubset will do the rest
+00000                 | 	_clkfreq = 200000000
+00000                 | ' 
+00000                 | ' 
+00000                 | ' ' 354_689_500   '200x Atari 8-bit PAL,  50x Amiga PAL  - real settings: 49 869 354693878  - 1.0000123 - mode 0
+00000                 | ' ' 357_954_500   '200x Atari 8-bit NTSC, 50x Amiga NTSC - real settings: 49 877 357959184  - 1.0000131 - mode 256
+00000                 | ' 
+00000                 | ' ' We also need x180 and x160 speeds
+00000                 | ' '
+00000                 | ' ' 319_220_550 90x PAL  - real settings: 51 814 319215686 - 0.9999848 - mode 1
+00000                 | ' ' 322_159_050 90x NTSC - real settings: 37 596 322162162 - 1.0000097 - mode 257
+00000                 | ' 
+00000                 | ' ' 283_751_600 80x PAL  - real settings: 64 908 283750000 - 0.9999944 - mode 2
+00000                 | ' ' 286_363_600 80x NTSC - real settings: 22 315 286363636 - 1.0000001 - mode 258
+00000                 | ' 
+00000                 | ' 
+00000                 | ' c_black         =    0
+00000                 | 	c_black = 0
+00000                 | ' c_blue          =  117
+00000                 | 	c_blue = 117
+00000                 | ' c_green         =  199
+00000                 | 	c_green = 199
+00000                 | ' c_cyan          =  151
+00000                 | 	c_cyan = 151
+00000                 | ' c_red           =   39
+00000                 | 	c_red = 39
+00000                 | ' c_magenta       =   71
+00000                 | 	c_magenta = 71
+00000                 | ' c_brown         =  246
+00000                 | 	c_brown = 246
+00000                 | ' c_lightgray     =   10
+00000                 | 	c_lightgray = 10
+00000                 | ' c_darkgray      =    5
+00000                 | 	c_darkgray = 5
+00000                 | ' c_lightblue     =  123
+00000                 | 	c_lightblue = 123
+00000                 | ' c_lightgreen    =  203
+00000                 | 	c_lightgreen = 203
+00000                 | ' c_lightcyan     =  155
+00000                 | 	c_lightcyan = 155
+00000                 | ' c_lightred      =   43
+00000                 | 	c_lightred = 43
+00000                 | ' c_lightmagenta  =   75
+00000                 | 	c_lightmagenta = 75
+00000                 | ' c_yellow        =  234
+00000                 | 	c_yellow = 234
+00000                 | ' c_white         =   15
+00000                 | 	c_white = 15
+00000                 | dat
+00000 000 00 00 00 00 | 	nop
+00004 001 01 EC 63 FD | 	cogid	pa
+00008 002 02 00 00 FF 
+0000c 003 00 EC E7 FC | 	coginit	pa,##$400
+00010                 | 	orgh	$10
+00010     00 00 00 00 | 	long	0	'reserved
+00014     00 00 00 00 | 	long	0 ' clock frequency: will default to 200000000
+00018     00 00 00 00 | 	long	0 ' clock mode: will default to $10009fb
+0001c     00 00 00 00 
+      ...             
+003f8     00 00 00 00 
+003fc     00 00 00 00 | 	orgh	$400
+00400 000             | 	org	0
+00400 000             | entry
+00400 000 00 F0 0F F2 | 	cmp	ptra, #0 wz
+00404 001 94 00 90 5D |  if_ne	jmp	#spininit
+00408 002 47 F0 03 F6 | 	mov	ptra, ptr_stackspace_
+0040c 003 14 EC 0F FB | 	rdlong	pa, #20 wz
+00410 004 6C 00 90 5D |  if_ne	jmp	#skip_clock_set_
+00414 005 00 00 64 FD | 	hubset	#0
+00418 006 04 80 80 FF 
+0041c 007 00 F0 67 FD | 	hubset	##16779768
+00420 008 86 01 80 FF 
+00424 009 1F 80 66 FD | 	waitx	##200000
+00428 00a 04 80 00 FF 
+0042c 00b FB ED 07 F6 | 	mov	pa, ##16779771
+00430 00c 00 EC 63 FD | 	hubset	pa
+00434 00d 18 EC 67 FC | 	wrlong	pa, #24
+00438 00e E1 F5 85 FF 
+0043c 00f 14 00 6C FC | 	wrlong	##200000000, #20
+00440 010 3C 00 90 FD | 	jmp	#skip_clock_set_
+00444 011 00 00 00 00 
+      ...             
+00478 01e 00 00 00 00 
+0047c 01f 00 00 00 00 | 	orgf	32
+00480 020             | skip_clock_set_
+00480 020 04 88 60 FD | 	locknew	__lockreg
+00484 021 46 88 60 FC | 	wrlong	__lockreg, ptr___lockreg_
+00488 022 24 05 A0 FD | 	call	#_dummy2
+0048c 023             | cogexit
+0048c 023 38 01 80 FF 
+00490 024 1F 00 66 FD | 	waitx	##160000
+00494 025 01 92 60 FD | 	cogid	arg01
+00498 026 03 92 60 FD | 	cogstop	arg01
+0049c 027             | spininit
+0049c 027 00 8B 04 FB | 	rdlong	objptr, ptra
+004a0 028 04 F0 07 F1 | 	add	ptra, #4
+004a4 029 00 91 04 FB | 	rdlong	result1, ptra
+004a8 02a 04 F0 07 F1 | 	add	ptra, #4
+004ac 02b 00 93 04 FB | 	rdlong	arg01, ptra
+004b0 02c 04 F0 07 F1 | 	add	ptra, #4
+004b4 02d 00 95 04 FB | 	rdlong	arg02, ptra
+004b8 02e 04 F0 07 F1 | 	add	ptra, #4
+004bc 02f 00 97 04 FB | 	rdlong	arg03, ptra
+004c0 030 04 F0 07 F1 | 	add	ptra, #4
+004c4 031 00 99 04 FB | 	rdlong	arg04, ptra
+004c8 032 10 F0 87 F1 | 	sub	ptra, #16
+004cc 033 2D 90 60 FD | 	call	result1
+004d0 034 B8 FF 9F FD | 	jmp	#cogexit
+004d4 035             | FCACHE_LOAD_
+004d4 035 2B 86 60 FD |     pop	fcache_tmpb_
+004d8 036 F6 87 00 F1 |     add	fcache_tmpb_, pa
+004dc 037 2A 86 60 FD |     push	fcache_tmpb_
+004e0 038 F6 87 80 F1 |     sub	fcache_tmpb_, pa
+004e4 039 02 EC 47 F0 |     shr	pa, #2
+004e8 03a F6 85 00 F6 |     mov	fcache_tmpa_, pa
+004ec 03b 00 85 04 F1 |     add	fcache_tmpa_, #$100
+004f0 03c 42 82 30 FC |     wrlut ret_instr_, fcache_tmpa_
+004f4 03d 01 EC 87 F1 |     sub	pa, #1
+004f8 03e 29 EC 63 FD |     setq2	pa
+004fc 03f 43 00 02 FB |     rdlong	$100-0, fcache_tmpb_
+00500 040 00 03 80 FD |     jmp	#\$300 ' jmp to cache
+00504 041             | ret_instr_
+00504 041 2D 00 64 FD |     ret
+00508 042             | fcache_tmpa_
+00508 042 00 00 00 00 |     long 0
+0050c 043             | fcache_tmpb_
+0050c 043 00 00 00 00 |     long 0
+00510 044             | 
+00510 044             | __lockreg
+00510 044 00 00 00 00 | 	long	0
+00514 045             | objptr
+00514 045 2C 05 00 00 | 	long	@objmem
+00518 046             | ptr___lockreg_
+00518 046 10 05 00 00 | 	long	@__lockreg
+0051c 047             | ptr_stackspace_
+0051c 047 3C 06 00 00 | 	long	@stackspace
+00520 048             | result1
+00520 048 00 00 00 00 | 	long	0
+00524 049             | COG_BSS_START
+00524 049             | 	fit	480
+00524                 | 	orgh
+00524                 | hubentry
+00524                 | 
+00524                 | ' 
+00524                 | ' {{
+00524                 | ' }}
+00524                 | ' 
+00524                 | ' pub dummy2()
+00524                 | _dummy2
+00524                 | _dummy2_ret
+00524     2D 00 64 FD | 	ret
+00528                 | hubexit
+00528     23 00 80 FD | 	jmp	#cogexit
+0052c                 | objmem
+0052c     00 00 00 00 
+      ...             
+00634     00 00 00 00 
+00638     00 00 00 00 | 	long	0[68]
+0063c                 | stackspace
+0063c     00 00 00 00 | 	long	0[1]
+00640 049             | 	org	COG_BSS_START
+00640 049             | arg01
+00640 049             | 	res	1
+00640 04a             | arg02
+00640 04a             | 	res	1
+00640 04b             | arg03
+00640 04b             | 	res	1
+00640 04c             | arg04
+00640 04c             | 	res	1
+00640 04d             | 	fit	480

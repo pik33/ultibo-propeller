@@ -1,0 +1,160 @@
+' 
+' 
+' hdmi_base       = 48             'must be a multiple of 8
+con
+	hdmi_base = 48
+' _clkfreq        = 200000000      'start safe, hubset will do the rest
+	_clkfreq = 200000000
+' 
+' 
+' ' 354_689_500   '200x Atari 8-bit PAL,  50x Amiga PAL  - real settings: 49 869 354693878  - 1.0000123 - mode 0
+' ' 357_954_500   '200x Atari 8-bit NTSC, 50x Amiga NTSC - real settings: 49 877 357959184  - 1.0000131 - mode 256
+' 
+' ' We also need x180 and x160 speeds
+' '
+' ' 319_220_550 90x PAL  - real settings: 51 814 319215686 - 0.9999848 - mode 1
+' ' 322_159_050 90x NTSC - real settings: 37 596 322162162 - 1.0000097 - mode 257
+' 
+' ' 283_751_600 80x PAL  - real settings: 64 908 283750000 - 0.9999944 - mode 2
+' ' 286_363_600 80x NTSC - real settings: 22 315 286363636 - 1.0000001 - mode 258
+' 
+' 
+' c_black         =    0
+	c_black = 0
+' c_blue          =  117
+	c_blue = 117
+' c_green         =  199
+	c_green = 199
+' c_cyan          =  151
+	c_cyan = 151
+' c_red           =   39
+	c_red = 39
+' c_magenta       =   71
+	c_magenta = 71
+' c_brown         =  246
+	c_brown = 246
+' c_lightgray     =   10
+	c_lightgray = 10
+' c_darkgray      =    5
+	c_darkgray = 5
+' c_lightblue     =  123
+	c_lightblue = 123
+' c_lightgreen    =  203
+	c_lightgreen = 203
+' c_lightcyan     =  155
+	c_lightcyan = 155
+' c_lightred      =   43
+	c_lightred = 43
+' c_lightmagenta  =   75
+	c_lightmagenta = 75
+' c_yellow        =  234
+	c_yellow = 234
+' c_white         =   15
+	c_white = 15
+dat
+	nop
+	cogid	pa
+	coginit	pa,##$400
+	orgh	$10
+	long	0	'reserved
+	long	0 ' clock frequency: will default to 200000000
+	long	0 ' clock mode: will default to $10009fb
+	orgh	$400
+	org	0
+entry
+	cmp	ptra, #0 wz
+ if_ne	jmp	#spininit
+	mov	ptra, ptr_stackspace_
+	rdlong	pa, #20 wz
+ if_ne	jmp	#skip_clock_set_
+	hubset	#0
+	hubset	##16779768
+	waitx	##200000
+	mov	pa, ##16779771
+	hubset	pa
+	wrlong	pa, #24
+	wrlong	##200000000, #20
+	jmp	#skip_clock_set_
+	orgf	32
+skip_clock_set_
+	locknew	__lockreg
+	wrlong	__lockreg, ptr___lockreg_
+	call	#_dummy2
+cogexit
+	waitx	##160000
+	cogid	arg01
+	cogstop	arg01
+spininit
+	rdlong	objptr, ptra
+	add	ptra, #4
+	rdlong	result1, ptra
+	add	ptra, #4
+	rdlong	arg01, ptra
+	add	ptra, #4
+	rdlong	arg02, ptra
+	add	ptra, #4
+	rdlong	arg03, ptra
+	add	ptra, #4
+	rdlong	arg04, ptra
+	sub	ptra, #16
+	call	result1
+	jmp	#cogexit
+FCACHE_LOAD_
+    pop	fcache_tmpb_
+    add	fcache_tmpb_, pa
+    push	fcache_tmpb_
+    sub	fcache_tmpb_, pa
+    shr	pa, #2
+    mov	fcache_tmpa_, pa
+    add	fcache_tmpa_, #$100
+    wrlut ret_instr_, fcache_tmpa_
+    sub	pa, #1
+    setq2	pa
+    rdlong	$100-0, fcache_tmpb_
+    jmp	#\$300 ' jmp to cache
+ret_instr_
+    ret
+fcache_tmpa_
+    long 0
+fcache_tmpb_
+    long 0
+
+__lockreg
+	long	0
+objptr
+	long	@objmem
+ptr___lockreg_
+	long	@__lockreg
+ptr_stackspace_
+	long	@stackspace
+result1
+	long	0
+COG_BSS_START
+	fit	480
+	orgh
+hubentry
+
+' 
+' {{
+' }}
+' 
+' pub dummy2()
+_dummy2
+_dummy2_ret
+	ret
+hubexit
+	jmp	#cogexit
+objmem
+	long	0[71]
+stackspace
+	long	0[1]
+	org	COG_BSS_START
+arg01
+	res	1
+arg02
+	res	1
+arg03
+	res	1
+arg04
+	res	1
+	fit	480
