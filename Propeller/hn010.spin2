@@ -56,7 +56,7 @@ long command_ptr
 long fontnum_ptr
 long hdmibase
 long cog
-long bordercolor[32]
+long bordercolor[38]
 long buflen
 byte cursor_x
 byte cursor_y
@@ -93,6 +93,8 @@ lines
 
 pub dummy2()
 '' this is not a main program.
+
+start(448,48)
 ''------------------------------------------------------------------------
 pub setfontnum(afontnum)
 
@@ -200,7 +202,7 @@ pub setbordercolors(r,g,b) |color, i
 
 color:=r<<16+g<<8+b  ''' todo!!! border buffer has to be defined like a main buffer
 
-repeat i from 0 to 31
+repeat i from 0 to lines+1
   bordercolor[i]:=color
 
 
@@ -462,7 +464,7 @@ lines:=30
 '' bb - borders/total pixels, 00-wide/1140, 01 medium/1026, 10 narrow/912, 11 no border, 1024 px PAL, 880 px NTSC
 
 '----------------
-if (mode==0)                                'PAL 50 Hz signaling 1140x624, active 800x480, 100x30 text, wide border, 2 colors per pixel, 00_00_00_00_00=0
+if (mode==0)                                'PAL 50 Hz signaling 1140x624, active 800x480, 100x30 text, wide border, 2 colors per pixel, 00_00_00_00_00=0, 354_693_878 Hz
   longmove(@streamer,@timingsxxt,6)
   longmove(@timings,@timings000,16)
   repeat i from 0 to 5
@@ -471,168 +473,69 @@ if (mode==0)                                'PAL 50 Hz signaling 1140x624, activ
   hubset(timings[14])
 '---------------
 
-if (mode==64)                               'PAL 50 Hz signaling 1026x624, active 880x496, 110x32 text, medium border, 2 colors per pixel 00_01_00_00_00=64
-  
-  timings[0]:= $70810000 + hdmi_base<<17 + 30          'before sync
-  timings[1]:= $70810000 + hdmi_base<<17 + 80          'sync
-  timings[2]:= $70810000 + hdmi_base<<17 + 20          'before visible
-  timings[3]:= $70810000 + hdmi_base<<17 + 896         'visible 896
-  timings[4]:= $70810000 + hdmi_base<<17 + 48          'immediate 48
-  timings[5]:= $20880000 + hdmi_base<<17 + 8           'imm+lut, 1 char
-  timings[6]:= 24
-  timings[7]:= 32
-  timings[8]:= 32
-  timings[9]:= 32
-  timings[10]:=64
-  timings[11]:=100
-  timings[12]:=30
-  
-  
-  {  
-  
-  timings[0]:= $70810000 + hdmi_base<<17 + 18         'before sync
-  timings[1]:= $70810000 + hdmi_base<<17 + 64          'sync
-  timings[2]:= $70810000 + hdmi_base<<17 + 16          'before visible
-  timings[3]:= $70810000 + hdmi_base<<17 + 928         'visible 896
-  timings[4]:= $70810000 + hdmi_base<<17 + 24          'immediate 48
-  timings[5]:= $20880000 + hdmi_base<<17 + 8           'imm+lut, 1 char
-  timings[6]:= 16
-  timings[7]:= 32
-  timings[8]:= 32
-  timings[9]:= 32
-  timings[10]:= 64
-  buflen:=3520
-  cpl:=110
-  lines:=32
-}
-  clkfreq:=319215686
-  org
-  hubset ##%1_110010__11_0010_1101__1111_1011     '51,814->50,813->110010_11_0010_1101
-  end
+if (mode==64)                               'PAL 50 Hz signaling 1026x624, active 880x496, 110x31 text, medium border, 2 colors per pixel 00_01_00_00_00=64, 319_215_686 Hz
+  longmove(@streamer,@timingsxxt,6)
+  longmove(@timings,@timings064,16)
+  repeat i from 0 to 5
+    timings[i]:=timings[i]+streamer[i]+hdmibase<<17
+  clkfreq:=timings[13]
+  hubset(timings[14])
+'---------------
 
+if (mode==128)                              'PAL 50 Hz signaling 912x624, active 800x480, 100x30 text, medium border, 2 colors per pixel 00_10_00_00_00=64, 283750000z
+  longmove(@streamer,@timingsxxt,6)
+  longmove(@timings,@timings128,16)
+  repeat i from 0 to 5
+    timings[i]:=timings[i]+streamer[i]+hdmibase<<17
+  clkfreq:=timings[13]
+  hubset(timings[14])
+'---------------
 
-if (mode==128) ' 912 pixes per line     ' 283_751_600 80x PAL  - real settings: 64 908 283750000 - 0.9999944
+if (mode==192)                              'PAL 50 Hz signaling 1140x624, active 1024x576, 128x36 text, borderless, 2 colors per pixel 00_11_00_00_00=6192, 354_693_878 Hz
+  longmove(@streamer,@timingsxxt,6)
+  longmove(@timings,@timings192,16)
+  repeat i from 0 to 5
+    timings[i]:=timings[i]+streamer[i]+hdmibase<<17
+  clkfreq:=timings[13]
+  hubset(timings[14])
+'---------------  
 
-  timings[0]:= $70810000 + hdmi_base<<17 + 16           'before sync
-  timings[1]:= $70810000 + hdmi_base<<17 + 64           'sync
-  timings[2]:= $70810000 + hdmi_base<<17 + 16           'before visible
-  timings[3]:= $70810000 + hdmi_base<<17 + 816          'visible 1024
-  timings[4]:= $70810000 + hdmi_base<<17 + 8            'immediate 112
-  timings[5]:= $20880000 + hdmi_base<<17 + 8            'imm+lut, 1 char
-  timings[6]:= 8
-  timings[7]:= 32
-  timings[8]:= 64
-  timings[9]:= 32
-  timings[10]:=128
+if (mode==256)                               'NTSC 50 Hz signaling 1140x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_00_00_00_00=256, 357959184 Hz 
+  longmove(@streamer,@timingsxxt,6)
+  longmove(@timings,@timings256,16)
+  repeat i from 0 to 5
+    timings[i]:=timings[i]+streamer[i]+hdmibase<<17
+  clkfreq:=timings[13]
+  hubset(timings[14])
+'---------------  
 
-  clkfreq:=283750000
-  org
-  hubset ##%1_111111__11_1000_1011__1111_1011     '64,908->63,907->110010_11_1000_1011
-  end
-  
-if (mode==192) ' borderless 1024x576
+if (mode==320)                               'NTSC 50 Hz signaling 1026x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_01_00_00_00=320, 322162162 Hz 
+  longmove(@streamer,@timingsxxt,6)
+  longmove(@timings,@timings320,16)
+  repeat i from 0 to 5
+    timings[i]:=timings[i]+streamer[i]+hdmibase<<17
+  clkfreq:=timings[13]
+  hubset(timings[14])
+'---------------  
 
-  timings[0]:= $70810000 + hdmi_base<<17 + 16          'before sync
-  timings[1]:= $70810000 + hdmi_base<<17 + 80          'sync
-  timings[2]:= $70810000 + hdmi_base<<17 + 20          'before visible
-  timings[3]:= $70810000 + hdmi_base<<17 + 1024        'visible 1024
-  timings[4]:= 0                                      'no border
-  timings[5]:= $20880000 + hdmi_base<<17 + 8           'imm+lut, 1 char
-  timings[6]:= 0
-  timings[7]:= 16
-  timings[8]:= 16
-  timings[9]:= 16
-  timings[10]:= 192
-  timings[11]:= 128
-  timings[12]:= 36
-
-  clkfreq:=354693878
-  org
-  hubset ##%1_110000__11_0110_1100__1111_1011     '49,877->48,876->110000_11_0110_1100
-  end
+if (mode==384)                               'NTSC 50 Hz signaling 912x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_10_00_00_00=384, 286363636 Hz 
+  longmove(@streamer,@timingsxxt,6)
+  longmove(@timings,@timings384,16)
+  repeat i from 0 to 5
+    timings[i]:=timings[i]+streamer[i]+hdmibase<<17
+  clkfreq:=timings[13]
+  hubset(timings[14])
+'---------------  
  
-  buflen:=4608
-  cpl:=128
-  lines:=36
-  
+if (mode==448)                               'NTSC 50 Hz signaling 1026x524, active 880x496, 110x31 text, borderless, 2 colors per pixel, 01_11_00_00_00=496, 322162162 Hz 
+  longmove(@streamer,@timingsxxt,6)
+  longmove(@timings,@timings448,16)
+  repeat i from 0 to 5
+    timings[i]:=timings[i]+streamer[i]+hdmibase<<17
+  clkfreq:=timings[13]
+  hubset(timings[14])
+'---------------  
 
-if (mode==256)
-
-  timings[0]:= $70810000 + hdmi_base<<17 + 80          'before sync
-  timings[1]:= $70810000 + hdmi_base<<17 + 160         'sync
-  timings[2]:= $70810000 + hdmi_base<<17 + 84          'before visible
-  timings[3]:= $70810000 + hdmi_base<<17 + 816         'visible 816
-  timings[4]:= $70810000 + hdmi_base<<17 + 8           'immediate 8
-  timings[5]:= $20880000 + hdmi_base<<17 + 8           'imm+lut, 1 char
-  timings[6]:= 8
-  timings[7]:= 8
-  timings[8]:= 12
-  timings[9]:= 8
-  timings[10]:= 256
-
-  clkfreq:=357959184
-  org
-  hubset ##%1_110000__11_0110_0100__1111_1011     '49,869->48,868->110000_11_0110_0100
-  end
-
-if (mode==320)  '1026 px
-
-  timings[0]:= $70810000 + hdmi_base<<17 + 80          'before sync
-  timings[1]:= $70810000 + hdmi_base<<17 + 50          'sync
-  timings[2]:= $70810000 + hdmi_base<<17 + 80          'before visible
-  timings[3]:= $70810000 + hdmi_base<<17 + 816         'visible 816
-  timings[4]:= $70810000 + hdmi_base<<17 + 8           'immediate 8
-  timings[5]:= $20880000 + hdmi_base<<17 + 8           'imm+lut, 1 char
-  timings[6]:= 8
-  timings[7]:= 8
-  timings[8]:= 12
-  timings[9]:= 8
-  timings[10]:= 320
-  
-  clkfreq:=322162162
-  org
-  hubset ##%1_100100__10_0101_0011__1111_1011     '37,596_.36,595->100100_10_0101_0011
-  end
-
-if (mode==384)  '912 px
-
-  timings[0]:= $70810000 + hdmi_base<<17 + 24          'before sync
-  timings[1]:= $70810000 + hdmi_base<<17 + 48         'sync
-  timings[2]:= $70810000 + hdmi_base<<17 + 24          'before visible
-  timings[3]:= $70810000 + hdmi_base<<17 + 816         'visible 816
-  timings[4]:= $70810000 + hdmi_base<<17 + 8           'immediate 8
-  timings[5]:= $20880000 + hdmi_base<<17 + 8           'imm+lut, 1 char
-  timings[6]:= 8
-  timings[7]:= 8
-  timings[8]:= 12
-  timings[9]:= 8
-  timings[10]:= 384
-   
-
-  clkfreq:=286363636
-  org
-  hubset ##%1_010101__01_0011_1010__1111_1011     '22,315->21,314->010101_01_0011_1010
-  end
-
-if (mode==448)  '1026 px borderless 848x480
-
-  timings[0]:= $70810000 + hdmi_base<<17 + 24          'before sync
-  timings[1]:= $70810000 + hdmi_base<<17 + 48         'sync
-  timings[2]:= $70810000 + hdmi_base<<17 + 24          'before visible
-  timings[3]:= $70810000 + hdmi_base<<17 + 816         'visible 816
-  timings[4]:= $70810000 + hdmi_base<<17 + 8           'immediate 8
-  timings[5]:= $20880000 + hdmi_base<<17 + 8           'imm+lut, 1 char
-  timings[6]:= 0
-  timings[7]:= 10
-  timings[8]:= 16
-  timings[9]:= 10
-  timings[10]:= 448
-   
-
-  clkfreq:=286363636
-  org
-  hubset ##%1_010101__01_0011_1010__1111_1011     '22,315->21,314->010101_01_0011_1010
-  end
 
 setbordercolors (0,0,0)
 
@@ -655,7 +558,9 @@ font_ptr:=@st_font
 
 hdmibase:=base
 setmode(mode)
-  
+cpl:=timings[11]
+lines:=timings[12]>>4
+buflen:=cpl*lines
 buf_ptr:=$7C000-4*buflen    'todo: the buf ptr depends on mode
 vblank_ptr:=@vblank
 cursor_ptr:=@cursor_x
@@ -702,18 +607,21 @@ cmd1:=257 ' set idle
 cog:=coginit(16,@hdmi, @buf_ptr)
 waitms(20)
 cls(c_green,c_black)
+setbordercolors(0,255,0)
 setwritecolors(c_green,c_black)
 'writeln(inttostr(mode))
 'writeln(inttostr(cpl))
 'writeln(inttohex(buf_ptr,8))
 'write(string("Streamer[0], should be 70810000: "))
-writeln(inttohex(long[$50000],8))
+'writeln(inttohex(long[$50000],8))
 'writeln(inttohex(long[$40004],8))
 'writeln(inttohex(long[$40008],8))
-'writeln(inttohex(long[$4000c],8))
-writeln(inttohex(long[$50010],8))
+writeln(inttostr(buflen))
+writeln(inttostr(lines))
 writeln(inttohex(timings[0],8))
-waitvbl(12000)
+repeat c1 from 1 to 100
+  writeln(inttostr(c1))  
+waitvbl(120)
 return cog
 
 {{ todo
@@ -802,7 +710,7 @@ p901            add     frames,#1
 
 
                  mov     ii, i_vborder wz
-                 if_z mov ii,a576     
+    
                  if_z jmp #p111
 
 up_border       call    #hsync
@@ -811,8 +719,8 @@ up_border       call    #hsync
 
 '' 480 active lines
 
-                mov     ii,i_lines
-p111            mov     linenum,#0
+p111            mov     ii,i_lines
+                mov     linenum,#0
 
 line1           mov     cursorpos2,cursorx
 
@@ -833,7 +741,8 @@ line1           mov     cursorpos2,cursorx
                 add     borderptr2,#4
                 shl     border,#8
 
-p102            cmp     m_border, #0 wz
+p102            getword t1,m_border,#0
+                cmp     t1, #0 wz
           if_nz xcont   m_border,border                 'display a left border
                 cmp     fontline,cursorsh wcz
           if_c  mov     cursorpos,#129
@@ -874,7 +783,8 @@ p102            cmp     m_border, #0 wz
 '' rep end ----------------------------------------------------------------------------
 
 
-p103            cmp m_border,#0 wz
+p103            getword t1,m_border,#0
+                cmp     t1, #0 wz
                 if_nz xcont   m_border,border                     'display a right border
 
                 add     linenum, #1
@@ -1015,11 +925,21 @@ repnum res 1
 
 dat
 orgh
-timingsxxt      long $70810000, $70810000, $70810000, $70810000, $70810000, $20880000 
-'before hsync, hsync, before visible, border/blankline, horiz.border, active, vertical border, up porch, vsync, down porch, mode, cpl, lines
-timings000      long   16,  80,  20,1024, 112,   8,  48,  16,  16,  16,  0, 100, 480,   354693878,   %1_110000__11_0110_1100__1111_1011,   0
+timingsxxt      long $70810000, $70810000, $70810000, $70810000, $70810000, $20880000 'streamer sets for text mode, to add to timings[0..5]
 
+'                     bf.hs, hs,  bf.vis  visible, lr bord, pixel, ud bord,  up p., vsync, down p., mode, cpl, scanlines,  clock,                  hubset                  reserved
+timings000      long   16,   80,    20,    1024,    112,     8,     48,      16,      16,    16,      0,  100,   480,     354693878,   %1_110000__11_0110_1100__1111_1011,   0
+timings064      long   18,   64,    16,     928,     24,     8,     24,      24,      32,    24,     64,  110,   496,     319215686,   %1_110010__11_0010_1101__1111_1011,   0
+timings128      long   16,   64,    16,     816,      8,     8,     8,       32,      64,    32,    128,  100,   480,     283750000,   %1_111111__11_1000_1011__1111_1011,   0
+timings192      long   16,   80,    20,    1024,      0,     8,     0,       16,      16,    16,    192,  128,   576,     354693878,   %1_110000__11_0110_1100__1111_1011,   0
+timings256      long   80,  160,    84,     816,      8,     8,     8,        8,      12,     8,    256,  100,   480,     357959184,   %1_110000__11_0110_0100__1111_1011,   0
+timings320      long   80,   50,    80,     816,      8,     8,     8,        8,      12,     8,    320,  100,   480,     322162162,   %1_100100__10_0101_0011__1111_1011,   0
+timings384      long   24,   48,    24,     816,      8,     8,     8,        8,      12,     8,    384,  100,   480,     286363636,   %1_010101__01_0011_1010__1111_1011,   0
+timings448      long   40,   64,    42,     880,      0,     8,     0,        8,      12,     8,    448,  110,   480,     322162162,   %1_100100__10_0101_0011__1111_1011,   0
+'timings448      long   40,   64,    42,     880,      0,     8,     0,        8,      12,     8,    448,  110,   496,     322162162,   %1_100100__10_0101_0011__1111_1011,   0
+'timings448      long   40,   64,    42,     880,      0,     8,     0,        8,      12,     8,    448,  110,   496,     322162162,   %1_100100__10_0101_0011__1111_1011,   0
 
+ 
 
 end             long 0
 {{
