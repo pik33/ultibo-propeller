@@ -1,6 +1,6 @@
 
 00000                 | 
-00000                 | #line 1 "D:/programowanie/20210307-ultibo-propeller/ultibo-propeller/Propeller/hn010.p2asm"
+00000                 | #line 1 "D:/Programowanie/ultibo-propeller/Propeller/hn010.p2asm"
 00000                 | ' 
 00000                 | ' 
 00000                 | ' hdmi_base       = 48             'must be a multiple of 8
@@ -71,48 +71,49 @@
 00400 000             | entry
 00400 000 00 F0 0F F2 | 	cmp	ptra, #0 wz
 00404 001 94 00 90 5D |  if_ne	jmp	#spininit
-00408 002 47 F0 03 F6 | 	mov	ptra, ptr_stackspace_
-0040c 003 14 EC 0F FB | 	rdlong	pa, #20 wz
-00410 004 6C 00 90 5D |  if_ne	jmp	#skip_clock_set_
-00414 005 00 00 64 FD | 	hubset	#0
-00418 006 04 80 80 FF 
-0041c 007 00 F0 67 FD | 	hubset	##16779768
-00420 008 86 01 80 FF 
-00424 009 1F 80 66 FD | 	waitx	##200000
-00428 00a 04 80 00 FF 
-0042c 00b FB ED 07 F6 | 	mov	pa, ##16779771
-00430 00c 00 EC 63 FD | 	hubset	pa
-00434 00d 18 EC 67 FC | 	wrlong	pa, #24
-00438 00e E1 F5 85 FF 
-0043c 00f 14 00 6C FC | 	wrlong	##200000000, #20
-00440 010 3C 00 90 FD | 	jmp	#skip_clock_set_
-00444 011 00 00 00 00 
+00408 002 45 F0 03 F6 | 	mov	ptra, objptr
+0040c 003 48 F1 07 F1 | 	add	ptra, #328
+00410 004 14 EC 0F FB | 	rdlong	pa, #20 wz
+00414 005 68 00 90 5D |  if_ne	jmp	#skip_clock_set_
+00418 006 00 00 64 FD | 	hubset	#0
+0041c 007 04 80 80 FF 
+00420 008 00 F0 67 FD | 	hubset	##16779768
+00424 009 86 01 80 FF 
+00428 00a 1F 80 66 FD | 	waitx	##200000
+0042c 00b 04 80 00 FF 
+00430 00c FB ED 07 F6 | 	mov	pa, ##16779771
+00434 00d 00 EC 63 FD | 	hubset	pa
+00438 00e 18 EC 67 FC | 	wrlong	pa, #24
+0043c 00f E1 F5 85 FF 
+00440 010 14 00 6C FC | 	wrlong	##200000000, #20
+00444 011 38 00 90 FD | 	jmp	#skip_clock_set_
+00448 012 00 00 00 00 
       ...             
 00478 01e 00 00 00 00 
 0047c 01f 00 00 00 00 | 	orgf	32
 00480 020             | skip_clock_set_
 00480 020 04 88 60 FD | 	locknew	__lockreg
 00484 021 46 88 60 FC | 	wrlong	__lockreg, ptr___lockreg_
-00488 022 24 05 A0 FD | 	call	#_dummy2
+00488 022 20 05 A0 FD | 	call	#_dummy2
 0048c 023             | cogexit
 0048c 023 38 01 80 FF 
 00490 024 1F 00 66 FD | 	waitx	##160000
-00494 025 01 92 60 FD | 	cogid	arg01
-00498 026 03 92 60 FD | 	cogstop	arg01
+00494 025 01 90 60 FD | 	cogid	arg01
+00498 026 03 90 60 FD | 	cogstop	arg01
 0049c 027             | spininit
 0049c 027 00 8B 04 FB | 	rdlong	objptr, ptra
 004a0 028 04 F0 07 F1 | 	add	ptra, #4
-004a4 029 00 91 04 FB | 	rdlong	result1, ptra
+004a4 029 00 8F 04 FB | 	rdlong	result1, ptra
 004a8 02a 04 F0 07 F1 | 	add	ptra, #4
-004ac 02b 00 93 04 FB | 	rdlong	arg01, ptra
+004ac 02b 00 91 04 FB | 	rdlong	arg01, ptra
 004b0 02c 04 F0 07 F1 | 	add	ptra, #4
-004b4 02d 00 95 04 FB | 	rdlong	arg02, ptra
+004b4 02d 00 93 04 FB | 	rdlong	arg02, ptra
 004b8 02e 04 F0 07 F1 | 	add	ptra, #4
-004bc 02f 00 97 04 FB | 	rdlong	arg03, ptra
+004bc 02f 00 95 04 FB | 	rdlong	arg03, ptra
 004c0 030 04 F0 07 F1 | 	add	ptra, #4
-004c4 031 00 99 04 FB | 	rdlong	arg04, ptra
+004c4 031 00 97 04 FB | 	rdlong	arg04, ptra
 004c8 032 10 F0 87 F1 | 	sub	ptra, #16
-004cc 033 2D 90 60 FD | 	call	result1
+004cc 033 2D 8E 60 FD | 	call	result1
 004d0 034 B8 FF 9F FD | 	jmp	#cogexit
 004d4 035             | FCACHE_LOAD_
 004d4 035 2B 86 60 FD |     pop	fcache_tmpb_
@@ -137,42 +138,35 @@
 00510 044             | __lockreg
 00510 044 00 00 00 00 | 	long	0
 00514 045             | objptr
-00514 045 2C 05 00 00 | 	long	@objmem
+00514 045 28 05 00 00 | 	long	@objmem
 00518 046             | ptr___lockreg_
 00518 046 10 05 00 00 | 	long	@__lockreg
-0051c 047             | ptr_stackspace_
-0051c 047 48 06 00 00 | 	long	@stackspace
-00520 048             | result1
-00520 048 00 00 00 00 | 	long	0
-00524 049             | COG_BSS_START
-00524 049             | 	fit	480
-00524                 | 	orgh
-00524                 | hubentry
-00524                 | 
-00524                 | ' 
-00524                 | ' {{
-00524                 | ' }}
-00524                 | ' 
-00524                 | ' pub dummy2()
-00524                 | _dummy2
-00524                 | _dummy2_ret
-00524     2D 00 64 FD | 	ret
-00528                 | hubexit
-00528     23 00 80 FD | 	jmp	#cogexit
-0052c                 | objmem
-0052c     00 00 00 00 
-      ...             
-00640     00 00 00 00 
-00644     00 00 00 00 | 	long	0[71]
-00648                 | stackspace
-00648     00 00 00 00 | 	long	0[1]
-0064c 049             | 	org	COG_BSS_START
-0064c 049             | arg01
-0064c 049             | 	res	1
-0064c 04a             | arg02
-0064c 04a             | 	res	1
-0064c 04b             | arg03
-0064c 04b             | 	res	1
-0064c 04c             | arg04
-0064c 04c             | 	res	1
-0064c 04d             | 	fit	480
+0051c 047             | result1
+0051c 047 00 00 00 00 | 	long	0
+00520 048             | COG_BSS_START
+00520 048             | 	fit	480
+00520                 | 	orgh
+00520                 | hubentry
+00520                 | 
+00520                 | ' 
+00520                 | ' {{ timings
+00520                 | ' }}
+00520                 | ' 
+00520                 | ' pub dummy2()
+00520                 | _dummy2
+00520                 | _dummy2_ret
+00520     2D 00 64 FD | 	ret
+00524                 | hubexit
+00524     23 00 80 FD | 	jmp	#cogexit
+00528                 | objmem
+00528     00 00 00 00 | 	long	0[1]
+0052c 048             | 	org	COG_BSS_START
+0052c 048             | arg01
+0052c 048             | 	res	1
+0052c 049             | arg02
+0052c 049             | 	res	1
+0052c 04a             | arg03
+0052c 04a             | 	res	1
+0052c 04b             | arg04
+0052c 04b             | 	res	1
+0052c 04c             | 	fit	480

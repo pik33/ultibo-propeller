@@ -64,7 +64,8 @@ dat
 entry
 	cmp	ptra, #0 wz
  if_ne	jmp	#spininit
-	mov	ptra, ptr_stackspace_
+	mov	ptra, objptr
+	add	ptra, #328
 	rdlong	pa, #20 wz
  if_ne	jmp	#skip_clock_set_
 	hubset	#0
@@ -125,8 +126,6 @@ objptr
 	long	@objmem
 ptr___lockreg_
 	long	@__lockreg
-ptr_stackspace_
-	long	@stackspace
 result1
 	long	0
 COG_BSS_START
@@ -135,7 +134,7 @@ COG_BSS_START
 hubentry
 
 ' 
-' {{
+' {{ timings
 ' }}
 ' 
 ' pub dummy2()
@@ -145,8 +144,6 @@ _dummy2_ret
 hubexit
 	jmp	#cogexit
 objmem
-	long	0[71]
-stackspace
 	long	0[1]
 	org	COG_BSS_START
 arg01

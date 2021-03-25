@@ -67,14 +67,15 @@ long write_background
 byte colors[16]
 long vblank
 byte n_string[12]  ' string buffer for inttostr and hextostr
-long timings[11]
+long timings[16]
 long cpl           'char/pixels per line
 long lines
 long cmd1
 long cmd2
 long fontnum
+long streamer[6]
 
-{{
+{{ timings
 m_bs        - before sync,             16      80
 m_sn        - sync                     80     160
 m_bv        - before visible           20      84
@@ -85,6 +86,9 @@ i_vborder   - up and down border       48       8
 i_upporch   - up non visible           16       8
 i_vsync     - vsync                    16      12
 i_downporch - down non visible         16       8
+mode
+cpl
+lines
 }}
 
 pub dummy2()
@@ -446,7 +450,7 @@ q:=@n_string
 return q
 
 
-pub setmode(mode)
+pub setmode(mode) | i
 
 
 buflen:=3000
@@ -455,30 +459,20 @@ lines:=30
 
 '' mode:nt_bb_cc_vv_hh
 '' hh - h.zoom, vv-v.zoom, cc-c.depth, 
-'' bb - borders/total pixels, 00-wide/1140, 01 medium/1026, 10 narrow/912, 11 no border, 1024 px PAL, 800 px NTSC
+'' bb - borders/total pixels, 00-wide/1140, 01 medium/1026, 10 narrow/912, 11 no border, 1024 px PAL, 880 px NTSC
 
-if (mode==0)
+'----------------
+if (mode==0)                                'PAL 50 Hz signaling 1140x624, active 800x480, 100x30 text, wide border, 2 colors per pixel, 00_00_00_00_00=0
+  longmove(@streamer,@timingsxxt,6)
+  longmove(@timings,@timings000,16)
+  repeat i from 0 to 5
+    timings[i]:=timings[i]+streamer[i]+hdmibase<<17
+  clkfreq:=timings[13]
+  hubset(timings[14])
+'---------------
 
-  timings[0]:= $70810000 + hdmi_base<<17 + 16          'before sync
-  timings[1]:= $70810000 + hdmi_base<<17 + 80          'sync
-  timings[2]:= $70810000 + hdmi_base<<17 + 20          'before visible
-  timings[3]:= $70810000 + hdmi_base<<17 + 1024        'visible 1024
-  timings[4]:= $70810000 + hdmi_base<<17 + 112         'immediate 112
-  timings[5]:= $20880000 + hdmi_base<<17 + 8           'imm+lut, 1 char
-  timings[6]:= 48
-  timings[7]:= 16
-  timings[8]:= 16
-  timings[9]:= 16
-  timings[10]:= 0
-
-  clkfreq:=354693878
-  org
-  hubset ##%1_110000__11_0110_1100__1111_1011     '49,877->48,876->110000_11_0110_1100
-  end
-
-
-if (mode==64)   ' 1026 px per line
-
+if (mode==64)                               'PAL 50 Hz signaling 1026x624, active 880x496, 110x32 text, medium border, 2 colors per pixel 00_01_00_00_00=64
+  
   timings[0]:= $70810000 + hdmi_base<<17 + 30          'before sync
   timings[1]:= $70810000 + hdmi_base<<17 + 80          'sync
   timings[2]:= $70810000 + hdmi_base<<17 + 20          'before visible
@@ -489,8 +483,28 @@ if (mode==64)   ' 1026 px per line
   timings[7]:= 32
   timings[8]:= 32
   timings[9]:= 32
+  timings[10]:=64
+  timings[11]:=100
+  timings[12]:=30
+  
+  
+  {  
+  
+  timings[0]:= $70810000 + hdmi_base<<17 + 18         'before sync
+  timings[1]:= $70810000 + hdmi_base<<17 + 64          'sync
+  timings[2]:= $70810000 + hdmi_base<<17 + 16          'before visible
+  timings[3]:= $70810000 + hdmi_base<<17 + 928         'visible 896
+  timings[4]:= $70810000 + hdmi_base<<17 + 24          'immediate 48
+  timings[5]:= $20880000 + hdmi_base<<17 + 8           'imm+lut, 1 char
+  timings[6]:= 16
+  timings[7]:= 32
+  timings[8]:= 32
+  timings[9]:= 32
   timings[10]:= 64
-
+  buflen:=3520
+  cpl:=110
+  lines:=32
+}
   clkfreq:=319215686
   org
   hubset ##%1_110010__11_0010_1101__1111_1011     '51,814->50,813->110010_11_0010_1101
@@ -529,6 +543,8 @@ if (mode==192) ' borderless 1024x576
   timings[8]:= 16
   timings[9]:= 16
   timings[10]:= 192
+  timings[11]:= 128
+  timings[12]:= 36
 
   clkfreq:=354693878
   org
@@ -637,6 +653,7 @@ pub start(mode,base):result | c1
 border_ptr:=@bordercolor
 font_ptr:=@st_font
 
+hdmibase:=base
 setmode(mode)
   
 buf_ptr:=$7C000-4*buflen    'todo: the buf ptr depends on mode
@@ -648,7 +665,7 @@ command_ptr:=@cmd1
 fontnum_ptr:=@fontnum
 
 fontnum:=2048  ' ST type font
-hdmibase:=base
+
 
 ' initialize a cursor
 
@@ -686,10 +703,17 @@ cog:=coginit(16,@hdmi, @buf_ptr)
 waitms(20)
 cls(c_green,c_black)
 setwritecolors(c_green,c_black)
-writeln(inttostr(mode))
-writeln(inttostr(cpl))
-writeln(inttohex(buf_ptr,8))
-waitvbl(1200)
+'writeln(inttostr(mode))
+'writeln(inttostr(cpl))
+'writeln(inttohex(buf_ptr,8))
+'write(string("Streamer[0], should be 70810000: "))
+writeln(inttohex(long[$50000],8))
+'writeln(inttohex(long[$40004],8))
+'writeln(inttohex(long[$40008],8))
+'writeln(inttohex(long[$4000c],8))
+writeln(inttohex(long[$50010],8))
+writeln(inttohex(timings[0],8))
+waitvbl(12000)
 return cog
 
 {{ todo
@@ -733,22 +757,21 @@ hdmi            setq    #9
                 mov     ii,#7
                 shl     ii,#6
                 add     ii,hbase
-                 drvl    ii                               ' #7<<6 + hdmi_base               'enable HDMI pins
-                 wrpin   ##%10110_1111_0111_10_00000_0, ii  '#7<<6 + hdmi_base      ' a '123 ohm BITDAC for pins
-         '       drvl    #7<<6 + 48              'enable HDMI pins
-          '      wrpin   ##%10110_1111_0111_10_00000_0, #7<<6 + 48     ' a '123 ohm BITDAC for pins
+                drvl    ii                               ' #7<<6 + hdmi_base               'enable HDMI pins
+                wrpin   ##%10110_1111_0111_10_00000_0, ii  '#7<<6 + hdmi_base      ' a '123 ohm BITDAC for pins
+
                 setxfrq ##$0CCCCCCC+1                   'set streamer freq to 1/10th clk (25 MHz)
 
 
 '' Blank lines before the frame
 
-p101            setq    #10
-                rdlong  m_bs,modeptr                    'read timings
-                testb   i_modenum,#16 wc
-         if_c   jmp #p200								' jump to graphics mode       
-p901                add     frames,#1
-                                rdlong  fontstart,fontnumptr
-                                add     fontstart,fontbuf
+p101            setq    #12
+                rdlong  m_bs,modeptr                     ' read timings
+                testb   i_modenum,#9 wc                  ' bit #8 set = graphics mode
+         if_c   jmp #p200								 ' jump to graphics mode       
+p901            add     frames,#1
+                  rdlong  fontstart,fontnumptr           ' todo: free byte in char buf = font select
+                  add     fontstart,fontbuf
                 rdlong  cursorx, cursorptr
                 getbyte cursory, cursorx,#1
                 getbyte cursorsh,cursorx,#2
@@ -788,7 +811,7 @@ up_border       call    #hsync
 
 '' 480 active lines
 
-                mov     ii,#480
+                mov     ii,i_lines
 p111            mov     linenum,#0
 
 line1           mov     cursorpos2,cursorx
@@ -798,56 +821,55 @@ line1           mov     cursorpos2,cursorx
                 mov     linestart,linenum
                 shr     linestart,#4
                 cmp     linestart,cursory wz
-         if_nz  mov     cursorpos2,#129
-                cmp m_border, #0 wz
-        if_nz        mul     linestart,#400
-        if_z         shl linestart,#9
+          if_nz mov     cursorpos2,#129
+                mul     linestart,i_cpl
+                shl     linestart,#2
                 add     framebuf2,linestart
                 call    #hsync
                 cmp     fontline,#0 wz
-         if_nz  jmp     #p102                          'if fontline >0, display it
+          if_nz jmp     #p102                          'if fontline >0, display it
 
                 rdlong  border,borderptr2
                 add     borderptr2,#4
                 shl     border,#8
 
-p102            cmp m_border, #0 wz
-       if_nz    xcont   m_border,border                 'display a left border
-       if_z     mov repnum,#128
-       if_nz    mov repnum, #100
+p102            cmp     m_border, #0 wz
+          if_nz xcont   m_border,border                 'display a left border
                 cmp     fontline,cursorsh wcz
-         if_c   mov     cursorpos,#129
-        if_nc   mov     cursorpos,cursorpos2
+          if_c  mov     cursorpos,#129
+         if_nc  mov     cursorpos,cursorpos2
                 add     cursorpos,#1
                 mov     t2,fontstart
                 add     t2,fontline
-                rep     @p103,repnum                      'display 100 chars
+                rep     @p103,i_cpl                      'display cpl chars
 ''---------------------------------------------------------------------------------------
-                        rdlong  char,framebuf2                                                      '2
-                        getbyte backcolor,char,#2                                                   '4
-                        getbyte charcolor,char,#3                                                   '6
-                        getbyte char,char, #0                                                       '8
-                        add     framebuf2,#4                                                        '10
-                        shl     char,#4                                                             '12
-                        add     char,t2                                                             '14
-                        rdbyte  t1,char                                                             '16
-                        sub     cursorpos,#1 wz                                                     '18
-                if_z    xor     t1, #$FF                                                            '20
+                        rdlong  char,framebuf2                                                      '1
+                        getbyte backcolor,char,#2                                                   '2
+                        getbyte charcolor,char,#3                                                   '3
+                        getbyte char,char, #0                                                       '4
+                        add     framebuf2,#4                                                        '5
+                        shl     char,#4                                                             '6
+                        add     char,t2                                                             '7
+                        rdbyte  t1,char                                                             '8
+                        sub     cursorpos,#1 wz                                                     '9
+                if_z    xor     t1, #$FF                                                            '10
 
+                        mergeb  t1																	'11
+                        xcont   m_lut1,t1                                                           '12
 
-                        mergeb  t1
-                        xcont   m_lut1,t1                                                           '22
+                        rdlut   t1,backcolor                                                        '13
+                        wrlut   t1,lutaddr                                                          '14
+                        add     lutaddr,#1                                                          '15
 
-                        rdlut   t1,backcolor                                                        '25
-                        wrlut   t1,lutaddr                                                          '28
-                        add     lutaddr,#1                                                          '30
+                        rdlut   t1,charcolor                                                        '16
+                        wrlut   t1,lutaddr                                                          '17
+                        sub     lutaddr,#1                                                          '18
 
-                        rdlut   t1,charcolor                                                        '33
-                        wrlut   t1,lutaddr                                                          '46
-                        sub     lutaddr,#1                                                          '38
-
-                        xor     m_lut1,a00010000                                                    '40
-                        xor     lutaddr,#32                                                         '42    .....    38 left
+                        xor     m_lut1,a00010000                                                    '19
+                        xor     lutaddr,#32                                                         '20
+           
+' 8 nops left      
+    
 
 '' rep end ----------------------------------------------------------------------------
 
@@ -944,6 +966,8 @@ i_upporch       long    16
 i_vsync         long    16
 i_downporch     long    16
 i_modenum       long    0
+i_cpl		    long    0
+i_lines         long    0
 
 linestart       long    0
 linenum         long    0
@@ -990,6 +1014,13 @@ repnum res 1
                 fit     496                     '
 
 dat
+orgh
+timingsxxt      long $70810000, $70810000, $70810000, $70810000, $70810000, $20880000 
+'before hsync, hsync, before visible, border/blankline, horiz.border, active, vertical border, up porch, vsync, down porch, mode, cpl, lines
+timings000      long   16,  80,  20,1024, 112,   8,  48,  16,  16,  16,  0, 100, 480,   354693878,   %1_110000__11_0110_1100__1111_1011,   0
+
+
+
 end             long 0
 {{
 ------------ MIT License ---------------
