@@ -1,0 +1,5322 @@
+' 
+' _clkfreq        = 200000000      'start safe, hubset will do the rest
+con
+	_clkfreq = 200000000
+' hdmi_base       = 48             'must be a multiple of 8
+	hdmi_base = 48
+dat
+	nop
+	cogid	pa
+	coginit	pa,##$400
+	orgh	$10
+	long	0	'reserved
+	long	0 ' clock frequency: will default to 200000000
+	long	0 ' clock mode: will default to $10009fb
+	orgh	$400
+	org	0
+entry
+	cmp	ptra, #0 wz
+ if_ne	jmp	#spininit
+	mov	ptra, objptr
+	add	ptra, #488
+	rdlong	pa, #20 wz
+ if_ne	jmp	#skip_clock_set_
+	hubset	#0
+	hubset	##16779768
+	waitx	##200000
+	mov	pa, ##16779771
+	hubset	pa
+	wrlong	pa, #24
+	wrlong	##200000000, #20
+	jmp	#skip_clock_set_
+	orgf	32
+skip_clock_set_
+	locknew	__lockreg
+	wrlong	__lockreg, ptr___lockreg_
+	call	#_demo
+cogexit
+	waitx	##160000
+	cogid	arg01
+	cogstop	arg01
+spininit
+	rdlong	objptr, ptra
+	add	ptra, #4
+	rdlong	result1, ptra
+	add	ptra, #4
+	rdlong	arg01, ptra
+	add	ptra, #4
+	rdlong	arg02, ptra
+	add	ptra, #4
+	rdlong	arg03, ptra
+	add	ptra, #4
+	rdlong	arg04, ptra
+	sub	ptra, #16
+	call	result1
+	jmp	#cogexit
+FCACHE_LOAD_
+    pop	fcache_tmpb_
+    add	fcache_tmpb_, pa
+    push	fcache_tmpb_
+    sub	fcache_tmpb_, pa
+    shr	pa, #2
+    mov	fcache_tmpa_, pa
+    add	fcache_tmpa_, #$100
+    wrlut ret_instr_, fcache_tmpa_
+    sub	pa, #1
+    setq2	pa
+    rdlong	$100-0, fcache_tmpb_
+    jmp	#\$300 ' jmp to cache
+ret_instr_
+    ret
+fcache_tmpa_
+    long 0
+fcache_tmpb_
+    long 0
+COUNT_
+    long 0
+RETADDR_
+    long 0
+fp
+    long 0
+gosub_
+    mov  COUNT_, #0
+    mov  pa, arg01
+    pop  RETADDR_
+    jmp  #pushregs_done_
+pushregs_
+    pop  pa
+    pop  RETADDR_
+    tjz  COUNT_, #pushregs_done_
+    sub  COUNT_, #1
+    setq COUNT_
+    wrlong local01, ptra
+    add  COUNT_, #1
+pushregs_done_
+    shl  COUNT_, #2
+    add  ptra, COUNT_
+    shr  COUNT_, #2
+    setq #2 ' push 3 registers starting at COUNT_
+    wrlong COUNT_, ptra
+    add    ptra, #12
+    mov    fp, ptra
+    jmp  pa
+ popregs_
+    pop    pa
+    sub    ptra, #12
+    setq   #2
+    rdlong COUNT_, ptra
+    tjz    COUNT_, #popregs__ret
+    shl    COUNT_, #2
+    sub    ptra, COUNT_
+    shr    COUNT_, #2
+    sub    COUNT_, #1
+    setq   COUNT_
+    rdlong local01, ptra
+popregs__ret
+    push   RETADDR_
+    jmp    pa
+
+unsdivide_
+       setq    #0
+       qdiv    muldiva_, muldivb_
+       getqx   muldivb_
+ _ret_ getqy   muldiva_
+
+divide_
+       abs     muldiva_,muldiva_     wc       'abs(x)
+       muxc    itmp2_,#%11                    'store sign of x
+       abs     muldivb_,muldivb_     wcz      'abs(y)
+ if_c  xor     itmp2_,#%10                    'store sign of y
+ if_z  ret
+       call    #unsdivide_
+       test    itmp2_,#1        wc       'restore sign, remainder
+       negc    muldiva_,muldiva_ 
+       test    itmp2_,#%10      wc       'restore sign, division result
+ _ret_ negc    muldivb_,muldivb_
+
+__lockreg
+	long	0
+itmp1_
+	long	0
+itmp2_
+	long	0
+objptr
+	long	@objmem
+ptr___lockreg_
+	long	@__lockreg
+ptr__dat__
+	long	@_dat_
+ptr__hng012_dat__
+	long	@_hng012_dat_
+result1
+	long	0
+COG_BSS_START
+	fit	480
+	orgh
+hubentry
+
+' 
+' pub demo() | random,  j, k, s1,s2,s3,s4,s5,s6,s7,s8
+_demo
+	mov	COUNT_, #68
+	call	#pushregs_
+' 
+' s1:=string("A HDMI Nostalgic text driver demo")
+	mov	local01, ##@LR__0156
+' s2:=string("It uses 8x16 font")
+' s3:=string("Every character has its own foreground and background color")
+	mov	local02, ##@LR__0158
+' s4:=string("Every line has its own border color")
+	mov	local03, ##@LR__0159
+' s5:=string("The hub RAM is used for the color buffer")
+	mov	local04, ##@LR__0160
+' s6:=string("You can set colors for all the screen using one function call")
+	mov	local05, ##@LR__0161
+' s7:=string("You can set border color for all the screen using one function call, too")
+	mov	local06, ##@LR__0162
+' s8:=string("1234567890")
+' 
+' 
+' 
+' v.start(448,hdmi_base)
+	mov	arg01, #448
+	mov	arg02, #48
+	add	objptr, #180
+	mov	local07, objptr
+' 
+' ' initialize pointers and variables
+' 
+' border_ptr:=@bordercolor
+	sub	objptr, #36
+	wrlong	local07, objptr
+	mov	local08, ptr__hng012_dat__
+' font_ptr:=@vga_font
+	sub	objptr, #4
+	wrlong	local08, objptr
+' hdmibase:=base
+	add	objptr, #32
+	wrlong	#48, objptr
+	sub	objptr, #36
+' 
+' ' the mode has to be set here to enable computing the buffer length
+' 
+' setmode(mode)
+	call	#_hng012_setmode
+	add	objptr, #212
+	mov	local09, objptr
+' 
+' 
+' 
+' vblank_ptr:=@vblank
+	sub	objptr, #200
+	wrlong	local09, objptr
+	add	objptr, #188
+	mov	local10, objptr
+' cursor_ptr:=@cursor_x
+	sub	objptr, #184
+	wrlong	local10, objptr
+	add	ptr__hng012_dat__, ##6144
+' 
+' palette_ptr:=@ataripalette
+	add	objptr, #8
+	wrlong	ptr__hng012_dat__, objptr
+	add	objptr, #276
+	mov	local11, objptr
+' command_ptr:=@cmd1
+	sub	objptr, #272
+	wrlong	local11, objptr
+	add	objptr, #280
+	mov	local12, objptr
+' fontnum_ptr:=@fontnum
+	sub	objptr, #276
+	wrlong	local12, objptr
+' 
+' fontnum:=0  ' PC type font ' TODO: font# in buffer byte #1
+	add	objptr, #276
+	wrlong	#0, objptr
+	add	objptr, #28
+	mov	arg01, objptr
+	sub	objptr, #336
+	add	ptr__hng012_dat__, ##1560
+	mov	arg02, ptr__hng012_dat__
+	sub	ptr__hng012_dat__, ##7704
+' bytemove(@colors,@vgacolors,16)
+	mov	arg03, #16
+	call	#__system__bytemove
+' 
+' ' initialize a cursor
+' 
+' cursor_x:=0
+	add	objptr, #200
+	wrbyte	#0, objptr
+' cursor_y:=0
+	add	objptr, #1
+	wrbyte	#0, objptr
+' cursor_sh:=14
+	add	objptr, #1
+	wrbyte	#14, objptr
+' 
+' cmd1:=257 ' set command idle
+	add	objptr, #98
+	wrlong	#257, objptr
+	sub	objptr, #300
+' 
+' ' start the cog
+' 
+' cog:=coginit(16,@hdmi, @buf_ptr)
+	add	ptr__hng012_dat__, ##7720
+	mov	arg02, ptr__hng012_dat__
+	sub	ptr__hng012_dat__, ##7720
+	mov	arg03, objptr
+	mov	arg01, #16
+	setq	arg03
+	coginit	arg01, arg02 wc
+ if_b	neg	arg01, #1
+	mov	result1, arg01
+	mov	local13, result1
+	add	objptr, #40
+	wrlong	local13, objptr
+	sub	objptr, #40
+' waitms(20)
+	mov	local14, #20
+	rdlong	local15, #20
+	loc	pa,	#(@LR__0002-@LR__0001)
+	call	#FCACHE_LOAD_
+LR__0001
+	cmps	local14, ##1000 wcz
+ if_a	waitx	local15
+ if_a	sub	local14, ##1000
+ if_a	jmp	#LR__0001
+LR__0002
+	cmps	local14, #0 wcz
+ if_be	jmp	#LR__0003
+	mov	muldiva_, local15
+	mov	muldivb_, ##1000
+	call	#divide_
+	qmul	local14, muldivb_
+	getqx	arg01
+	waitx	arg01
+LR__0003
+' 
+' ' clear the screen and set the colors to green on black
+' 
+' cls(c_green,c_black)
+	mov	arg01, #199
+	mov	arg02, #0
+	call	#_hng012_cls
+' setbordercolors(0,0,0)
+	mov	arg01, #0
+	mov	arg02, #0
+	mov	arg03, #0
+	call	#_hng012_setbordercolors
+' setwritecolors(c_green,c_black)
+' 
+' 
+' write_color:=ff
+	add	objptr, #204
+	wrlong	#199, objptr
+' write_background:=bb
+	add	objptr, #4
+	wrlong	#0, objptr
+' 
+' return cog
+	sub	objptr, #168
+	rdlong	result1, objptr
+	sub	objptr, #176
+' 
+' j:=0
+' 
+' repeat
+LR__0004
+' 
+'   v.cls(v.c_green,v.c_black)
+	mov	arg01, #199
+	mov	arg02, #0
+	add	objptr, #136
+	call	#_hng012_cls
+'   v.waitvbl(60)
+	mov	arg01, #60
+	call	#_hng012_waitvbl
+' 
+'   v.writeln(string("P2 Retromachine DOS v. 0.00"))
+	mov	arg01, ##@LR__0164
+	call	#_hng012_writeln
+'   v.waitvbl(120)
+	mov	arg01, #120
+	call	#_hng012_waitvbl
+'   v.crlf()
+	call	#_hng012_crlf
+'   v.writeln(string("This is a demonstration of HDMI 'nostalgic' text driver"))
+	mov	arg01, ##@LR__0165
+	call	#_hng012_writeln
+'   v.waitvbl(120)
+	mov	arg01, #120
+	call	#_hng012_waitvbl
+'   v.crlf()
+	call	#_hng012_crlf
+'   v.writeln(string("The driver is based on PAL/NTSC non-interlaced timings..."))
+	mov	arg01, ##@LR__0166
+	call	#_hng012_writeln
+'   v.waitvbl(60)
+	mov	arg01, #60
+	call	#_hng012_waitvbl
+'   v.writeln(string("...generating 524 lines at 60 Hz or 624 lines at 50 Hz"))
+	mov	arg01, ##@LR__0167
+	call	#_hng012_writeln
+'   v.writeln(string("The P2 clock is based on PAL/NTSC color carrier frequency multiplied by a constant"))
+	mov	arg01, ##@LR__0168
+	call	#_hng012_writeln
+'   v.waitvbl(120)
+	mov	arg01, #120
+	call	#_hng012_waitvbl
+'   v.crlf()
+	call	#_hng012_crlf
+'   v.write(string("The driver fits in "))
+	mov	arg01, ##@LR__0169
+	call	#_hng012_write
+'   v.write(v.inttostr(long[0]))
+	rdlong	arg01, #0
+	call	#_hng012_inttostr
+	mov	arg01, result1
+	call	#_hng012_write
+'   v.writeln (string(" longs."))
+	mov	arg01, ##@LR__0170
+	call	#_hng012_writeln
+'   v.waitvbl(120)
+	mov	arg01, #120
+	call	#_hng012_waitvbl
+'   v.writeln(string("We have 8 modes available:"))
+	mov	arg01, ##@LR__0171
+	call	#_hng012_writeln
+'   v.waitvbl(60)
+	mov	arg01, #60
+	call	#_hng012_waitvbl
+'   v.writeln(string("- mode 0:   PAL  50 Hz signaling 1140x624, active  800x480, 100x30 text, wide border,   354_693_878 Hz"))
+	mov	arg01, ##@LR__0172
+	call	#_hng012_writeln
+'   v.writeln(string("- mode 64:  PAL  50 Hz signaling 1026x624, active  880x496, 110x31 text, medium border, 319_215_686 Hz"))
+	mov	arg01, ##@LR__0173
+	call	#_hng012_writeln
+'   v.writeln(string("- mode 128: PAL  50 Hz signaling  912x624, active  800x480, 100x30 text, narrow border, 283_750_000 Hz"))
+	mov	arg01, ##@LR__0174
+	call	#_hng012_writeln
+'   v.writeln(string("- mode 192: PAL  50 Hz signaling 1140x624, active 1024x576, 128x36 text, borderless,    354_693_878 Hz"))
+	mov	arg01, ##@LR__0175
+	call	#_hng012_writeln
+'   v.writeln(string("- mode 256: NTSC 60 Hz signaling 1140x624, active  800x480, 100x30 text, narrow border, 357_959_184 Hz"))
+	mov	arg01, ##@LR__0176
+	call	#_hng012_writeln
+'   v.writeln(string("- mode 320: NTSC 60 Hz signaling 1026x624, active  800x480, 100x30 text, narrow border, 322_162_162 Hz"))
+	mov	arg01, ##@LR__0177
+	call	#_hng012_writeln
+'   v.writeln(string("- mode 384: NTSC 60 Hz signaling  912x624, active  800x480, 100x30 text, narrow border, 286_363_636 Hz"))
+	mov	arg01, ##@LR__0178
+	call	#_hng012_writeln
+'   v.writeln(string("- mode 448: NTSC 60 Hz signaling 1026x624, active  880x496, 110x31 text, borderless,    322_162_162 Hz"))
+	mov	arg01, ##@LR__0179
+	call	#_hng012_writeln
+'   v.waitvbl(60)
+	mov	arg01, #60
+	call	#_hng012_waitvbl
+'   v.crlf()
+	call	#_hng012_crlf
+'   v.writeln(string("We are in the mode 448 now"))
+	mov	arg01, ##@LR__0180
+	call	#_hng012_writeln
+'   v.writeln(string("It is the safest mode to start, the P2 is clocked at 322 MHz and the refresh rate is 60 Hz"))
+	mov	arg01, ##@LR__0181
+	call	#_hng012_writeln
+'   v.waitvbl(60)
+	mov	arg01, #60
+	call	#_hng012_waitvbl
+'   v.writeln(string(" "))
+	mov	arg01, ##@LR__0182
+	call	#_hng012_writeln
+'   v.writeln(string("This is MS-DOS like 8x16 font style..."))
+	mov	arg01, ##@LR__0183
+	call	#_hng012_writeln
+'   v.writeln(string(" "))
+	mov	arg01, ##@LR__0184
+	call	#_hng012_writeln
+'   v.write(string("C:\>"))
+	mov	arg01, ##@LR__0185
+	call	#_hng012_write
+'   v.waitvbl(600)
+	mov	arg01, ##600
+	call	#_hng012_waitvbl
+'   v.writeln(string("showfont "))
+	mov	arg01, ##@LR__0186
+	call	#_hng012_writeln
+'   v.waitvbl(60)
+	mov	arg01, #60
+	call	#_hng012_waitvbl
+'   v.writeln(string(" "))
+	mov	arg01, ##@LR__0187
+	call	#_hng012_writeln
+' 
+' 
+'   v.crlf()
+	call	#_hng012_crlf
+	sub	objptr, #136
+	mov	local16, #0
+	mov	local17, #16
+LR__0005
+'     v.write(string("        "))
+	mov	arg01, ##@LR__0188
+	add	objptr, #136
+	call	#_hng012_write
+	sub	objptr, #4
+	wrlong	#0, objptr
+	sub	objptr, #132
+LR__0006
+	mov	local18, local16
+	add	objptr, #132
+	rdlong	local19, objptr
+	sub	objptr, #132
+	add	local18, local19
+'       teststring[0]:=16*j+i
+	wrbyte	local18, objptr
+'       if (16*j+i)==0
+	mov	local20, local16
+	add	objptr, #132
+	rdlong	local19, objptr
+	sub	objptr, #132
+	add	local20, local19 wz
+'         teststring[0]:=32
+ if_e	wrbyte	#32, objptr
+'       teststring[1]:=0
+	add	objptr, #1
+	wrbyte	#0, objptr
+	mov	arg01, local16
+	add	objptr, #131
+	rdlong	local19, objptr
+	add	arg01, local19
+'       v.write(v.inttohex(16*j+i,2))
+	mov	arg02, #2
+	add	objptr, #4
+	call	#_hng012_inttohex
+	mov	arg01, result1
+	call	#_hng012_write
+'       v.write(string(" "))
+	mov	arg01, ##@LR__0189
+	call	#_hng012_write
+	sub	objptr, #136
+'       v.write(@teststring)
+	mov	arg01, objptr
+	add	objptr, #136
+	call	#_hng012_write
+'       v.write(string(","))
+	mov	arg01, ##@LR__0190
+	call	#_hng012_write
+	sub	objptr, #4
+	rdlong	local20, objptr
+	add	local20, #1
+	wrlong	local20, objptr
+	sub	objptr, #132
+	cmps	local20, #16 wcz
+ if_b	jmp	#LR__0006
+'     v.crlf()
+	add	objptr, #136
+	call	#_hng012_crlf
+'     v.waitvbl(1)
+	mov	arg01, #1
+	call	#_hng012_waitvbl
+	sub	objptr, #136
+	add	local16, #16
+	djnz	local17, #LR__0005
+'   v.crlf()
+	add	objptr, #136
+	call	#_hng012_crlf
+'   v.crlf()
+	call	#_hng012_crlf
+'   v.write(string("C:\>"))
+	mov	arg01, ##@LR__0191
+	call	#_hng012_write
+' 
+' 
+'   v.waitvbl(600)
+	mov	arg01, ##600
+	call	#_hng012_waitvbl
+'   v.write(string("mode 0"))
+	mov	arg01, ##@LR__0192
+	call	#_hng012_write
+'   v.waitvbl(60)
+	mov	arg01, #60
+	call	#_hng012_waitvbl
+' 
+'   v.setmode(0)
+	mov	arg01, #0
+	call	#_hng012_setmode
+'   v.defchar(0,2,0,255,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+	mov	arg01, #0
+	mov	arg03, #0
+	mov	arg04, #255
+	mov	arg05, #0
+	mov	arg06, #0
+	mov	arg07, #0
+	mov	arg08, #0
+	mov	arg09, #0
+	mov	arg10, #0
+	mov	arg11, #0
+	mov	arg12, #0
+	mov	arg13, #0
+	mov	arg14, #0
+	mov	arg15, #0
+	mov	arg16, #0
+	mov	arg17, #0
+	mov	arg18, #0
+	add	ptr__hng012_dat__, ##4096
+	mov	result1, ptr__hng012_dat__
+	sub	ptr__hng012_dat__, ##4096
+	add	result1, #32
+' 
+' s:=@st_font+fn+ch*16
+' byte[s+00]:=b0
+	wrbyte	#0, result1
+	mov	local21, result1
+	add	local21, #1
+' byte[s+01]:=b1
+	wrbyte	#255, local21
+	mov	local22, result1
+	add	local22, #2
+' byte[s+02]:=b2
+	wrbyte	#0, local22
+	mov	local23, result1
+	add	local23, #3
+' byte[s+03]:=b3
+	wrbyte	#0, local23
+	mov	local24, result1
+	add	local24, #4
+' byte[s+04]:=b4
+	wrbyte	#0, local24
+	mov	local25, result1
+	add	local25, #5
+' byte[s+05]:=b5
+	wrbyte	#0, local25
+	mov	local26, result1
+	add	local26, #6
+' byte[s+06]:=b6
+	wrbyte	#0, local26
+	mov	local27, result1
+	add	local27, #7
+' byte[s+07]:=b7
+	wrbyte	#0, local27
+	mov	local28, result1
+	add	local28, #8
+' byte[s+08]:=b8
+	wrbyte	#0, local28
+	mov	local29, result1
+	add	local29, #9
+' byte[s+09]:=b9
+	wrbyte	#0, local29
+	mov	local30, result1
+	add	local30, #10
+' byte[s+10]:=b10
+	wrbyte	#0, local30
+	mov	local31, result1
+	add	local31, #11
+' byte[s+11]:=b11
+	wrbyte	#0, local31
+	mov	local32, result1
+	add	local32, #12
+' byte[s+12]:=b12
+	wrbyte	#0, local32
+	mov	local33, result1
+	add	local33, #13
+' byte[s+13]:=b13
+	wrbyte	#0, local33
+	mov	local34, result1
+	add	local34, #14
+' byte[s+14]:=b14
+	wrbyte	#0, local34
+	mov	local35, result1
+	add	local35, #15
+' byte[s+15]:=b15
+	wrbyte	#0, local35
+'   v.setfontnum(4096)
+	decod	arg01, #12
+' 
+' fontnum:=afontnum
+	add	objptr, #308
+	wrlong	arg01, objptr
+	sub	objptr, #308
+' 
+'   v.cls(0,15)
+	mov	arg01, #0
+	mov	arg02, #15
+	call	#_hng012_cls
+'   v.setbordercolors(0,0,0)
+	mov	arg01, #0
+	mov	arg02, #0
+	mov	arg03, #0
+	call	#_hng012_setbordercolors
+'   v.cursoroff()
+' 
+' ''---------- Switch the cursor off
+' 
+' cursor_sh-=16
+	add	objptr, #202
+	rdbyte	local36, objptr
+	sub	local36, #16
+	wrbyte	local36, objptr
+	sub	objptr, #202
+'   v.outtextxy(0,0,string(" File  Options  View  Special"))
+	mov	arg03, ##@LR__0193
+	mov	arg01, #0
+	mov	arg02, #0
+	call	#_hng012_outtextxy
+	sub	objptr, #136
+	mov	local37, objptr
+	add	objptr, #132
+	wrlong	#0, objptr
+	sub	objptr, #132
+	loc	pa,	#(@LR__0008-@LR__0007)
+	call	#FCACHE_LOAD_
+LR__0007
+'     teststring[i]:=2
+	wrbyte	#2, local37
+	add	objptr, #132
+	rdlong	local20, objptr
+	add	local20, #1
+	wrlong	local20, objptr
+	add	local37, #1
+	sub	objptr, #132
+	cmps	local20, #100 wcz
+ if_b	jmp	#LR__0007
+LR__0008
+'   teststring[100]:=0
+	add	objptr, #100
+	wrbyte	#0, objptr
+	sub	objptr, #100
+'   v.outtextxy(0,1,@teststring)
+	mov	arg01, #0
+	mov	arg02, #1
+	mov	arg03, objptr
+	add	objptr, #136
+	call	#_hng012_outtextxy
+	sub	objptr, #136
+'   teststring[0]:=10
+	wrbyte	#10, objptr
+	add	objptr, #1
+	mov	local38, objptr
+	add	objptr, #131
+	wrlong	#1, objptr
+	sub	objptr, #132
+	loc	pa,	#(@LR__0010-@LR__0009)
+	call	#FCACHE_LOAD_
+LR__0009
+'     teststring[i]:=3
+	wrbyte	#3, local38
+	add	objptr, #132
+	rdlong	local20, objptr
+	add	local20, #1
+	wrlong	local20, objptr
+	add	local38, #1
+	sub	objptr, #132
+	cmps	local20, #81 wcz
+ if_b	jmp	#LR__0009
+LR__0010
+'   teststring[81]:=9
+	add	objptr, #81
+	wrbyte	#9, objptr
+'   teststring[82]:=0
+	add	objptr, #1
+	wrbyte	#0, objptr
+' 
+'   v.setcursorpos(8,5)
+	mov	arg02, #5
+' 
+' ''---------- Set the (x,y) position of cursor
+' 
+' cursor_x:=x
+	add	objptr, #254
+	wrbyte	#8, objptr
+' cursor_y:=y
+	add	objptr, #1
+	wrbyte	#5, objptr
+	sub	objptr, #337
+'   v.writeln(@teststring)
+	mov	arg01, objptr
+	add	objptr, #136
+	call	#_hng012_writeln
+	sub	objptr, #136
+	mov	local39, #0
+	mov	local17, #8
+LR__0011
+'     v.write(string("        "))
+	mov	arg01, ##@LR__0194
+	add	objptr, #136
+	call	#_hng012_write
+'     v.putchar(4)
+	mov	arg01, #4
+	call	#_hng012_putchar
+	sub	objptr, #4
+	wrlong	#0, objptr
+	sub	objptr, #132
+LR__0012
+	mov	local40, local39
+	add	objptr, #132
+	rdlong	local19, objptr
+	sub	objptr, #132
+	add	local40, local19
+'       teststring[0]:=16*j+i
+	wrbyte	local40, objptr
+'       if (16*j+i)==0
+	mov	local20, local39
+	add	objptr, #132
+	rdlong	local19, objptr
+	sub	objptr, #132
+	add	local20, local19 wz
+'         teststring[0]:=32
+ if_e	wrbyte	#32, objptr
+'       teststring[1]:=0
+	add	objptr, #1
+	wrbyte	#0, objptr
+	mov	arg01, local39
+	add	objptr, #131
+	rdlong	local19, objptr
+	add	arg01, local19
+'       v.write(v.inttohex(16*j+i,2))
+	mov	arg02, #2
+	add	objptr, #4
+	call	#_hng012_inttohex
+	mov	arg01, result1
+	call	#_hng012_write
+'       v.write(string(" "))
+	mov	arg01, ##@LR__0195
+	call	#_hng012_write
+	sub	objptr, #136
+'       v.write(@teststring)
+	mov	arg01, objptr
+	add	objptr, #136
+	call	#_hng012_write
+'       v.write(string(","))
+	mov	arg01, ##@LR__0196
+	call	#_hng012_write
+	sub	objptr, #4
+	rdlong	local20, objptr
+	add	local20, #1
+	wrlong	local20, objptr
+	sub	objptr, #132
+	cmps	local20, #16 wcz
+ if_b	jmp	#LR__0012
+'     v.putchar(4)
+	mov	arg01, #4
+	add	objptr, #136
+	call	#_hng012_putchar
+'     v.crlf()
+	call	#_hng012_crlf
+'     v.waitvbl(2)
+	mov	arg01, #2
+	call	#_hng012_waitvbl
+	sub	objptr, #136
+	add	local39, #16
+	djnz	local17, #LR__0011
+'   teststring[0]:=$C
+	wrbyte	#12, objptr
+	add	objptr, #1
+	mov	local41, objptr
+	add	objptr, #131
+	wrlong	#1, objptr
+	sub	objptr, #132
+	loc	pa,	#(@LR__0014-@LR__0013)
+	call	#FCACHE_LOAD_
+LR__0013
+'     teststring[i]:=3
+	wrbyte	#3, local41
+	add	objptr, #132
+	rdlong	local20, objptr
+	add	local20, #1
+	wrlong	local20, objptr
+	add	local41, #1
+	sub	objptr, #132
+	cmps	local20, #81 wcz
+ if_b	jmp	#LR__0013
+LR__0014
+'   teststring[81]:=$B
+	add	objptr, #81
+	wrbyte	#11, objptr
+'   teststring[82]:=0
+	add	objptr, #1
+	wrbyte	#0, objptr
+'   v.setcursorpos(8,14)
+	mov	arg02, #14
+' 
+' ''---------- Set the (x,y) position of cursor
+' 
+' cursor_x:=x
+	add	objptr, #254
+	wrbyte	#8, objptr
+' cursor_y:=y
+	add	objptr, #1
+	wrbyte	#14, objptr
+	sub	objptr, #337
+'   v.writeln(@teststring)
+	mov	arg01, objptr
+	add	objptr, #136
+	call	#_hng012_writeln
+' 
+'   v.writeln(string(" "))
+	mov	arg01, ##@LR__0197
+	call	#_hng012_writeln
+'   v.writeln(string("     ... but Atari ST-like mono font can also be used."))
+	mov	arg01, ##@LR__0198
+	call	#_hng012_writeln
+'   v.writeln(string("         We also switched the graphics mode to PAL like 50 Hz, 624 lines."))
+	mov	arg01, ##@LR__0199
+	call	#_hng012_writeln
+'   v.writeln(string(" "))
+	mov	arg01, ##@LR__0200
+	call	#_hng012_writeln
+'   v.setwritecolors(v.c_red,v.c_white)
+	mov	arg02, #15
+' 
+' 
+' write_color:=ff
+	add	objptr, #204
+	wrlong	#39, objptr
+' write_background:=bb
+	add	objptr, #4
+	wrlong	#15, objptr
+	sub	objptr, #208
+'   v.writeln(string("         Although the font is mono style, we are still in the color mode here."))
+	mov	arg01, ##@LR__0201
+	call	#_hng012_writeln
+' 
+' 
+' 
+'   v.waitvbl(1200)
+	mov	arg01, ##1200
+	call	#_hng012_waitvbl
+' 
+' '-----------------
+'   v.setfontnum(0)
+' 
+' fontnum:=afontnum
+	add	objptr, #308
+	wrlong	#0, objptr
+	sub	objptr, #308
+'   v.setscreencolors (151,145)
+	mov	arg01, #151
+	mov	arg02, #145
+	call	#_hng012_setscreencolors
+' 
+' 
+'   repeat i from 0 to 99
+	sub	objptr, #4
+	wrlong	#0, objptr
+	sub	objptr, #132
+LR__0015
+	mov	local42, #0
+	mov	local17, #0
+LR__0016
+	add	objptr, #132
+	rdlong	arg03, objptr
+	add	arg03, local42
+	and	arg03, #255
+'       v.putcharxy(i,j,(i+100*j) & $FF)
+	rdlong	arg01, objptr
+	mov	arg02, local17
+	add	objptr, #4
+	call	#_hng012_putcharxy
+	sub	objptr, #136
+	add	local17, #1
+	add	local42, #100
+	cmps	local17, #30 wcz
+ if_b	jmp	#LR__0016
+	add	objptr, #132
+	rdlong	local20, objptr
+	add	local20, #1
+	wrlong	local20, objptr
+	sub	objptr, #132
+	cmps	local20, #100 wcz
+ if_b	jmp	#LR__0015
+' 
+'   v.waitvbl(100)
+	mov	arg01, #100
+	add	objptr, #136
+	call	#_hng012_waitvbl
+	sub	objptr, #136
+' 
+'   repeat j from 0 to 29
+	mov	local17, #30
+LR__0017
+'     v.scrolldown()
+	add	objptr, #428
+	rdlong	local43, objptr
+	sub	objptr, #292
+	shl	local43, #2
+	rdlong	arg01, objptr
+	add	arg01, local43
+	add	objptr, #196
+	rdlong	arg03, objptr
+	add	objptr, #96
+	rdlong	local44, objptr
+	sub	objptr, #292
+	sub	arg03, local44
+' 
+' longmove(buf_ptr+cpl*4,buf_ptr,buflen-cpl)
+	rdlong	arg02, objptr
+	call	#__system__longmove
+' repeat i from 0 to cpl-1
+	mov	local45, #0
+	add	objptr, #292
+	rdlong	local46, objptr
+	sub	objptr, #292
+	sub	local46, #1
+	cmps	local46, #0 wcz
+ if_a	mov	local44, #1
+ if_be	neg	local44, #1
+	add	local46, local44
+	loc	pa,	#(@LR__0019-@LR__0018)
+	call	#FCACHE_LOAD_
+LR__0018
+	mov	local47, local45
+	shl	local47, #2
+	rdlong	local48, objptr
+	add	local48, local47
+	rdlong	local49, local48
+	and	local49, ##-65536
+	or	local49, #32
+'   long[buf_ptr+4*i]:=(long[buf_ptr+4*i] & $FFFF0000) | 32
+	wrlong	local49, local48
+	add	local45, local44
+	cmp	local45, local46 wz
+ if_ne	jmp	#LR__0018
+LR__0019
+'     v.waitvbl(1)
+	mov	arg01, #1
+	call	#_hng012_waitvbl
+	sub	objptr, #136
+	djnz	local17, #LR__0017
+' 
+'   v.cls(151,145)
+	mov	arg01, #151
+	mov	arg02, #145
+	add	objptr, #136
+	call	#_hng012_cls
+	sub	objptr, #136
+' 
+'   v.outtextxy (50-(strsize(s3)>>1),10,s3)
+	mov	arg01, local02
+	mov	local50, #0
+	loc	pa,	#(@LR__0021-@LR__0020)
+	call	#FCACHE_LOAD_
+LR__0020
+	rdbyte	local36, arg01 wz
+ if_ne	add	local50, #1
+ if_ne	add	arg01, #1
+ if_ne	jmp	#LR__0020
+LR__0021
+	mov	result1, local50
+	mov	local20, result1
+	shr	local20, #1
+	mov	arg01, #50
+	sub	arg01, local20
+	mov	arg03, local02
+	mov	arg02, #10
+	add	objptr, #136
+	call	#_hng012_outtextxy
+'   v.waitvbl(20)
+	mov	arg01, #20
+	call	#_hng012_waitvbl
+	sub	objptr, #136
+'   repeat k from 0 to 20
+	mov	local51, #0
+LR__0022
+'     repeat i from 0 to 99
+	add	objptr, #132
+	wrlong	#0, objptr
+	sub	objptr, #132
+LR__0023
+	add	objptr, #132
+	rdlong	local52, objptr
+	add	local52, local51
+	abs	local20, local52 wc
+	and	local20, #15
+ if_b	neg	local20, local20
+'       j:=(i+k)//16
+	mov	local17, local20
+'       v.setcharcolor(i,10,v.getvgacolor(j))
+	rdlong	local20, objptr
+	mov	arg01, local17
+	add	objptr, #340
+	add	arg01, objptr
+' 
+' return colors[color]
+	rdbyte	result1, arg01
+	sub	objptr, #336
+	mov	arg03, result1
+	mov	arg01, local20
+	mov	arg02, #10
+	call	#_hng012_setcharcolor
+	add	local17, #4
+	abs	local20, local17 wc
+	and	local20, #15
+ if_b	neg	local20, local20
+	mov	arg01, local20
+'       v.setbackcolor(i,10,v.getvgacolor((j+4)//16))
+	sub	objptr, #4
+	rdlong	local20, objptr
+	add	objptr, #340
+	add	arg01, objptr
+' 
+' return colors[color]
+	rdbyte	result1, arg01
+	sub	objptr, #336
+	mov	arg03, result1
+	mov	arg01, local20
+	mov	arg02, #10
+	call	#_hng012_setbackcolor
+	sub	objptr, #4
+	rdlong	local20, objptr
+	add	local20, #1
+	wrlong	local20, objptr
+	sub	objptr, #132
+	cmps	local20, #100 wcz
+ if_b	jmp	#LR__0023
+'     v.waitvbl(10)
+	mov	arg01, #10
+	add	objptr, #136
+	call	#_hng012_waitvbl
+	sub	objptr, #136
+	add	local51, #1
+	cmps	local51, #21 wcz
+ if_b	jmp	#LR__0022
+'   repeat i from 0 to 99
+	add	objptr, #132
+	wrlong	#0, objptr
+	sub	objptr, #132
+LR__0024
+'     v.setcharcolor(i,10,153)
+	add	objptr, #132
+	rdlong	arg01, objptr
+	mov	arg02, #10
+	mov	arg03, #153
+	add	objptr, #4
+	call	#_hng012_setcharcolor
+'     v.setbackcolor(i,10,145)
+	sub	objptr, #4
+	rdlong	arg01, objptr
+	mov	arg02, #10
+	mov	arg03, #145
+	add	objptr, #4
+	call	#_hng012_setbackcolor
+	sub	objptr, #4
+	rdlong	local20, objptr
+	add	local20, #1
+	wrlong	local20, objptr
+	sub	objptr, #132
+	cmps	local20, #100 wcz
+ if_b	jmp	#LR__0024
+' 
+'   v.outtextxy (50-(strsize(s4)>>1),12,s4)
+	mov	arg01, local03
+	mov	local50, #0
+	loc	pa,	#(@LR__0026-@LR__0025)
+	call	#FCACHE_LOAD_
+LR__0025
+	rdbyte	local36, arg01 wz
+ if_ne	add	local50, #1
+ if_ne	add	arg01, #1
+ if_ne	jmp	#LR__0025
+LR__0026
+	mov	result1, local50
+	mov	local20, result1
+	shr	local20, #1
+	mov	arg01, #50
+	sub	arg01, local20
+	mov	arg02, #12
+	mov	arg03, local03
+	add	objptr, #136
+	call	#_hng012_outtextxy
+'   v.waitvbl(20)
+	mov	arg01, #20
+	call	#_hng012_waitvbl
+	sub	objptr, #136
+'   v.outtextxy (50-(strsize(s5)>>1),14,s5)
+	mov	arg01, local04
+	mov	local50, #0
+	loc	pa,	#(@LR__0028-@LR__0027)
+	call	#FCACHE_LOAD_
+LR__0027
+	rdbyte	local36, arg01 wz
+ if_ne	add	local50, #1
+ if_ne	add	arg01, #1
+ if_ne	jmp	#LR__0027
+LR__0028
+	mov	result1, local50
+	mov	local20, result1
+	shr	local20, #1
+	mov	arg01, #50
+	sub	arg01, local20
+	mov	arg03, local04
+	mov	arg02, #14
+	add	objptr, #136
+	call	#_hng012_outtextxy
+'   v.waitvbl(200)
+	mov	arg01, #200
+	call	#_hng012_waitvbl
+' 
+' 
+'   repeat i from 0 to 99
+	sub	objptr, #4
+	wrlong	#0, objptr
+	sub	objptr, #132
+LR__0029
+	mov	local53, #0
+	mov	local17, #0
+LR__0030
+	add	objptr, #132
+	rdlong	arg03, objptr
+	add	arg03, local53
+	and	arg03, #255
+'       v.putcharxy(i,j,(i+100*j) & $FF)
+	rdlong	arg01, objptr
+	mov	arg02, local17
+	add	objptr, #4
+	call	#_hng012_putcharxy
+	sub	objptr, #136
+	add	local17, #1
+	add	local53, #100
+	cmps	local17, #30 wcz
+ if_b	jmp	#LR__0030
+	add	objptr, #132
+	rdlong	local20, objptr
+	add	local20, #1
+	wrlong	local20, objptr
+	sub	objptr, #132
+	cmps	local20, #100 wcz
+ if_b	jmp	#LR__0029
+' 
+'   v.waitvbl(100)
+	mov	arg01, #100
+	add	objptr, #136
+	call	#_hng012_waitvbl
+	sub	objptr, #136
+' 
+'   repeat k from 0 to 99
+	mov	local51, #100
+LR__0031
+'     repeat i from 0 to 31
+	add	objptr, #132
+	wrlong	#0, objptr
+	sub	objptr, #132
+	loc	pa,	#(@LR__0033-@LR__0032)
+	call	#FCACHE_LOAD_
+LR__0032
+'       v.setbordercolor(i,getrnd() & 255,getrnd() & 255,getrnd()& 255)
+	add	objptr, #132
+	rdlong	arg01, objptr
+	getrnd	arg02
+	and	arg02, #255
+	getrnd	arg03
+	and	arg03, #255
+	getrnd	arg04
+	and	arg04, #255
+	shl	arg02, #16
+	shl	arg03, #8
+	add	arg02, arg03
+	add	arg02, arg04
+' 
+' color:=r<<16+g<<8+b
+	shl	arg01, #2
+	add	objptr, #48
+	add	arg01, objptr
+' bordercolor[line]:=color
+	wrlong	arg02, arg01
+	sub	objptr, #48
+	rdlong	local20, objptr
+	add	local20, #1
+	wrlong	local20, objptr
+	sub	objptr, #132
+	cmps	local20, #32 wcz
+ if_b	jmp	#LR__0032
+LR__0033
+'     repeat j from 0 to 29
+	mov	local17, #0
+LR__0034
+'       repeat i from 0 to 99
+	add	objptr, #132
+	wrlong	#0, objptr
+	sub	objptr, #132
+LR__0035
+'         v.setcharcolor(i,j,getrnd()&255)
+	add	objptr, #132
+	rdlong	arg01, objptr
+	getrnd	result1
+	mov	arg03, result1
+	and	arg03, #255
+	mov	arg02, local17
+	add	objptr, #4
+	call	#_hng012_setcharcolor
+'         v.setbackcolor(i,j,getrnd()&255)
+	sub	objptr, #4
+	rdlong	arg01, objptr
+	getrnd	result1
+	mov	arg03, result1
+	and	arg03, #255
+	mov	arg02, local17
+	add	objptr, #4
+	call	#_hng012_setbackcolor
+	sub	objptr, #4
+	rdlong	local20, objptr
+	add	local20, #1
+	wrlong	local20, objptr
+	sub	objptr, #132
+	cmps	local20, #100 wcz
+ if_b	jmp	#LR__0035
+	add	local17, #1
+	cmps	local17, #30 wcz
+ if_b	jmp	#LR__0034
+'     v.waitvbl(1)
+	mov	arg01, #1
+	add	objptr, #136
+	call	#_hng012_waitvbl
+	sub	objptr, #136
+	djnz	local51, #LR__0031
+' 
+'   v.waitvbl(500)
+	mov	arg01, #500
+	add	objptr, #136
+	call	#_hng012_waitvbl
+' 
+'   v.cls(151,145)
+	mov	arg01, #151
+	mov	arg02, #145
+	call	#_hng012_cls
+'   v.setscreencolors (151,145)
+	mov	arg01, #151
+	mov	arg02, #145
+	call	#_hng012_setscreencolors
+'   v.setbordercolors(0,0,0)
+	mov	arg01, #0
+	mov	arg02, #0
+	mov	arg03, #0
+	call	#_hng012_setbordercolors
+	sub	objptr, #136
+' 
+'   v.outtextxy (50-(strsize(s6)>>1),10,s6)
+	mov	arg01, local05
+	mov	local50, #0
+	loc	pa,	#(@LR__0037-@LR__0036)
+	call	#FCACHE_LOAD_
+LR__0036
+	rdbyte	local36, arg01 wz
+ if_ne	add	local50, #1
+ if_ne	add	arg01, #1
+ if_ne	jmp	#LR__0036
+LR__0037
+	mov	result1, local50
+	mov	local20, result1
+	shr	local20, #1
+	mov	arg01, #50
+	sub	arg01, local20
+	mov	arg03, local05
+	mov	arg02, #10
+	add	objptr, #136
+	call	#_hng012_outtextxy
+'   v.waitvbl(50)
+	mov	arg01, #50
+	call	#_hng012_waitvbl
+	sub	objptr, #136
+' 
+' 
+'   random:=getrnd()
+	getrnd	result1
+' 
+'   repeat j from 0 to 15
+	mov	local17, #16
+LR__0038
+' 
+'     v. waitvbl(25)
+	mov	arg01, #25
+	add	objptr, #136
+	call	#_hng012_waitvbl
+'     v.setscreencolors (getrnd() & 255,getrnd() & 255)
+	getrnd	arg01
+	and	arg01, #255
+	getrnd	result1
+	mov	arg02, result1
+	and	arg02, #255
+	call	#_hng012_setscreencolors
+	sub	objptr, #136
+	djnz	local17, #LR__0038
+' 
+'  v.setscreencolors (151,145)
+	mov	arg01, #151
+	mov	arg02, #145
+	add	objptr, #136
+	call	#_hng012_setscreencolors
+	sub	objptr, #136
+' 
+'   v.outtextxy (50-(strsize(s7)>>1),12,s7)
+	mov	arg01, local06
+	mov	local50, #0
+	loc	pa,	#(@LR__0040-@LR__0039)
+	call	#FCACHE_LOAD_
+LR__0039
+	rdbyte	local36, arg01 wz
+ if_ne	add	local50, #1
+ if_ne	add	arg01, #1
+ if_ne	jmp	#LR__0039
+LR__0040
+	mov	result1, local50
+	mov	local20, result1
+	shr	local20, #1
+	mov	arg01, #50
+	sub	arg01, local20
+	mov	arg03, local06
+	mov	arg02, #12
+	add	objptr, #136
+	call	#_hng012_outtextxy
+'   v.waitvbl(50)
+	mov	arg01, #50
+	call	#_hng012_waitvbl
+	sub	objptr, #136
+' 
+'   repeat j from 0 to 15
+	mov	local17, #16
+LR__0041
+'     v.waitvbl(25)
+	mov	arg01, #25
+	add	objptr, #136
+	call	#_hng012_waitvbl
+'     v.setbordercolors (getrnd() & 255,getrnd() & 255,getrnd() & 255)
+	getrnd	arg01
+	and	arg01, #255
+	getrnd	arg02
+	and	arg02, #255
+	getrnd	result1
+	mov	arg03, result1
+	and	arg03, #255
+	call	#_hng012_setbordercolors
+	sub	objptr, #136
+	djnz	local17, #LR__0041
+' 
+'   v.waitvbl(25)
+	mov	arg01, #25
+	add	objptr, #136
+	call	#_hng012_waitvbl
+'   v.setbordercolors(0,0,0)
+	mov	arg01, #0
+	mov	arg02, #0
+	mov	arg03, #0
+	call	#_hng012_setbordercolors
+	sub	objptr, #136
+' '
+'   repeat j from 0 to 29
+	mov	local17, #30
+LR__0042
+'    v.scrollup()
+	add	objptr, #136
+	call	#_hng012_scrollup
+'    v.waitvbl(2)
+	mov	arg01, #2
+	call	#_hng012_waitvbl
+	sub	objptr, #136
+	djnz	local17, #LR__0042
+' 
+' 
+'   repeat i from 0 to 29
+	add	objptr, #132
+	wrlong	#0, objptr
+	sub	objptr, #132
+LR__0043
+'     v.waitvbl(2)
+	mov	arg01, #2
+	add	objptr, #136
+	call	#_hng012_waitvbl
+'     v.cls(141,145)
+	mov	arg01, #141
+	mov	arg02, #145
+	call	#_hng012_cls
+'     v.outtextxy(i,i,s1)
+	sub	objptr, #4
+	rdlong	arg01, objptr
+	mov	arg02, arg01
+	mov	arg03, local01
+	add	objptr, #4
+	call	#_hng012_outtextxy
+	sub	objptr, #4
+	rdlong	local20, objptr
+	add	local20, #1
+	wrlong	local20, objptr
+	sub	objptr, #132
+	cmps	local20, #30 wcz
+ if_b	jmp	#LR__0043
+' 
+' 
+'   v.waitvbl(100)
+	mov	arg01, #100
+	add	objptr, #136
+	call	#_hng012_waitvbl
+'   v.setmode(320)
+	mov	arg01, #320
+	call	#_hng012_setmode
+'   v.setfontnum(0)
+' 
+' fontnum:=afontnum
+	add	objptr, #308
+	wrlong	#0, objptr
+'   v.cursoron()
+' 
+' ''---------- Switch the cursor on
+' 
+' cursor_sh+=16
+	sub	objptr, #106
+	rdbyte	local36, objptr
+	add	local36, #16
+	wrbyte	local36, objptr
+	sub	objptr, #202
+'   v.cls(15,0)
+	mov	arg01, #15
+	mov	arg02, #0
+	call	#_hng012_cls
+'   v.setcursorpos(0,0)
+	mov	arg02, #0
+' 
+' ''---------- Set the (x,y) position of cursor
+' 
+' cursor_x:=x
+	add	objptr, #200
+	wrbyte	#0, objptr
+' cursor_y:=y
+	add	objptr, #1
+	wrbyte	#0, objptr
+'   v.setwritecolors(v.c_blue,0)
+' 
+' 
+' write_color:=ff
+	add	objptr, #3
+	wrlong	#117, objptr
+' write_background:=bb
+	add	objptr, #4
+	wrlong	#0, objptr
+	sub	objptr, #208
+'   v.writeln(string("blue"))
+	mov	arg01, ##@LR__0202
+	call	#_hng012_writeln
+'   v.setwritecolors(v.c_green,0)
+	mov	arg02, #0
+' 
+' 
+' write_color:=ff
+	add	objptr, #204
+	wrlong	#199, objptr
+' write_background:=bb
+	add	objptr, #4
+	wrlong	#0, objptr
+	sub	objptr, #208
+'   v.writeln(string("green"))
+	mov	arg01, ##@LR__0203
+	call	#_hng012_writeln
+'   v.setwritecolors(v.c_cyan,0)
+	mov	arg02, #0
+' 
+' 
+' write_color:=ff
+	add	objptr, #204
+	wrlong	#151, objptr
+' write_background:=bb
+	add	objptr, #4
+	wrlong	#0, objptr
+	sub	objptr, #208
+'   v.writeln(string("cyan"))
+	mov	arg01, ##@LR__0204
+	call	#_hng012_writeln
+'   v.setwritecolors(v.c_red,0)
+	mov	arg02, #0
+' 
+' 
+' write_color:=ff
+	add	objptr, #204
+	wrlong	#39, objptr
+' write_background:=bb
+	add	objptr, #4
+	wrlong	#0, objptr
+	sub	objptr, #208
+'   v.writeln(string("red"))
+	mov	arg01, ##@LR__0205
+	call	#_hng012_writeln
+'   v.setwritecolors(v.c_magenta,0)
+	mov	arg02, #0
+' 
+' 
+' write_color:=ff
+	add	objptr, #204
+	wrlong	#71, objptr
+' write_background:=bb
+	add	objptr, #4
+	wrlong	#0, objptr
+	sub	objptr, #208
+'   v.writeln(string("magenta"))
+	mov	arg01, ##@LR__0206
+	call	#_hng012_writeln
+'   v.setwritecolors(v.c_brown,0)
+	mov	arg02, #0
+' 
+' 
+' write_color:=ff
+	add	objptr, #204
+	wrlong	#246, objptr
+' write_background:=bb
+	add	objptr, #4
+	wrlong	#0, objptr
+	sub	objptr, #208
+'   v.writeln(string("brown"))
+	mov	arg01, ##@LR__0207
+	call	#_hng012_writeln
+'   v.setwritecolors(v.c_lightgray,0)
+	mov	arg02, #0
+' 
+' 
+' write_color:=ff
+	add	objptr, #204
+	wrlong	#10, objptr
+' write_background:=bb
+	add	objptr, #4
+	wrlong	#0, objptr
+	sub	objptr, #208
+'   v.writeln(string("light gray"))
+	mov	arg01, ##@LR__0208
+	call	#_hng012_writeln
+'   v.setwritecolors(v.c_darkgray,0)
+	mov	arg02, #0
+' 
+' 
+' write_color:=ff
+	add	objptr, #204
+	wrlong	#5, objptr
+' write_background:=bb
+	add	objptr, #4
+	wrlong	#0, objptr
+	sub	objptr, #208
+'   v.writeln(string("dark gray"))
+	mov	arg01, ##@LR__0209
+	call	#_hng012_writeln
+'   v.setwritecolors(v.c_lightblue,0)
+	mov	arg02, #0
+' 
+' 
+' write_color:=ff
+	add	objptr, #204
+	wrlong	#123, objptr
+' write_background:=bb
+	add	objptr, #4
+	wrlong	#0, objptr
+	sub	objptr, #208
+'   v.writeln(string("light blue"))
+	mov	arg01, ##@LR__0210
+	call	#_hng012_writeln
+'   v.setwritecolors(v.c_lightgreen,0)
+	mov	arg02, #0
+' 
+' 
+' write_color:=ff
+	add	objptr, #204
+	wrlong	#203, objptr
+' write_background:=bb
+	add	objptr, #4
+	wrlong	#0, objptr
+	sub	objptr, #208
+'   v.writeln(string("light green"))
+	mov	arg01, ##@LR__0211
+	call	#_hng012_writeln
+'   v.setwritecolors(v.c_lightcyan,0)
+	mov	arg02, #0
+' 
+' 
+' write_color:=ff
+	add	objptr, #204
+	wrlong	#155, objptr
+' write_background:=bb
+	add	objptr, #4
+	wrlong	#0, objptr
+	sub	objptr, #208
+'   v.writeln(string("light cyan"))
+	mov	arg01, ##@LR__0212
+	call	#_hng012_writeln
+'   v.setwritecolors(v.c_lightred,0)
+	mov	arg02, #0
+' 
+' 
+' write_color:=ff
+	add	objptr, #204
+	wrlong	#43, objptr
+' write_background:=bb
+	add	objptr, #4
+	wrlong	#0, objptr
+	sub	objptr, #208
+'   v.writeln(string("light red"))
+	mov	arg01, ##@LR__0213
+	call	#_hng012_writeln
+'   v.setwritecolors(v.c_lightmagenta,0)
+	mov	arg02, #0
+' 
+' 
+' write_color:=ff
+	add	objptr, #204
+	wrlong	#75, objptr
+' write_background:=bb
+	add	objptr, #4
+	wrlong	#0, objptr
+	sub	objptr, #208
+'   v.writeln(string("light magenta"))
+	mov	arg01, ##@LR__0214
+	call	#_hng012_writeln
+'   v.setwritecolors(v.c_yellow,0)
+	mov	arg02, #0
+' 
+' 
+' write_color:=ff
+	add	objptr, #204
+	wrlong	#234, objptr
+' write_background:=bb
+	add	objptr, #4
+	wrlong	#0, objptr
+	sub	objptr, #208
+'   v.writeln(string("yellow"))
+	mov	arg01, ##@LR__0215
+	call	#_hng012_writeln
+'   v.setwritecolors(v.c_white,0)
+	mov	arg02, #0
+' 
+' 
+' write_color:=ff
+	add	objptr, #204
+	wrlong	#15, objptr
+' write_background:=bb
+	add	objptr, #4
+	wrlong	#0, objptr
+	sub	objptr, #208
+'   v.writeln(string("white"))
+	mov	arg01, ##@LR__0216
+	call	#_hng012_writeln
+'   v.write(string("Clock frequency: "))
+	mov	arg01, ##@LR__0217
+	call	#_hng012_write
+'   v.writeln(v.inttostr(clkfreq))
+	rdlong	arg01, #20
+	call	#_hng012_inttostr
+	mov	arg01, result1
+	call	#_hng012_writeln
+	mov	local54, #50
+	mov	local55, #0
+	mov	local56, #51
+	mov	local57, #0
+	sub	objptr, #4
+	wrlong	#0, objptr
+	sub	objptr, #132
+LR__0044
+	mov	local58, #8
+	mov	local17, #0
+LR__0045
+	mov	local51, #2
+LR__0046
+	mov	arg03, local55
+	add	arg03, local17
+'         v.setbackcolor(2*i+50,j+8,16*i+j)
+	mov	arg01, local54
+	mov	arg02, local58
+	add	objptr, #136
+	call	#_hng012_setbackcolor
+	mov	arg03, local57
+	add	arg03, local17
+'         v.setbackcolor(2*i+51,j+8,16*i+j)
+	mov	arg01, local56
+	mov	arg02, local58
+	call	#_hng012_setbackcolor
+	sub	objptr, #136
+	djnz	local51, #LR__0046
+	add	local17, #1
+	add	local58, #1
+	cmps	local17, #16 wcz
+ if_b	jmp	#LR__0045
+	add	objptr, #132
+	rdlong	local20, objptr
+	add	local20, #1
+	wrlong	local20, objptr
+	add	local54, #2
+	add	local55, #16
+	add	local56, #2
+	add	local57, #16
+	sub	objptr, #132
+	cmps	local20, #16 wcz
+ if_b	jmp	#LR__0044
+' 
+'   v.waitvbl(1000)
+	mov	arg01, ##1000
+	add	objptr, #136
+	call	#_hng012_waitvbl
+' 
+' 
+' 
+'   v.setcursorpos(0,25)
+	mov	arg02, #25
+' 
+' ''---------- Set the (x,y) position of cursor
+' 
+' cursor_x:=x
+	add	objptr, #200
+	wrbyte	#0, objptr
+' cursor_y:=y
+	add	objptr, #1
+	wrbyte	#25, objptr
+	sub	objptr, #201
+'   v.waitvbl(120)
+	mov	arg01, #120
+	call	#_hng012_waitvbl
+'   v.setwritecolors(v.c_white,v.c_black)
+	mov	arg02, #0
+' 
+' 
+' write_color:=ff
+	add	objptr, #204
+	wrlong	#15, objptr
+' write_background:=bb
+	add	objptr, #4
+	wrlong	#0, objptr
+	sub	objptr, #208
+'   v.write(string("C:\>"))
+	mov	arg01, ##@LR__0218
+	call	#_hng012_write
+'   v.waitvbl(120)
+	mov	arg01, #120
+	call	#_hng012_waitvbl
+'   v.write(string("p"))
+	mov	arg01, ##@LR__0219
+	call	#_hng012_write
+'   v.waitvbl(10)
+	mov	arg01, #10
+	call	#_hng012_waitvbl
+'   v.write(string("c"))
+	mov	arg01, ##@LR__0220
+	call	#_hng012_write
+'   v.waitvbl(10)
+	mov	arg01, #10
+	call	#_hng012_waitvbl
+'   v.writeln(string(" "))
+	mov	arg01, ##@LR__0221
+	call	#_hng012_writeln
+'   v.waitvbl(120)
+	mov	arg01, #120
+	call	#_hng012_waitvbl
+' 
+'   teststring[100]:=0
+	sub	objptr, #36
+	wrbyte	#0, objptr
+	sub	objptr, #100
+	mov	local59, objptr
+	add	objptr, #132
+	wrlong	#0, objptr
+	sub	objptr, #132
+	loc	pa,	#(@LR__0048-@LR__0047)
+	call	#FCACHE_LOAD_
+LR__0047
+'     teststring[i]:=32
+	wrbyte	#32, local59
+	add	objptr, #132
+	rdlong	local20, objptr
+	add	local20, #1
+	wrlong	local20, objptr
+	add	local59, #1
+	sub	objptr, #132
+	cmps	local20, #100 wcz
+ if_b	jmp	#LR__0047
+LR__0048
+'   repeat i from 21 to 29
+	add	objptr, #132
+	wrlong	#21, objptr
+	sub	objptr, #132
+LR__0049
+	mov	arg03, objptr
+'     v.outtextxyc(0,i,@teststring,v.c_white,v.c_black)
+	add	objptr, #132
+	rdlong	arg02, objptr
+	mov	arg01, #0
+	mov	arg04, #15
+	mov	arg05, #0
+	add	objptr, #4
+	call	#_hng012_outtextxyc
+	sub	objptr, #4
+	rdlong	local20, objptr
+	add	local20, #1
+	wrlong	local20, objptr
+	sub	objptr, #132
+	cmps	local20, #30 wcz
+ if_b	jmp	#LR__0049
+' 
+'   v.write(string("The Propeller Commander, Copyleft ("))
+	mov	arg01, ##@LR__0222
+	add	objptr, #136
+	call	#_hng012_write
+	sub	objptr, #136
+'   teststring[0]:=1
+	wrbyte	#1, objptr
+'   teststring[1]:=0
+	add	objptr, #1
+	wrbyte	#0, objptr
+	sub	objptr, #1
+'   v.write(@teststring)
+	mov	arg01, objptr
+	add	objptr, #136
+	call	#_hng012_write
+'   v.writeln(string(") 2021 pik33@o2.pl"))
+	mov	arg01, ##@LR__0223
+	call	#_hng012_writeln
+'   v.waitvbl(60)
+	mov	arg01, #60
+	call	#_hng012_waitvbl
+'   v.writeln(string(" "))
+	mov	arg01, ##@LR__0224
+	call	#_hng012_writeln
+'   v.write(string("C:\>"))
+	mov	arg01, ##@LR__0225
+	call	#_hng012_write
+' 
+'   v.setwritecolors(v.c_lightcyan,v.c_blue)
+' 
+' 
+' write_color:=ff
+	add	objptr, #204
+	wrlong	#155, objptr
+' write_background:=bb
+	add	objptr, #4
+	wrlong	#117, objptr
+	sub	objptr, #343
+	mov	local60, objptr
+	add	objptr, #131
+	wrlong	#1, objptr
+	sub	objptr, #132
+	loc	pa,	#(@LR__0051-@LR__0050)
+	call	#FCACHE_LOAD_
+LR__0050
+'     teststring[i]:=$CD
+	wrbyte	#205, local60
+	add	objptr, #132
+	rdlong	local20, objptr
+	add	local20, #1
+	wrlong	local20, objptr
+	add	local60, #1
+	sub	objptr, #132
+	cmps	local20, #99 wcz
+ if_b	jmp	#LR__0050
+LR__0051
+'   teststring[0]:=$C9
+	wrbyte	#201, objptr
+'   teststring[50]:=$C9
+	add	objptr, #50
+	wrbyte	#201, objptr
+' 
+'   teststring[49]:=$BB
+	sub	objptr, #1
+	wrbyte	#187, objptr
+'   teststring[99]:=$BB
+	add	objptr, #50
+	wrbyte	#187, objptr
+'   teststring[100]:=0
+	add	objptr, #1
+	wrbyte	#0, objptr
+	sub	objptr, #100
+' 
+'   v.outtextxyc(0,0,@teststring,v.c_lightcyan, v.c_blue)
+	mov	arg01, #0
+	mov	arg02, #0
+	mov	arg03, objptr
+	mov	arg04, #155
+	mov	arg05, #117
+	add	objptr, #136
+	call	#_hng012_outtextxyc
+'   v.outtextxyc(71,0,string(" Status "),v.c_lightcyan, v.c_blue)
+	mov	arg03, ##@LR__0226
+	mov	arg01, #71
+	mov	arg02, #0
+	mov	arg04, #155
+	mov	arg05, #117
+	call	#_hng012_outtextxyc
+'   v.outtextxyc(23,0,string(" C:\ "),v.c_blue, v.c_lightcyan)
+	mov	arg03, ##@LR__0227
+	mov	arg01, #23
+	mov	arg02, #0
+	mov	arg04, #117
+	mov	arg05, #155
+	call	#_hng012_outtextxyc
+	sub	objptr, #135
+	mov	local61, objptr
+	add	objptr, #131
+	wrlong	#1, objptr
+	sub	objptr, #132
+	loc	pa,	#(@LR__0053-@LR__0052)
+	call	#FCACHE_LOAD_
+LR__0052
+'     teststring[i]:=32
+	wrbyte	#32, local61
+	add	objptr, #132
+	rdlong	local20, objptr
+	add	local20, #1
+	wrlong	local20, objptr
+	add	local61, #1
+	sub	objptr, #132
+	cmps	local20, #99 wcz
+ if_b	jmp	#LR__0052
+LR__0053
+'   teststring[43]:=$B3
+	add	objptr, #43
+	wrbyte	#179, objptr
+'   teststring[32]:=$B3
+	sub	objptr, #11
+	wrbyte	#179, objptr
+'   teststring[22]:=$B3
+	sub	objptr, #10
+	wrbyte	#179, objptr
+	sub	objptr, #22
+'   teststring[0]:=$BA
+	wrbyte	#186, objptr
+'   teststring[49]:=$BA
+	add	objptr, #49
+	wrbyte	#186, objptr
+'   teststring[50]:=$BA
+	add	objptr, #1
+	wrbyte	#186, objptr
+'   teststring[99]:=$BA
+	add	objptr, #49
+	wrbyte	#186, objptr
+'   repeat i from 1 to 19
+	add	objptr, #33
+	wrlong	#1, objptr
+	sub	objptr, #132
+LR__0054
+	mov	arg03, objptr
+'     v.outtextxyc(0,i,@teststring,v.c_lightcyan, v.c_blue)
+	add	objptr, #132
+	rdlong	arg02, objptr
+	mov	arg01, #0
+	mov	arg04, #155
+	mov	arg05, #117
+	add	objptr, #4
+	call	#_hng012_outtextxyc
+	sub	objptr, #4
+	rdlong	local20, objptr
+	add	local20, #1
+	wrlong	local20, objptr
+	sub	objptr, #132
+	cmps	local20, #20 wcz
+ if_b	jmp	#LR__0054
+	add	objptr, #1
+	mov	local62, objptr
+	add	objptr, #131
+	wrlong	#1, objptr
+	sub	objptr, #132
+	loc	pa,	#(@LR__0056-@LR__0055)
+	call	#FCACHE_LOAD_
+LR__0055
+'     teststring[i]:=$CD
+	wrbyte	#205, local62
+	add	objptr, #132
+	rdlong	local20, objptr
+	add	local20, #1
+	wrlong	local20, objptr
+	add	local62, #1
+	sub	objptr, #132
+	cmps	local20, #99 wcz
+ if_b	jmp	#LR__0055
+LR__0056
+'   teststring[0]:=$C8
+	wrbyte	#200, objptr
+'   teststring[50]:=$C8
+	add	objptr, #50
+	wrbyte	#200, objptr
+' 
+'   teststring[49]:=$BC
+	sub	objptr, #1
+	wrbyte	#188, objptr
+'   teststring[99]:=$BC
+	add	objptr, #50
+	wrbyte	#188, objptr
+'   teststring[100]:=0
+	add	objptr, #1
+	wrbyte	#0, objptr
+	sub	objptr, #100
+' 
+'   v.outtextxyc(0,20,@teststring,v.c_lightcyan, v.c_blue)
+	mov	arg01, #0
+	mov	arg02, #20
+	mov	arg03, objptr
+	mov	arg04, #155
+	mov	arg05, #117
+	add	objptr, #136
+	call	#_hng012_outtextxyc
+'   v.outtextxy(56,2,string("The Propeller Commander, Version 0.00"))
+	mov	arg03, ##@LR__0228
+	mov	arg01, #56
+	mov	arg02, #2
+	call	#_hng012_outtextxy
+'   v.outtextxy(60,3,string("Copyleft ("))
+	mov	arg03, ##@LR__0229
+	mov	arg01, #60
+	mov	arg02, #3
+	call	#_hng012_outtextxy
+	sub	objptr, #136
+'   teststring[0]:=1
+	wrbyte	#1, objptr
+'   teststring[1]:=0
+	add	objptr, #1
+	wrbyte	#0, objptr
+	sub	objptr, #1
+'   v.outtextxy(70,3,@teststring)
+	mov	arg01, #70
+	mov	arg02, #3
+	mov	arg03, objptr
+	add	objptr, #136
+	call	#_hng012_outtextxy
+'   v.outtextxy(71,3,string(") 2021 pik33@o2.pl"))
+	mov	arg03, ##@LR__0230
+	mov	arg01, #71
+	mov	arg02, #3
+	call	#_hng012_outtextxy
+	sub	objptr, #135
+	mov	local63, objptr
+	add	objptr, #131
+	wrlong	#1, objptr
+	sub	objptr, #132
+LR__0057
+'     teststring[i]:=$CD
+	wrbyte	#205, local63
+'     teststring[50]:=0
+	add	objptr, #50
+	wrbyte	#0, objptr
+	sub	objptr, #50
+'     teststring[0]:=$CC
+	wrbyte	#204, objptr
+'     teststring[49]:=$B9
+	add	objptr, #49
+	wrbyte	#185, objptr
+	sub	objptr, #49
+	mov	local64, objptr
+'     v.outtextxy(50,5,@teststring)
+	mov	arg01, #50
+	mov	arg02, #5
+	mov	arg03, local64
+	add	objptr, #136
+	call	#_hng012_outtextxy
+'     v.outtextxy(50,14,@teststring)
+	mov	arg01, #50
+	mov	arg02, #14
+	mov	arg03, local64
+	call	#_hng012_outtextxy
+	sub	objptr, #4
+	rdlong	local20, objptr
+	add	local20, #1
+	wrlong	local20, objptr
+	add	local63, #1
+	sub	objptr, #132
+	cmps	local20, #49 wcz
+ if_b	jmp	#LR__0057
+' 
+'   v.outtextxy(65,7,string("524,288 Bytes Memory"))
+	mov	arg03, ##@LR__0231
+	mov	arg01, #65
+	mov	arg02, #7
+	add	objptr, #136
+	call	#_hng012_outtextxy
+	mov	local65, ptr__dat__
+	decod	local66, #19
+	sub	local66, local65
+'   i:=$80000-@aend
+	sub	objptr, #4
+	wrlong	local66, objptr
+	mov	muldiva_, local66
+	sub	objptr, #132
+	mov	muldivb_, ##1000
+	call	#divide_
+'   v.outtextxy(66,8,v.inttostr(i / 1000))
+	mov	local67, #66
+	mov	local20, #8
+	mov	arg01, muldivb_
+	add	objptr, #136
+	call	#_hng012_inttostr
+	mov	arg03, result1
+	mov	arg01, local67
+	mov	arg02, local20
+	call	#_hng012_outtextxy
+'   v.outtextxy(69,8,string(","))
+	mov	arg03, ##@LR__0232
+	mov	arg01, #69
+	mov	arg02, #8
+	call	#_hng012_outtextxy
+	sub	objptr, #4
+	rdlong	muldiva_, objptr
+	sub	objptr, #132
+	mov	muldivb_, ##1000
+	call	#divide_
+'   v.outtextxy(70,8,v.inttostr(i // 1000))
+	mov	local67, #70
+	mov	local20, #8
+	mov	arg01, muldiva_
+	add	objptr, #136
+	call	#_hng012_inttostr
+	mov	arg03, result1
+	mov	arg01, local67
+	mov	arg02, local20
+	call	#_hng012_outtextxy
+'   v.outtextxy(74,8,string("Bytes Free"))
+	mov	arg03, ##@LR__0233
+	mov	arg01, #74
+	mov	arg02, #8
+	call	#_hng012_outtextxy
+'   v.outtextxy(56,9,string("32,212,254,720 total bytes on drive C:"))
+	mov	arg03, ##@LR__0234
+	mov	arg01, #56
+	mov	arg02, #9
+	call	#_hng012_outtextxy
+'   v.outtextxy(57,10,string("3,989,123,640 bytes free on drive C:"))
+	mov	arg03, ##@LR__0235
+	mov	arg01, #57
+	mov	arg02, #10
+	call	#_hng012_outtextxy
+'   v.outtextxy(58,11,string("123 files use 128,956,384 bytes in"))
+	mov	arg03, ##@LR__0236
+	mov	arg01, #58
+	mov	arg02, #11
+	call	#_hng012_outtextxy
+'   v.outtextxy(74,12,string("C:"))
+	mov	arg03, ##@LR__0237
+	mov	arg01, #74
+	mov	arg02, #12
+	call	#_hng012_outtextxy
+'   v.outtextxy(58,17,string("No 'dirinfo' file in this directory"))
+	mov	arg03, ##@LR__0238
+	mov	arg01, #58
+	mov	arg02, #17
+	call	#_hng012_outtextxy
+' 
+'   v.outtextxyc(9,1,string("Name"),v.c_yellow,v.c_blue)
+	mov	arg03, ##@LR__0239
+	mov	arg01, #9
+	mov	arg02, #1
+	mov	arg04, #234
+	mov	arg05, #117
+	call	#_hng012_outtextxyc
+'   v.outtextxyc(25,1,string("Size"),v.c_yellow,v.c_blue)
+	mov	arg03, ##@LR__0240
+	mov	arg01, #25
+	mov	arg02, #1
+	mov	arg04, #234
+	mov	arg05, #117
+	call	#_hng012_outtextxyc
+'   v.outtextxyc(36,1,string("Date"),v.c_yellow,v.c_blue)
+	mov	arg03, ##@LR__0241
+	mov	arg01, #36
+	mov	arg02, #1
+	mov	arg04, #234
+	mov	arg05, #117
+	call	#_hng012_outtextxyc
+'   v.outtextxyc(45,1,string("Time"),v.c_yellow,v.c_blue)
+	mov	arg03, ##@LR__0242
+	mov	arg01, #45
+	mov	arg02, #1
+	mov	arg04, #234
+	mov	arg05, #117
+	call	#_hng012_outtextxyc
+'   v.outtextxy(44,2,string("12:34"))
+	mov	arg03, ##@LR__0243
+	mov	arg01, #44
+	mov	arg02, #2
+	call	#_hng012_outtextxy
+'   v.outtextxy(33,2,string("2021.03.23"))
+	mov	arg03, ##@LR__0244
+	mov	arg01, #33
+	mov	arg02, #2
+	call	#_hng012_outtextxy
+	sub	objptr, #136
+'   teststring[0]:=16
+	wrbyte	#16, objptr
+'   teststring[1]:=0
+	add	objptr, #1
+	wrbyte	#0, objptr
+'   repeat i from 2 to 8
+	add	objptr, #131
+	wrlong	#2, objptr
+	sub	objptr, #132
+LR__0058
+	mov	arg03, objptr
+'     v.outtextxy(23,i,@teststring)
+	add	objptr, #132
+	rdlong	arg02, objptr
+	mov	arg01, #23
+	add	objptr, #4
+	call	#_hng012_outtextxy
+	sub	objptr, #4
+	rdlong	local20, objptr
+	add	local20, #1
+	wrlong	local20, objptr
+	sub	objptr, #132
+	cmps	local20, #9 wcz
+ if_b	jmp	#LR__0058
+'   teststring[0]:=17
+	wrbyte	#17, objptr
+'   repeat i from 2 to 8
+	add	objptr, #132
+	wrlong	#2, objptr
+	sub	objptr, #132
+LR__0059
+	mov	arg03, objptr
+'     v.outtextxy(31,i,@teststring)
+	add	objptr, #132
+	rdlong	arg02, objptr
+	mov	arg01, #31
+	add	objptr, #4
+	call	#_hng012_outtextxy
+	sub	objptr, #4
+	rdlong	local20, objptr
+	add	local20, #1
+	wrlong	local20, objptr
+	sub	objptr, #132
+	cmps	local20, #9 wcz
+ if_b	jmp	#LR__0059
+'   repeat i from 2 to 8
+	add	objptr, #132
+	wrlong	#2, objptr
+	sub	objptr, #132
+LR__0060
+'     v.outtextxy(24,i,string("SUB-DIR"))
+	add	objptr, #132
+	rdlong	arg02, objptr
+	mov	arg03, ##@LR__0245
+	mov	arg01, #24
+	add	objptr, #4
+	call	#_hng012_outtextxy
+	sub	objptr, #4
+	rdlong	local20, objptr
+	add	local20, #1
+	wrlong	local20, objptr
+	sub	objptr, #132
+	cmps	local20, #9 wcz
+ if_b	jmp	#LR__0060
+'   v.outtextxy(27,9,string("21356"))
+	mov	arg03, ##@LR__0246
+	mov	arg01, #27
+	mov	arg02, #9
+	add	objptr, #136
+	call	#_hng012_outtextxy
+'   v.outtextxy(27,10,string("12564"))
+	mov	arg03, ##@LR__0247
+	mov	arg01, #27
+	mov	arg02, #10
+	call	#_hng012_outtextxy
+'   v.outtextxy(28,11,string("1128"))
+	mov	arg03, ##@LR__0248
+	mov	arg01, #28
+	mov	arg02, #11
+	call	#_hng012_outtextxy
+'   v.outtextxy(26,12,string("105321"))
+	mov	arg03, ##@LR__0249
+	mov	arg01, #26
+	mov	arg02, #12
+	call	#_hng012_outtextxy
+'   v.outtextxy(27,13,string("30831"))
+	mov	arg03, ##@LR__0250
+	mov	arg01, #27
+	mov	arg02, #13
+	call	#_hng012_outtextxy
+'   v.outtextxy(29,14,string("856"))
+	mov	arg03, ##@LR__0251
+	mov	arg01, #29
+	mov	arg02, #14
+	call	#_hng012_outtextxy
+'   v.outtextxy(27,15,string("31248"))
+	mov	arg03, ##@LR__0252
+	mov	arg01, #27
+	mov	arg02, #15
+	call	#_hng012_outtextxy
+'   v.outtextxy(28,16,string("2316"))
+	mov	arg03, ##@LR__0253
+	mov	arg01, #28
+	mov	arg02, #16
+	call	#_hng012_outtextxy
+'   v.outtextxy(27,17,string("17531"))
+	mov	arg03, ##@LR__0254
+	mov	arg01, #27
+	mov	arg02, #17
+	call	#_hng012_outtextxy
+'   v.outtextxy(1,2,string("PropDOS"))
+	mov	arg03, ##@LR__0255
+	mov	arg01, #1
+	mov	arg02, #2
+	call	#_hng012_outtextxy
+'   v.outtextxy(1,3,string("BASIC"))
+	mov	arg03, ##@LR__0256
+	mov	arg01, #1
+	mov	arg02, #3
+	call	#_hng012_outtextxy
+'   v.outtextxy(1,4,string("Spin"))
+	mov	arg03, ##@LR__0257
+	mov	arg01, #1
+	mov	arg02, #4
+	call	#_hng012_outtextxy
+'   v.outtextxy(1,5,string("Windows"))
+	mov	arg03, ##@LR__0258
+	mov	arg01, #1
+	mov	arg02, #5
+	call	#_hng012_outtextxy
+'   v.outtextxy(1,6,string("Atari             emu"))
+	mov	arg03, ##@LR__0259
+	mov	arg01, #1
+	mov	arg02, #6
+	call	#_hng012_outtextxy
+'   v.outtextxy(1,7,string("Amiga             emu"))
+	mov	arg03, ##@LR__0260
+	mov	arg01, #1
+	mov	arg02, #7
+	call	#_hng012_outtextxy
+'   v.outtextxy(1,8,string("Propeller"))
+	mov	arg03, ##@LR__0261
+	mov	arg01, #1
+	mov	arg02, #8
+	call	#_hng012_outtextxy
+'   v.outtextxy(1,9,string("DOS               SYS"))
+	mov	arg03, ##@LR__0262
+	mov	arg01, #1
+	mov	arg02, #9
+	call	#_hng012_outtextxy
+'   v.outtextxy(1,10,string("DUP               SYS"))
+	mov	arg03, ##@LR__0263
+	mov	arg01, #1
+	mov	arg02, #10
+	call	#_hng012_outtextxy
+'   v.outtextxy(1,11,string("Autoexec          BAT"))
+	mov	arg03, ##@LR__0264
+	mov	arg01, #1
+	mov	arg02, #11
+	call	#_hng012_outtextxy
+'   v.outtextxy(1,12,string("pc                exe"))
+	mov	arg03, ##@LR__0265
+	mov	arg01, #1
+	mov	arg02, #12
+	call	#_hng012_outtextxy
+'   v.outtextxy(1,13,string("win               com"))
+	mov	arg03, ##@LR__0266
+	mov	arg01, #1
+	mov	arg02, #13
+	call	#_hng012_outtextxy
+'   v.outtextxy(1,14,string("DOOM              BAT"))
+	mov	arg03, ##@LR__0267
+	mov	arg01, #1
+	mov	arg02, #14
+	call	#_hng012_outtextxy
+'   v.outtextxy(1,15,string("command           com"))
+	mov	arg03, ##@LR__0268
+	mov	arg01, #1
+	mov	arg02, #15
+	call	#_hng012_outtextxy
+'   v.outtextxy(1,16,string("config            sys"))
+	mov	arg03, ##@LR__0269
+	mov	arg01, #1
+	mov	arg02, #16
+	call	#_hng012_outtextxy
+'   v.outtextxy(1,17,string("msdos             sys"))
+	mov	arg03, ##@LR__0270
+	mov	arg01, #1
+	mov	arg02, #17
+	call	#_hng012_outtextxy
+	sub	objptr, #136
+	mov	local68, objptr
+	add	objptr, #132
+	wrlong	#0, objptr
+	sub	objptr, #132
+	loc	pa,	#(@LR__0062-@LR__0061)
+	call	#FCACHE_LOAD_
+LR__0061
+'     teststring[i]:=$C4
+	wrbyte	#196, local68
+	add	objptr, #132
+	rdlong	local20, objptr
+	add	local20, #1
+	wrlong	local20, objptr
+	add	local68, #1
+	sub	objptr, #132
+	cmps	local20, #50 wcz
+ if_b	jmp	#LR__0061
+LR__0062
+'   teststring[50]:=0
+	add	objptr, #50
+	wrbyte	#0, objptr
+	sub	objptr, #50
+'   teststring[0]:=$BA
+	wrbyte	#186, objptr
+'   teststring[49]:=$BA
+	add	objptr, #49
+	wrbyte	#186, objptr
+'   teststring[22]:=$C1
+	sub	objptr, #27
+	wrbyte	#193, objptr
+'   teststring[32]:=$C1
+	add	objptr, #10
+	wrbyte	#193, objptr
+'   teststring[43]:=$C1
+	add	objptr, #11
+	wrbyte	#193, objptr
+	sub	objptr, #43
+'   v.outtextxy(0,18,@teststring)
+	mov	arg01, #0
+	mov	arg02, #18
+	mov	arg03, objptr
+	add	objptr, #136
+	call	#_hng012_outtextxy
+'   v.outtextxy(1,19,string("pc.exe                105321    2021.03.23 12:34"))
+	mov	arg03, ##@LR__0271
+	mov	arg01, #1
+	mov	arg02, #19
+	call	#_hng012_outtextxy
+' 
+' 
+' 
+'   v.waitvbl(12000)
+	mov	arg01, ##12000
+	call	#_hng012_waitvbl
+'   v.setmode(448)
+	mov	arg01, #448
+	call	#_hng012_setmode
+	sub	objptr, #136
+	jmp	#LR__0004
+	mov	ptra, fp
+	call	#popregs_
+_demo_ret
+	ret
+
+' 
+' '*************************************************************************
+' '                                                                        *
+' '  VBlank functions                                                      *
+' '                                                                        *
+' '*************************************************************************
+' 
+' pub waitvbl(amount) | i
+_hng012_waitvbl
+	mov	COUNT_, #4
+	call	#pushregs_
+	mov	local01, arg01
+' 
+' ''---------- Wait for start of vblank. Amount=delay in frames
+' 
+' repeat i from 1 to amount
+	mov	local02, #1
+	cmps	local01, #1 wcz
+ if_a	mov	local03, #1
+ if_be	neg	local03, #1
+	add	local01, local03
+LR__0063
+'   repeat until vblank==0
+LR__0064
+	add	objptr, #212
+	rdlong	local04, objptr wz
+	sub	objptr, #212
+ if_e	jmp	#LR__0065
+'     waitus(100)
+	mov	arg01, #100
+	call	#__system___waitus
+	jmp	#LR__0064
+LR__0065
+'   repeat until vblank==1
+LR__0066
+	add	objptr, #212
+	rdlong	local04, objptr
+	sub	objptr, #212
+	cmp	local04, #1 wz
+ if_e	jmp	#LR__0067
+'     waitus(100)
+	mov	arg01, #100
+	call	#__system___waitus
+	jmp	#LR__0066
+LR__0067
+	add	local02, local03
+	cmp	local02, local01 wz
+ if_ne	jmp	#LR__0063
+	mov	ptra, fp
+	call	#popregs_
+_hng012_waitvbl_ret
+	ret
+
+' 
+' ''---------- Set font and back colors for all screen - from 256 color palette
+' 
+' pub setscreencolors(ff,bb) | c ,i
+_hng012_setscreencolors
+	shl	arg01, #24
+	shl	arg02, #16
+	add	arg01, arg02
+' 
+' c:=ff<<24+bb<<16
+' 
+' repeat i from 0 to buflen-1
+	mov	_var01, #0
+	add	objptr, #196
+	rdlong	_var02, objptr
+	sub	objptr, #196
+	sub	_var02, #1
+	cmps	_var02, #0 wcz
+ if_a	mov	_var03, #1
+ if_be	neg	_var03, #1
+	add	_var02, _var03
+	loc	pa,	#(@LR__0069-@LR__0068)
+	call	#FCACHE_LOAD_
+LR__0068
+	mov	_var04, _var01
+	shl	_var04, #2
+	rdlong	_var05, objptr
+	add	_var05, _var04
+	rdlong	_var06, _var05
+	and	_var06, ##65535
+	or	_var06, arg01
+'    long[buf_ptr+4*i]:= (long[buf_ptr+4*i] & $FFFF) |  c
+	wrlong	_var06, _var05
+	add	_var01, _var03
+	cmp	_var01, _var02 wz
+ if_ne	jmp	#LR__0068
+LR__0069
+_hng012_setscreencolors_ret
+	ret
+
+' 
+' ''---------- Set border color for all screen - rgb
+' 
+' pub setbordercolors(r,g,b) |color, i
+_hng012_setbordercolors
+	shl	arg01, #16
+	shl	arg02, #8
+	add	arg01, arg02
+	add	arg01, arg03
+' 
+' color:=r<<16+g<<8+b  ''' todo!!! border buffer has to be defined like a main buffer
+' 
+' repeat i from 0 to lines+1
+	mov	_var01, #0
+	add	objptr, #296
+	rdlong	_var02, objptr
+	sub	objptr, #296
+	add	_var02, #1
+	cmps	_var02, #0 wcz
+ if_a	mov	_var03, #1
+ if_be	neg	_var03, #1
+	add	_var02, _var03
+	loc	pa,	#(@LR__0071-@LR__0070)
+	call	#FCACHE_LOAD_
+LR__0070
+	mov	_var04, _var01
+	shl	_var04, #2
+	add	objptr, #44
+	add	_var04, objptr
+'   bordercolor[i]:=color
+	wrlong	arg01, _var04
+	add	_var01, _var03
+	cmp	_var01, _var02 wz
+	sub	objptr, #44
+ if_ne	jmp	#LR__0070
+LR__0071
+_hng012_setbordercolors_ret
+	ret
+
+' 
+' ''---------- Set the color for the character at line y and position x
+' 
+' pub setcharcolor(x,y,c) | place, color
+_hng012_setcharcolor
+	add	objptr, #292
+	rdlong	_var01, objptr
+	qmul	arg02, _var01
+	getqx	_var02
+	add	arg01, _var02
+' 
+' place:=(x)+(y*cpl)
+' 
+' if (place>buflen-1)
+	sub	objptr, #96
+	rdlong	_var03, objptr
+	sub	objptr, #196
+	sub	_var03, #1
+	cmps	arg01, _var03 wcz
+ if_be	jmp	#LR__0072
+	add	objptr, #196
+	rdlong	arg01, objptr
+	sub	objptr, #196
+	sub	arg01, #1
+'   place:=buflen-1
+LR__0072
+	shl	arg01, #2
+	rdlong	_var04, objptr
+	add	_var04, arg01
+	rdlong	_var05, _var04
+	and	_var05, ##16777215
+	shl	arg03, #24
+	or	_var05, arg03
+' 
+' color:=(long[buf_ptr+4*place] &$FFFFFF) | (c<<24)
+	rdlong	_var06, objptr
+	add	_var06, arg01
+' long[buf_ptr+4*place]:=color
+	wrlong	_var05, _var06
+_hng012_setcharcolor_ret
+	ret
+
+' 
+' ''---------- Set the background color at line y and position x
+' 
+' pub setbackcolor(x,y,c) | place, color
+_hng012_setbackcolor
+	add	objptr, #292
+	rdlong	_var01, objptr
+	qmul	arg02, _var01
+	getqx	_var02
+	add	arg01, _var02
+' 
+' place:=(x)+(y*cpl)
+' 
+' if (place>buflen-1)
+	sub	objptr, #96
+	rdlong	_var03, objptr
+	sub	objptr, #196
+	sub	_var03, #1
+	cmps	arg01, _var03 wcz
+ if_be	jmp	#LR__0073
+	add	objptr, #196
+	rdlong	arg01, objptr
+	sub	objptr, #196
+	sub	arg01, #1
+'   place:=buflen-1
+LR__0073
+	shl	arg01, #2
+	rdlong	_var04, objptr
+	add	_var04, arg01
+	rdlong	_var05, _var04
+	and	_var05, ##-16711681
+	shl	arg03, #16
+	or	_var05, arg03
+' 
+' color:=(long[buf_ptr+4*place] &$FF00FFFF) | (c<<16)
+	rdlong	_var06, objptr
+	add	_var06, arg01
+' long[buf_ptr+4*place]:=color
+	wrlong	_var05, _var06
+_hng012_setbackcolor_ret
+	ret
+
+' 
+' 
+' '*************************************************************************
+' '                                                                        *
+' '  Text functions                                                        *
+' '                                                                        *
+' '*************************************************************************
+' 
+' ''---------- Clear the screen, set its foreground/background color
+' 
+' pub cls(fc,bc)   :c
+_hng012_cls
+	mov	COUNT_, #3
+	call	#pushregs_
+	mov	local01, arg01
+	mov	local02, local01
+	shl	local02, #24
+	mov	local03, arg02
+	shl	local03, #16
+	add	local02, local03
+	add	local02, #32
+' 
+' c:=fc<<24+bc<<16+$20
+' longfill(buf_ptr,c,buflen)
+	rdlong	arg01, objptr
+	add	objptr, #196
+	rdlong	arg03, objptr wz
+	sub	objptr, #196
+ if_e	jmp	#LR__0078
+	loc	pa,	#(@LR__0076-@LR__0074)
+	call	#FCACHE_LOAD_
+LR__0074
+	rep	@LR__0077, arg03
+LR__0075
+	wrlong	local02, arg01
+	add	arg01, #4
+LR__0076
+LR__0077
+LR__0078
+' setwritecolors(fc,bc)
+' 
+' 
+' write_color:=ff
+	add	objptr, #204
+	wrlong	local01, objptr
+' write_background:=bb
+	add	objptr, #4
+	wrlong	arg02, objptr
+' cursor_x:=0
+	sub	objptr, #8
+	wrbyte	#0, objptr
+' cursor_y:=0
+	add	objptr, #1
+	wrbyte	#0, objptr
+	sub	objptr, #201
+	mov	result1, local02
+	mov	ptra, fp
+	call	#popregs_
+_hng012_cls_ret
+	ret
+
+' 
+' ''---------- Output a char at x,y, don't change colors and cursor position
+' 
+' pub putcharxy(x,y,achar) | c
+_hng012_putcharxy
+	add	objptr, #292
+	rdlong	_var01, objptr
+	sub	objptr, #292
+	qmul	_var01, arg02
+	getqx	_var02
+	add	_var02, arg01
+	shl	_var02, #2
+	rdlong	_var03, objptr
+	add	_var03, _var02
+	rdlong	_var04, _var03
+	andn	_var04, #255
+	and	arg03, #255
+	or	_var04, arg03
+' 
+' long[buf_ptr+4*(cpl*y+x)]:=(long[buf_ptr+4*(cpl*y+x)] & $FFFFFF00)  |(achar & $000000FF)
+	wrlong	_var04, _var03
+_hng012_putcharxy_ret
+	ret
+
+' 
+' ''--------- Output a string at position x,y without changing colors
+' 
+' pub outtextxy(x,y,text) | iii
+_hng012_outtextxy
+	mov	COUNT_, #11
+	call	#pushregs_
+	mov	local01, arg01
+' 
+' repeat iii from 0 to strsize(text)-1
+	mov	local02, #0
+	mov	arg01, arg03
+	mov	local03, #0
+	loc	pa,	#(@LR__0080-@LR__0079)
+	call	#FCACHE_LOAD_
+LR__0079
+	rdbyte	local04, arg01 wz
+ if_ne	add	local03, #1
+ if_ne	add	arg01, #1
+ if_ne	jmp	#LR__0079
+LR__0080
+	mov	result1, local03
+	mov	local05, result1
+	sub	local05, #1
+	cmps	local05, #0 wcz
+ if_a	mov	local06, #1
+ if_be	neg	local06, #1
+	add	local05, local06
+	loc	pa,	#(@LR__0082-@LR__0081)
+	call	#FCACHE_LOAD_
+LR__0081
+	add	objptr, #292
+	rdlong	local07, objptr
+	sub	objptr, #292
+	qmul	local07, arg02
+	getqx	local08
+	add	local08, local01
+	add	local08, local02
+	shl	local08, #2
+	rdlong	local09, objptr
+	add	local09, local08
+	rdlong	local10, local09
+	andn	local10, #255
+	mov	local11, arg03
+	add	local11, local02
+	rdbyte	local07, local11
+	or	local10, local07
+'   long[buf_ptr+4*(cpl*y+x+iii)]:=(long[buf_ptr+4*(cpl*y+x+iii)] & $FFFFFF00)  | byte[text+iii]
+	wrlong	local10, local09
+	add	local02, local06
+	cmp	local02, local05 wz
+ if_ne	jmp	#LR__0081
+LR__0082
+	mov	ptra, fp
+	call	#popregs_
+_hng012_outtextxy_ret
+	ret
+
+' 
+' 
+' ''--------- Output a string at position x,y and colors b,f
+' 
+' pub outtextxyc(x,y,text,f,b) | iii,c
+_hng012_outtextxyc
+	mov	COUNT_, #14
+	call	#pushregs_
+	mov	local01, arg01
+	shl	arg04, #24
+	shl	arg05, #16
+	add	arg04, arg05
+' 
+' c:=f<<24+b<<16
+' repeat iii from 0 to strsize(text)-1
+	mov	local02, #0
+	mov	arg01, arg03
+	mov	local03, #0
+	loc	pa,	#(@LR__0084-@LR__0083)
+	call	#FCACHE_LOAD_
+LR__0083
+	rdbyte	local04, arg01 wz
+ if_ne	add	local03, #1
+ if_ne	add	arg01, #1
+ if_ne	jmp	#LR__0083
+LR__0084
+	mov	result1, local03
+	mov	local05, result1
+	sub	local05, #1
+	cmps	local05, #0 wcz
+ if_a	mov	local06, #1
+ if_be	neg	local06, #1
+	add	local05, local06
+	loc	pa,	#(@LR__0086-@LR__0085)
+	call	#FCACHE_LOAD_
+LR__0085
+	add	objptr, #292
+	rdlong	local07, objptr
+	sub	objptr, #292
+	qmul	local07, arg02
+	getqx	local08
+	add	local08, local01
+	add	local08, local02
+	shl	local08, #2
+	rdlong	local09, objptr
+	add	local09, local08
+	rdlong	local10, local09
+	andn	local10, #255
+	mov	local11, arg03
+	add	local11, local02
+	rdbyte	local07, local11
+	or	local10, local07
+'   long[buf_ptr+4*(cpl*y+x+iii)]:=(long[buf_ptr+4*(cpl*y+x+iii)] & $FFFFFF00)  | byte[text+iii]
+	wrlong	local10, local09
+	add	objptr, #292
+	rdlong	local07, objptr
+	sub	objptr, #292
+	qmul	local07, arg02
+	getqx	local12
+	add	local12, local01
+	add	local12, local02
+	shl	local12, #2
+	rdlong	local13, objptr
+	add	local13, local12
+	rdlong	local14, local13
+	and	local14, ##65535
+	or	local14, arg04
+'   long[buf_ptr+4*(cpl*y+x+iii)]:=(long[buf_ptr+4*(cpl*y+x+iii)] & $0000FFFF)  | c
+	wrlong	local14, local13
+	add	local02, local06
+	cmp	local02, local05 wz
+ if_ne	jmp	#LR__0085
+LR__0086
+	mov	ptra, fp
+	call	#popregs_
+_hng012_outtextxyc_ret
+	ret
+
+' 
+' ''---------- Output a char at the cursor position, move the cursor
+' 
+' pub putchar(achar) | c,x,y
+_hng012_putchar
+	mov	COUNT_, #15
+	call	#pushregs_
+' 
+' x:=cursor_x
+	add	objptr, #200
+	rdbyte	local01, objptr
+' y:=cursor_y
+	add	objptr, #1
+	rdbyte	local02, objptr
+	add	objptr, #3
+	rdlong	local03, objptr
+	shl	local03, #24
+	add	objptr, #4
+	rdlong	local04, objptr
+	shl	local04, #16
+	add	local03, local04
+' c:=write_color<<24+write_background<<16
+	add	objptr, #84
+	rdlong	local05, objptr
+	sub	objptr, #292
+	qmul	local05, local02
+	getqx	local06
+	add	local06, local01
+	shl	local06, #2
+	rdlong	local07, objptr
+	add	local07, local06
+	rdlong	local08, local07
+	and	local08, ##65535
+	or	local08, local03
+' long[buf_ptr+4*(cpl*y+x)]:=long[buf_ptr+4*(cpl*y+x)] &$FFFF | c
+	wrlong	local08, local07
+	add	objptr, #292
+	rdlong	local05, objptr
+	sub	objptr, #292
+	qmul	local05, local02
+	getqx	local09
+	add	local09, local01
+	shl	local09, #2
+	rdlong	local10, objptr
+	add	local10, local09
+	rdlong	local11, local10
+	andn	local11, #255
+	mov	local12, arg01
+	and	local12, #255
+	or	local11, local12
+' long[buf_ptr+4*(cpl*y+x)]:=(long[buf_ptr+4*(cpl*y+x)] & $FFFFFF00)  |(achar & $000000FF)
+	wrlong	local11, local10
+' cursor_x+=1
+	add	objptr, #200
+	rdbyte	local13, objptr
+	add	local13, #1
+	wrbyte	local13, objptr
+' if cursor_x==cpl
+	rdbyte	local13, objptr
+	add	objptr, #92
+	rdlong	local14, objptr
+	sub	objptr, #292
+	cmp	local13, local14 wz
+ if_ne	jmp	#LR__0088
+'   cursor_x:=0
+	add	objptr, #200
+	wrbyte	#0, objptr
+'   cursor_y+=1
+	add	objptr, #1
+	rdbyte	local13, objptr
+	add	local13, #1
+	wrbyte	local13, objptr
+'   if cursor_y>lines-1
+	add	objptr, #95
+	rdlong	local13, objptr
+	sub	local13, #1
+	sub	objptr, #95
+	rdbyte	local14, objptr
+	sub	objptr, #201
+	cmps	local14, local13 wcz
+ if_be	jmp	#LR__0087
+'     scrollup()
+	call	#_hng012_scrollup
+	add	objptr, #296
+	rdlong	local15, objptr
+	sub	local15, #1
+'     cursor_y:=lines-1
+	sub	objptr, #95
+	wrbyte	local15, objptr
+	sub	objptr, #201
+LR__0087
+LR__0088
+	mov	ptra, fp
+	call	#popregs_
+_hng012_putchar_ret
+	ret
+
+' 
+' ''--------- Output a string at the cursor position, move the cursor
+' 
+' pub write(text) | iii,c,ncx,ncy
+_hng012_write
+	mov	COUNT_, #17
+	call	#pushregs_
+	mov	local01, arg01
+	add	objptr, #204
+	rdlong	local02, objptr
+	shl	local02, #24
+	add	objptr, #4
+	rdlong	local03, objptr
+	shl	local03, #16
+	add	local02, local03
+' 
+' c:=write_color<<24+write_background<<16
+' 'debug(uhex_long(write_color))
+' ncy:=cursor_y
+	sub	objptr, #7
+	rdbyte	local04, objptr
+' ncx:=cursor_x+strsize(text)
+	sub	objptr, #1
+	rdbyte	local05, objptr
+	sub	objptr, #200
+	mov	arg01, local01
+	mov	local06, #0
+	loc	pa,	#(@LR__0090-@LR__0089)
+	call	#FCACHE_LOAD_
+LR__0089
+	rdbyte	local07, arg01 wz
+ if_ne	add	local06, #1
+ if_ne	add	arg01, #1
+ if_ne	jmp	#LR__0089
+LR__0090
+	mov	result1, local06
+	add	local05, local06
+	mov	local08, local05
+	loc	pa,	#(@LR__0092-@LR__0091)
+	call	#FCACHE_LOAD_
+' repeat while ncx>cpl-1
+LR__0091
+	add	objptr, #292
+	rdlong	local05, objptr
+	sub	objptr, #292
+	sub	local05, #1
+	cmps	local08, local05 wcz
+ if_be	jmp	#LR__0093
+'   ncx-=cpl
+	add	objptr, #292
+	rdlong	local09, objptr
+	sub	objptr, #292
+	sub	local08, local09
+'   ncy+=1
+	add	local04, #1
+	jmp	#LR__0091
+LR__0092
+LR__0093
+' repeat while ncy>lines-1
+LR__0094
+	add	objptr, #296
+	rdlong	local05, objptr
+	sub	objptr, #296
+	sub	local05, #1
+	cmps	local04, local05 wcz
+ if_be	jmp	#LR__0095
+'   ncy-=1
+	sub	local04, #1
+'   scrollup()
+	call	#_hng012_scrollup
+'   cursor_y-=1
+	add	objptr, #201
+	rdbyte	local05, objptr
+	sub	local05, #1
+	wrbyte	local05, objptr
+	sub	objptr, #201
+	jmp	#LR__0094
+LR__0095
+' 
+' repeat iii from 0 to strsize(text)-1
+	mov	local10, #0
+	mov	arg01, local01
+	mov	local06, #0
+	loc	pa,	#(@LR__0097-@LR__0096)
+	call	#FCACHE_LOAD_
+LR__0096
+	rdbyte	local07, arg01 wz
+ if_ne	add	local06, #1
+ if_ne	add	arg01, #1
+ if_ne	jmp	#LR__0096
+LR__0097
+	mov	result1, local06
+	mov	local11, result1
+	sub	local11, #1
+	cmps	local11, #0 wcz
+ if_a	mov	local12, #1
+ if_be	neg	local12, #1
+	add	local11, local12
+	loc	pa,	#(@LR__0099-@LR__0098)
+	call	#FCACHE_LOAD_
+LR__0098
+	add	objptr, #292
+	rdlong	local13, objptr
+	sub	objptr, #91
+	rdbyte	local14, objptr
+	qmul	local13, local14
+	getqx	local15
+	sub	objptr, #1
+	rdbyte	local13, objptr
+	sub	objptr, #200
+	add	local15, local13
+	add	local15, local10
+	shl	local15, #2
+	rdlong	local16, objptr
+	add	local16, local15
+	rdlong	local17, local16
+	and	local17, ##65535
+	or	local17, local02
+' 
+'   long[buf_ptr+4*(cpl*cursor_y+cursor_x+iii)]:=long[buf_ptr+4*(cpl*cursor_y+cursor_x+iii)] &$FFFF | c
+	wrlong	local17, local16
+	add	local10, local12
+	cmp	local10, local11 wz
+ if_ne	jmp	#LR__0098
+LR__0099
+' 
+' outtextxy(cursor_x,cursor_y,text)
+	add	objptr, #200
+	rdbyte	arg01, objptr
+	add	objptr, #1
+	rdbyte	arg02, objptr
+	sub	objptr, #201
+	mov	arg03, local01
+	call	#_hng012_outtextxy
+' 
+' cursor_x:=ncx
+	add	objptr, #200
+	wrbyte	local08, objptr
+' cursor_y:=ncy
+	add	objptr, #1
+	wrbyte	local04, objptr
+	sub	objptr, #201
+	mov	ptra, fp
+	call	#popregs_
+_hng012_write_ret
+	ret
+
+' 
+' '--------- Output a string at the cursor position x,y, move the cursor to the next line
+' 
+' pub writeln(text)
+_hng012_writeln
+	mov	COUNT_, #3
+	call	#pushregs_
+' 
+' write(text)
+	call	#_hng012_write
+' cursor_x:=0
+	add	objptr, #200
+	wrbyte	#0, objptr
+' cursor_y+=1
+	add	objptr, #1
+	rdbyte	local01, objptr
+	add	local01, #1
+	wrbyte	local01, objptr
+' if (cursor_y>lines-1)
+	add	objptr, #95
+	rdlong	local01, objptr
+	sub	local01, #1
+	sub	objptr, #95
+	rdbyte	local02, objptr
+	sub	objptr, #201
+	cmps	local02, local01 wcz
+ if_be	jmp	#LR__0100
+'   scrollup()
+	call	#_hng012_scrollup
+	add	objptr, #296
+	rdlong	local03, objptr
+	sub	local03, #1
+'   cursor_y:=lines-1
+	sub	objptr, #95
+	wrbyte	local03, objptr
+	sub	objptr, #201
+LR__0100
+	mov	ptra, fp
+	call	#popregs_
+_hng012_writeln_ret
+	ret
+
+' 
+' ''-----------  Scroll the screen one line up
+' 
+' pub scrollup() | i
+_hng012_scrollup
+	mov	COUNT_, #10
+	call	#pushregs_
+	add	objptr, #292
+	rdlong	local01, objptr
+	sub	objptr, #292
+	shl	local01, #2
+	rdlong	arg02, objptr
+	add	arg02, local01
+	add	objptr, #196
+	rdlong	arg03, objptr
+	add	objptr, #96
+	rdlong	local02, objptr
+	sub	objptr, #292
+	sub	arg03, local02
+' 
+' longmove(buf_ptr,buf_ptr+4*cpl,buflen-cpl)
+	rdlong	arg01, objptr
+	call	#__system__longmove
+' repeat i from buflen-cpl to buflen-1
+	add	objptr, #196
+	rdlong	local03, objptr
+	add	objptr, #96
+	rdlong	local02, objptr
+	sub	local03, local02
+	sub	objptr, #96
+	rdlong	local04, objptr
+	sub	local04, #1
+	rdlong	local05, objptr
+	add	objptr, #96
+	rdlong	local06, objptr
+	sub	objptr, #292
+	sub	local05, local06
+	cmps	local04, local05 wcz
+ if_a	mov	local07, #1
+ if_be	neg	local07, #1
+	add	local04, local07
+	loc	pa,	#(@LR__0102-@LR__0101)
+	call	#FCACHE_LOAD_
+LR__0101
+	mov	local08, local03
+	shl	local08, #2
+	rdlong	local09, objptr
+	add	local09, local08
+	rdlong	local10, local09
+	and	local10, ##-65536
+	or	local10, #32
+'   long[buf_ptr+4*i]:=(long[buf_ptr+4*i] & $FFFF0000) | 32
+	wrlong	local10, local09
+	add	local03, local07
+	cmp	local03, local04 wz
+ if_ne	jmp	#LR__0101
+LR__0102
+	mov	ptra, fp
+	call	#popregs_
+_hng012_scrollup_ret
+	ret
+
+' 
+' ''----------- Set cursor at the first character in a new line, scroll if needed
+' 
+' pub crlf()
+_hng012_crlf
+	mov	COUNT_, #3
+	call	#pushregs_
+' 
+' cursor_x:=0
+	add	objptr, #200
+	wrbyte	#0, objptr
+' cursor_y+=1
+	add	objptr, #1
+	rdbyte	local01, objptr
+	add	local01, #1
+	wrbyte	local01, objptr
+' if cursor_y>lines-1
+	add	objptr, #95
+	rdlong	local01, objptr
+	sub	local01, #1
+	sub	objptr, #95
+	rdbyte	local02, objptr
+	sub	objptr, #201
+	cmps	local02, local01 wcz
+ if_be	jmp	#LR__0103
+'   scrollup()
+	call	#_hng012_scrollup
+	add	objptr, #296
+	rdlong	local03, objptr
+	sub	local03, #1
+'   cursor_y:=lines-1
+	sub	objptr, #95
+	wrbyte	local03, objptr
+	sub	objptr, #201
+LR__0103
+	mov	ptra, fp
+	call	#popregs_
+_hng012_crlf_ret
+	ret
+
+' 
+' 
+' '*************************************************************************
+' '                                                                        *
+' '  Conversions                                                           *
+' '                                                                        *
+' '*************************************************************************
+' 
+' ''---------- Convert a integer to dec string, return a pointer
+' 
+' pub inttostr(i):result |q,pos,k,j
+_hng012_inttostr
+	mov	COUNT_, #7
+	call	#pushregs_
+	mov	local01, arg01
+' 
+' j:=i
+	mov	local02, local01 wz
+' pos:=10
+	mov	local03, #10
+' k:=0
+	mov	local04, #0
+' 
+' if (j==0)
+ if_ne	jmp	#LR__0104
+'   n_string[0]:=48
+	add	objptr, #216
+	wrbyte	#48, objptr
+'   n_string[1]:=0
+	add	objptr, #1
+	wrbyte	#0, objptr
+	sub	objptr, #217
+' 
+' else
+	jmp	#LR__0111
+LR__0104
+'   if (j<0)
+	cmps	local02, #0 wcz
+'     j:=0-j
+ if_b	neg	local02, local02
+'     k:=45
+ if_b	mov	local04, #45
+' 
+'   n_string[11]:=0
+	add	objptr, #227
+	wrbyte	#0, objptr
+	sub	objptr, #227
+	loc	pa,	#(@LR__0106-@LR__0105)
+	call	#FCACHE_LOAD_
+'   repeat while (pos>-1)
+LR__0105
+	cmps	local03, ##-1 wcz
+ if_be	jmp	#LR__0107
+	mov	muldiva_, local02
+	mov	muldivb_, #10
+	call	#divide_
+	mov	local05, muldiva_
+'     q:=j//10
+'     q:=48+q
+	add	local05, #48
+	mov	local06, local03
+	add	objptr, #216
+	add	local06, objptr
+'     n_string[pos]:=q
+	wrbyte	local05, local06
+'     j:=j/10
+	mov	local02, muldivb_
+'     pos-=1
+	sub	local03, #1
+	sub	objptr, #216
+	jmp	#LR__0105
+LR__0106
+LR__0107
+'   repeat while n_string[0]==48
+LR__0108
+	add	objptr, #216
+	rdbyte	local07, objptr
+	sub	objptr, #216
+	cmp	local07, #48 wz
+ if_ne	jmp	#LR__0109
+	add	objptr, #216
+	mov	arg01, objptr
+	sub	objptr, #216
+	mov	arg02, arg01
+	add	arg02, #1
+'     bytemove(@n_string,@n_string+1,12)
+	mov	arg03, #12
+	call	#__system__bytemove
+	jmp	#LR__0108
+LR__0109
+' 
+'   if k==45
+	cmp	local04, #45 wz
+ if_ne	jmp	#LR__0110
+	add	objptr, #216
+	mov	arg02, objptr
+	sub	objptr, #216
+	mov	arg01, arg02
+	add	arg01, #1
+'      bytemove(@n_string+1,@n_string,12)
+	mov	arg03, #12
+	call	#__system__bytemove
+'      n_string[0]:=k
+	add	objptr, #216
+	wrbyte	local04, objptr
+	sub	objptr, #216
+LR__0110
+LR__0111
+	add	objptr, #216
+	mov	result1, objptr
+	sub	objptr, #216
+' 
+' q:=@n_string
+' return q
+	mov	ptra, fp
+	call	#popregs_
+_hng012_inttostr_ret
+	ret
+
+' 
+' ''----------  Convert unsigned integer to hex string with d digits, return a pointer
+' 
+' pub inttohex(i,d):result |q,pos,k,j
+_hng012_inttohex
+' 
+' j:=i
+	mov	_var01, arg02
+	sub	_var01, #1
+' pos:=d-1
+	mov	_var02, _var01
+' k:=0
+	add	objptr, #216
+	add	arg02, objptr
+' n_string[d]:=0
+	wrbyte	#0, arg02
+' repeat k from 0 to d-1
+	mov	_var03, #0
+	cmps	_var01, #0 wcz
+	sub	objptr, #216
+ if_a	mov	_var04, #1
+ if_be	neg	_var04, #1
+	add	_var01, _var04
+	loc	pa,	#(@LR__0113-@LR__0112)
+	call	#FCACHE_LOAD_
+LR__0112
+	mov	_var05, _var03
+	add	objptr, #216
+	add	_var05, objptr
+'   n_string[k]:=48
+	wrbyte	#48, _var05
+	add	_var03, _var04
+	cmp	_var03, _var01 wz
+	sub	objptr, #216
+ if_ne	jmp	#LR__0112
+LR__0113
+' if (j<>0)
+	cmp	arg01, #0 wz
+ if_e	jmp	#LR__0116
+' 
+'   repeat while (pos>-1)
+LR__0114
+	cmps	_var02, ##-1 wcz
+ if_be	jmp	#LR__0115
+	mov	_var06, arg01
+	and	_var06, #15
+'     q:=j+//16
+'     if (q>9)
+	cmps	_var06, #9 wcz
+'       q:=q+7
+ if_a	add	_var06, #7
+'     q:=48+q
+	add	_var06, #48
+	mov	_var07, _var02
+	add	objptr, #216
+	add	_var07, objptr
+'     n_string[pos]:=q
+	wrbyte	_var06, _var07
+'     j:=j+/16
+	shr	arg01, #4
+'     pos-=1
+	sub	_var02, #1
+	sub	objptr, #216
+	jmp	#LR__0114
+LR__0115
+LR__0116
+	add	objptr, #216
+	mov	result1, objptr
+	sub	objptr, #216
+' 
+' q:=@n_string
+' return q
+_hng012_inttohex_ret
+	ret
+
+' 
+' 
+' '*************************************************************************
+' '                                                                        *
+' '  Mode setting and driver start                                                          *
+' '                                                                        *
+' '*************************************************************************
+' 
+' ''---------  Set the graphics mode
+' 
+' pub setmode(mode) | i
+_hng012_setmode
+	mov	COUNT_, #20
+	call	#pushregs_
+	mov	local01, arg01
+' 
+' '' mode:nt_bb_cc_vv_hh
+' '' hh - h.zoom, vv-v.zoom, cc-c.depth,
+' '' bb - borders/total pixels, 00-wide/1140, 01 medium/1026, 10 narrow/912, 11 no border, 1024 px PAL, 880 px NTSC
+' 
+' if (mode<512)  '' text modes
+	cmps	local01, ##512 wcz
+ if_ae	jmp	#LR__0127
+	add	objptr, #312
+	mov	local02, objptr
+	add	ptr__hng012_dat__, ##7168
+	mov	local03, ptr__hng012_dat__
+'   longmove(@streamer,@timingsxxt,6)
+	mov	local04, local02
+	mov	local05, local03
+	mov	local06, #6
+	mov	arg01, local04
+	mov	arg02, local05
+	mov	arg03, #6
+	sub	objptr, #312
+	sub	ptr__hng012_dat__, ##7168
+	call	#__system__longmove
+	mov	local07, result1
+'   if (mode==0)                                'PAL 50 Hz signaling 1140x624, active 800x480, 100x30 text, wide border, 2 colors per pixel, 00_00_00_00_00=0, 354_693_878 Hz
+	cmp	local01, #0 wz
+ if_ne	jmp	#LR__0117
+	add	objptr, #228
+	mov	local08, objptr
+	add	ptr__hng012_dat__, ##7192
+	mov	local09, ptr__hng012_dat__
+'     longmove(@timings,@timings000,16)
+	mov	local04, local08
+	mov	local05, local09
+	mov	local06, #16
+	mov	arg01, local04
+	mov	arg02, local05
+	mov	arg03, #16
+	sub	objptr, #228
+	sub	ptr__hng012_dat__, ##7192
+	call	#__system__longmove
+	mov	local07, result1
+LR__0117
+'   if (mode==64)                               'PAL 50 Hz signaling 1026x624, active 880x496, 110x31 text, medium border, 2 colors per pixel 00_01_00_00_00=64, 319_215_686 Hz
+	cmp	local01, #64 wz
+ if_ne	jmp	#LR__0118
+	add	objptr, #228
+	mov	local10, objptr
+	add	ptr__hng012_dat__, ##7256
+	mov	local11, ptr__hng012_dat__
+'     longmove(@timings,@timings064,16)
+	mov	arg01, local10
+	mov	arg02, local11
+	mov	arg03, #16
+	sub	objptr, #228
+	sub	ptr__hng012_dat__, ##7256
+	call	#__system__longmove
+	mov	local07, result1
+LR__0118
+'   if (mode==128)                              'PAL 50 Hz signaling 912x624, active 800x480, 100x30 text, medium border, 2 colors per pixel 00_10_00_00_00=64, 283750000z
+	cmp	local01, #128 wz
+ if_ne	jmp	#LR__0119
+	add	objptr, #228
+	mov	arg01, objptr
+	sub	objptr, #228
+	add	ptr__hng012_dat__, ##7320
+	mov	arg02, ptr__hng012_dat__
+	sub	ptr__hng012_dat__, ##7320
+'     longmove(@timings,@timings128,16)
+	mov	arg03, #16
+	call	#__system__longmove
+LR__0119
+'   if (mode==192)                              'PAL 50 Hz signaling 1140x624, active 1024x576, 128x36 text, borderless, 2 colors per pixel 00_11_00_00_00=6192, 354_693_878 Hz
+	cmp	local01, #192 wz
+ if_ne	jmp	#LR__0120
+	add	objptr, #228
+	mov	arg01, objptr
+	sub	objptr, #228
+	add	ptr__hng012_dat__, ##7384
+	mov	arg02, ptr__hng012_dat__
+	sub	ptr__hng012_dat__, ##7384
+'     longmove(@timings,@timings192,16)
+	mov	arg03, #16
+	call	#__system__longmove
+LR__0120
+'   if (mode==256)                              'NTSC 50 Hz signaling 1140x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_00_00_00_00=256, 357959184 Hz
+	cmp	local01, #256 wz
+ if_ne	jmp	#LR__0121
+	add	objptr, #228
+	mov	arg01, objptr
+	sub	objptr, #228
+	add	ptr__hng012_dat__, ##7448
+	mov	arg02, ptr__hng012_dat__
+	sub	ptr__hng012_dat__, ##7448
+'     longmove(@timings,@timings256,16)
+	mov	arg03, #16
+	call	#__system__longmove
+LR__0121
+'   if (mode==320)                              'NTSC 50 Hz signaling 1026x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_01_00_00_00=320, 322162162 Hz
+	cmp	local01, #320 wz
+ if_ne	jmp	#LR__0122
+	add	objptr, #228
+	mov	arg01, objptr
+	sub	objptr, #228
+	add	ptr__hng012_dat__, ##7512
+	mov	arg02, ptr__hng012_dat__
+	sub	ptr__hng012_dat__, ##7512
+'     longmove(@timings,@timings320,16)
+	mov	arg03, #16
+	call	#__system__longmove
+LR__0122
+'   if (mode==384)                              'NTSC 50 Hz signaling 912x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_10_00_00_00=384, 286363636 Hz
+	cmp	local01, #384 wz
+ if_ne	jmp	#LR__0123
+	add	objptr, #228
+	mov	arg01, objptr
+	sub	objptr, #228
+	add	ptr__hng012_dat__, ##7576
+	mov	arg02, ptr__hng012_dat__
+	sub	ptr__hng012_dat__, ##7576
+'     longmove(@timings,@timings384,16)
+	mov	arg03, #16
+	call	#__system__longmove
+LR__0123
+'   if (mode==448)                              'NTSC 50 Hz signaling 1026x524, active 880x496, 110x31 text, borderless, 2 colors per pixel, 01_11_00_00_00=496, 322162162 Hz
+	cmp	local01, #448 wz
+ if_ne	jmp	#LR__0124
+	add	objptr, #228
+	mov	arg01, objptr
+	sub	objptr, #228
+	add	ptr__hng012_dat__, ##7640
+	mov	arg02, ptr__hng012_dat__
+	sub	ptr__hng012_dat__, ##7640
+'     longmove(@timings,@timings448,16)
+	mov	arg03, #16
+	call	#__system__longmove
+LR__0124
+' 
+'   repeat i from 0 to 5
+	mov	local12, #0
+	loc	pa,	#(@LR__0126-@LR__0125)
+	call	#FCACHE_LOAD_
+LR__0125
+	mov	local13, local12
+	shl	local13, #2
+	add	objptr, #228
+	add	local13, objptr
+	mov	local14, local12
+	shl	local14, #2
+	add	objptr, #84
+	rdlong	local15, local13
+	add	local14, objptr
+	rdlong	local05, local14
+	add	local15, local05
+	sub	objptr, #276
+	rdlong	local16, objptr
+	sub	objptr, #36
+	shl	local16, #17
+	add	local15, local16
+'     timings[i]:=timings[i]+streamer[i]+hdmibase<<17
+	wrlong	local15, local13
+	add	local12, #1
+	cmps	local12, #6 wcz
+ if_b	jmp	#LR__0125
+LR__0126
+'   clkfreq:=timings[13]
+	add	objptr, #280
+	rdlong	local04, objptr
+	wrlong	local04, #20
+'   hubset(timings[14])
+	add	objptr, #4
+	rdlong	arg01, objptr
+	sub	objptr, #284
+	hubset	arg01
+LR__0127
+' 
+' cpl:=timings[11]
+	add	objptr, #272
+	rdlong	local04, objptr
+	add	objptr, #20
+	wrlong	local04, objptr
+	sub	objptr, #16
+	rdlong	local17, objptr
+	shr	local17, #4
+' lines:=timings[12]>>4
+	add	objptr, #20
+	wrlong	local17, objptr
+	sub	objptr, #4
+	rdlong	local05, objptr
+	add	objptr, #4
+	rdlong	local07, objptr
+	qmul	local05, local07
+	getqx	local18
+' buflen:=cpl*lines
+	sub	objptr, #100
+	wrlong	local18, objptr
+	sub	objptr, #196
+	shl	local18, #2
+	mov	local19, ##507904
+	sub	local19, local18
+' buf_ptr:=$7C000-4*buflen
+	wrlong	local19, objptr
+	add	objptr, #228
+	mov	local20, objptr
+' mode_ptr:=@timings
+	sub	objptr, #208
+	wrlong	local20, objptr
+	sub	objptr, #20
+	mov	ptra, fp
+	call	#popregs_
+_hng012_setmode_ret
+	ret
+hubexit
+	jmp	#cogexit
+
+__system__bytemove
+	mov	_var01, arg01
+	cmps	arg01, arg02 wcz
+ if_ae	jmp	#LR__0135
+	loc	pa,	#(@LR__0129-@LR__0128)
+	call	#FCACHE_LOAD_
+LR__0128
+	cmps	arg03, #3 wcz
+ if_be	jmp	#LR__0130
+	rdlong	_var02, arg02
+	wrlong	_var02, arg01
+	add	arg01, #4
+	add	arg02, #4
+	sub	arg03, #4
+	jmp	#LR__0128
+LR__0129
+LR__0130
+	mov	_var03, arg03 wz
+ if_e	jmp	#LR__0141
+	loc	pa,	#(@LR__0133-@LR__0131)
+	call	#FCACHE_LOAD_
+LR__0131
+	rep	@LR__0134, _var03
+LR__0132
+	rdbyte	_var02, arg02
+	wrbyte	_var02, arg01
+	add	arg01, #1
+	add	arg02, #1
+LR__0133
+LR__0134
+	jmp	#LR__0141
+LR__0135
+	add	arg01, arg03
+	add	arg02, arg03
+	mov	_var04, arg03 wz
+ if_e	jmp	#LR__0140
+	loc	pa,	#(@LR__0138-@LR__0136)
+	call	#FCACHE_LOAD_
+LR__0136
+	rep	@LR__0139, _var04
+LR__0137
+	sub	arg01, #1
+	sub	arg02, #1
+	rdbyte	_var02, arg02
+	wrbyte	_var02, arg01
+LR__0138
+LR__0139
+LR__0140
+LR__0141
+	mov	result1, _var01
+__system__bytemove_ret
+	ret
+
+__system__longmove
+	mov	_var01, arg01
+	cmps	arg01, arg02 wcz
+ if_ae	jmp	#LR__0146
+	mov	_var02, arg03 wz
+ if_e	jmp	#LR__0152
+	loc	pa,	#(@LR__0144-@LR__0142)
+	call	#FCACHE_LOAD_
+LR__0142
+	rep	@LR__0145, _var02
+LR__0143
+	rdlong	_var03, arg02
+	wrlong	_var03, arg01
+	add	arg01, #4
+	add	arg02, #4
+LR__0144
+LR__0145
+	jmp	#LR__0152
+LR__0146
+	mov	_var04, arg03
+	shl	_var04, #2
+	add	arg01, _var04
+	add	arg02, _var04
+	mov	_var05, arg03 wz
+ if_e	jmp	#LR__0151
+	loc	pa,	#(@LR__0149-@LR__0147)
+	call	#FCACHE_LOAD_
+LR__0147
+	rep	@LR__0150, _var05
+LR__0148
+	sub	arg01, #4
+	sub	arg02, #4
+	rdlong	_var03, arg02
+	wrlong	_var03, arg01
+LR__0149
+LR__0150
+LR__0151
+LR__0152
+	mov	result1, _var01
+__system__longmove_ret
+	ret
+
+__system___waitus
+	mov	COUNT_, #2
+	call	#pushregs_
+	mov	local01, arg01
+	rdlong	local02, #20
+	loc	pa,	#(@LR__0154-@LR__0153)
+	call	#FCACHE_LOAD_
+LR__0153
+	cmps	local01, ##1000000 wcz
+ if_a	waitx	local02
+ if_a	sub	local01, ##1000000
+ if_a	jmp	#LR__0153
+LR__0154
+	cmps	local01, #0 wcz
+ if_be	jmp	#LR__0155
+	mov	muldiva_, local02
+	mov	muldivb_, ##1000000
+	call	#divide_
+	qmul	local01, muldivb_
+	getqx	arg01
+	waitx	arg01
+LR__0155
+	mov	ptra, fp
+	call	#popregs_
+__system___waitus_ret
+	ret
+
+LR__0156
+	byte	"A HDMI Nostalgic text driver demo"
+	byte	0
+LR__0157
+	byte	"It uses 8x16 font"
+	byte	0
+LR__0158
+	byte	"Every character has its own foreground and background color"
+	byte	0
+LR__0159
+	byte	"Every line has its own border color"
+	byte	0
+LR__0160
+	byte	"The hub RAM is used for the color buffer"
+	byte	0
+LR__0161
+	byte	"You can set colors for all the screen using one function call"
+	byte	0
+LR__0162
+	byte	"You can set border color for all the screen using one function call, too"
+	byte	0
+LR__0163
+	byte	"1234567890"
+	byte	0
+LR__0164
+	byte	"P2 Retromachine DOS v. 0.00"
+	byte	0
+LR__0165
+	byte	"This is a demonstration of HDMI 'nostalgic' text driver"
+	byte	0
+LR__0166
+	byte	"The driver is based on PAL/NTSC non-interlaced timings..."
+	byte	0
+LR__0167
+	byte	"...generating 524 lines at 60 Hz or 624 lines at 50 Hz"
+	byte	0
+LR__0168
+	byte	"The P2 clock is based on PAL/NTSC color carrier frequency multiplied by a constant"
+	byte	0
+LR__0169
+	byte	"The driver fits in "
+	byte	0
+LR__0170
+	byte	" longs."
+	byte	0
+LR__0171
+	byte	"We have 8 modes available:"
+	byte	0
+LR__0172
+	byte	"- mode 0:   PAL  50 Hz signaling 1140x624, active  800x480, 100x30 text, wide border,   354_693_878 Hz"
+	byte	0
+LR__0173
+	byte	"- mode 64:  PAL  50 Hz signaling 1026x624, active  880x496, 110x31 text, medium border, 319_215_686 Hz"
+	byte	0
+LR__0174
+	byte	"- mode 128: PAL  50 Hz signaling  912x624, active  800x480, 100x30 text, narrow border, 283_750_000 Hz"
+	byte	0
+LR__0175
+	byte	"- mode 192: PAL  50 Hz signaling 1140x624, active 1024x576, 128x36 text, borderless,    354_693_878 Hz"
+	byte	0
+LR__0176
+	byte	"- mode 256: NTSC 60 Hz signaling 1140x624, active  800x480, 100x30 text, narrow border, 357_959_184 Hz"
+	byte	0
+LR__0177
+	byte	"- mode 320: NTSC 60 Hz signaling 1026x624, active  800x480, 100x30 text, narrow border, 322_162_162 Hz"
+	byte	0
+LR__0178
+	byte	"- mode 384: NTSC 60 Hz signaling  912x624, active  800x480, 100x30 text, narrow border, 286_363_636 Hz"
+	byte	0
+LR__0179
+	byte	"- mode 448: NTSC 60 Hz signaling 1026x624, active  880x496, 110x31 text, borderless,    322_162_162 Hz"
+	byte	0
+LR__0180
+	byte	"We are in the mode 448 now"
+	byte	0
+LR__0181
+	byte	"It is the safest mode to start, the P2 is clocked at 322 MHz and the refresh rate is 60 Hz"
+	byte	0
+LR__0182
+	byte	" "
+	byte	0
+LR__0183
+	byte	"This is MS-DOS like 8x16 font style..."
+	byte	0
+LR__0184
+	byte	" "
+	byte	0
+LR__0185
+	byte	"C:\>"
+	byte	0
+LR__0186
+	byte	"showfont "
+	byte	0
+LR__0187
+	byte	" "
+	byte	0
+LR__0188
+	byte	"        "
+	byte	0
+LR__0189
+	byte	" "
+	byte	0
+LR__0190
+	byte	","
+	byte	0
+LR__0191
+	byte	"C:\>"
+	byte	0
+LR__0192
+	byte	"mode 0"
+	byte	0
+LR__0193
+	byte	" File  Options  View  Special"
+	byte	0
+LR__0194
+	byte	"        "
+	byte	0
+LR__0195
+	byte	" "
+	byte	0
+LR__0196
+	byte	","
+	byte	0
+LR__0197
+	byte	" "
+	byte	0
+LR__0198
+	byte	"     ... but Atari ST-like mono font can also be used."
+	byte	0
+LR__0199
+	byte	"         We also switched the graphics mode to PAL like 50 Hz, 624 lines."
+	byte	0
+LR__0200
+	byte	" "
+	byte	0
+LR__0201
+	byte	"         Although the font is mono style, we are still in the color mode here."
+	byte	0
+LR__0202
+	byte	"blue"
+	byte	0
+LR__0203
+	byte	"green"
+	byte	0
+LR__0204
+	byte	"cyan"
+	byte	0
+LR__0205
+	byte	"red"
+	byte	0
+LR__0206
+	byte	"magenta"
+	byte	0
+LR__0207
+	byte	"brown"
+	byte	0
+LR__0208
+	byte	"light gray"
+	byte	0
+LR__0209
+	byte	"dark gray"
+	byte	0
+LR__0210
+	byte	"light blue"
+	byte	0
+LR__0211
+	byte	"light green"
+	byte	0
+LR__0212
+	byte	"light cyan"
+	byte	0
+LR__0213
+	byte	"light red"
+	byte	0
+LR__0214
+	byte	"light magenta"
+	byte	0
+LR__0215
+	byte	"yellow"
+	byte	0
+LR__0216
+	byte	"white"
+	byte	0
+LR__0217
+	byte	"Clock frequency: "
+	byte	0
+LR__0218
+	byte	"C:\>"
+	byte	0
+LR__0219
+	byte	"p"
+	byte	0
+LR__0220
+	byte	"c"
+	byte	0
+LR__0221
+	byte	" "
+	byte	0
+LR__0222
+	byte	"The Propeller Commander, Copyleft ("
+	byte	0
+LR__0223
+	byte	") 2021 pik33@o2.pl"
+	byte	0
+LR__0224
+	byte	" "
+	byte	0
+LR__0225
+	byte	"C:\>"
+	byte	0
+LR__0226
+	byte	" Status "
+	byte	0
+LR__0227
+	byte	" C:\ "
+	byte	0
+LR__0228
+	byte	"The Propeller Commander, Version 0.00"
+	byte	0
+LR__0229
+	byte	"Copyleft ("
+	byte	0
+LR__0230
+	byte	") 2021 pik33@o2.pl"
+	byte	0
+LR__0231
+	byte	"524,288 Bytes Memory"
+	byte	0
+LR__0232
+	byte	","
+	byte	0
+LR__0233
+	byte	"Bytes Free"
+	byte	0
+LR__0234
+	byte	"32,212,254,720 total bytes on drive C:"
+	byte	0
+LR__0235
+	byte	"3,989,123,640 bytes free on drive C:"
+	byte	0
+LR__0236
+	byte	"123 files use 128,956,384 bytes in"
+	byte	0
+LR__0237
+	byte	"C:"
+	byte	0
+LR__0238
+	byte	"No 'dirinfo' file in this directory"
+	byte	0
+LR__0239
+	byte	"Name"
+	byte	0
+LR__0240
+	byte	"Size"
+	byte	0
+LR__0241
+	byte	"Date"
+	byte	0
+LR__0242
+	byte	"Time"
+	byte	0
+LR__0243
+	byte	"12:34"
+	byte	0
+LR__0244
+	byte	"2021.03.23"
+	byte	0
+LR__0245
+	byte	"SUB-DIR"
+	byte	0
+LR__0246
+	byte	"21356"
+	byte	0
+LR__0247
+	byte	"12564"
+	byte	0
+LR__0248
+	byte	"1128"
+	byte	0
+LR__0249
+	byte	"105321"
+	byte	0
+LR__0250
+	byte	"30831"
+	byte	0
+LR__0251
+	byte	"856"
+	byte	0
+LR__0252
+	byte	"31248"
+	byte	0
+LR__0253
+	byte	"2316"
+	byte	0
+LR__0254
+	byte	"17531"
+	byte	0
+LR__0255
+	byte	"PropDOS"
+	byte	0
+LR__0256
+	byte	"BASIC"
+	byte	0
+LR__0257
+	byte	"Spin"
+	byte	0
+LR__0258
+	byte	"Windows"
+	byte	0
+LR__0259
+	byte	"Atari             emu"
+	byte	0
+LR__0260
+	byte	"Amiga             emu"
+	byte	0
+LR__0261
+	byte	"Propeller"
+	byte	0
+LR__0262
+	byte	"DOS               SYS"
+	byte	0
+LR__0263
+	byte	"DUP               SYS"
+	byte	0
+LR__0264
+	byte	"Autoexec          BAT"
+	byte	0
+LR__0265
+	byte	"pc                exe"
+	byte	0
+LR__0266
+	byte	"win               com"
+	byte	0
+LR__0267
+	byte	"DOOM              BAT"
+	byte	0
+LR__0268
+	byte	"command           com"
+	byte	0
+LR__0269
+	byte	"config            sys"
+	byte	0
+LR__0270
+	byte	"msdos             sys"
+	byte	0
+LR__0271
+	byte	"pc.exe                105321    2021.03.23 12:34"
+	byte	0
+	alignl
+_dat_
+'-' aend long 0
+	byte	$00, $00, $00, $00
+	alignl
+_hng012_dat_
+'-' vga_font                file "vgafont.def"
+	byte	$00[19]
+	byte	$7e, $81, $a5, $81, $81, $bd, $99, $81, $81, $7e, $00, $00, $00, $00, $00, $00
+	byte	$7e, $ff, $db, $ff, $ff, $c3, $e7, $ff, $ff, $7e, $00, $00, $00, $00, $00, $00
+	byte	$00, $36, $7f, $7f, $7f, $7f, $3e, $1c, $08, $00, $00, $00, $00, $00, $00, $00
+	byte	$00, $08, $1c, $3e, $7f, $3e, $1c, $08, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$18, $3c, $3c, $e7, $e7, $e7, $18, $18, $3c, $00, $00, $00, $00, $00, $00, $00
+	byte	$18, $3c, $7e, $ff, $ff, $7e, $18, $18, $3c, $00, $00, $00, $00, $00, $00, $00
+	byte	$00, $00, $00, $18, $3c, $3c, $18, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff
+	byte	$ff, $ff, $ff, $e7, $c3, $c3, $e7, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00
+	byte	$00, $00, $3c, $66, $42, $42, $66, $3c, $00, $00, $00, $00, $00, $ff, $ff, $ff
+	byte	$ff, $ff, $c3, $99, $bd, $bd, $99, $c3, $ff, $ff, $ff, $ff, $ff, $00, $00, $00
+	byte	$78, $70, $58, $4c, $1e, $33, $33, $33, $33, $1e, $00, $00, $00, $00, $00, $00
+	byte	$3c, $66, $66, $66, $66, $3c, $18, $7e, $18, $18, $00, $00, $00, $00, $00, $00
+	byte	$fc, $cc, $fc, $0c, $0c, $0c, $0c, $0e, $0f, $07, $00, $00, $00, $00, $00, $00
+	byte	$fe, $c6, $fe, $c6, $c6, $c6, $c6, $e6, $e7, $67, $03, $00, $00, $00, $00, $00
+	byte	$18, $18, $db, $3c, $e7, $3c, $db, $18, $18, $00, $00, $00, $00, $00, $00, $01
+	byte	$03, $07, $0f, $1f, $7f, $1f, $0f, $07, $03, $01, $00, $00, $00, $00, $00, $40
+	byte	$60, $70, $78, $7c, $7f, $7c, $78, $70, $60, $40, $00, $00, $00, $00, $00, $00
+	byte	$18, $3c, $7e, $18, $18, $18, $7e, $3c, $18, $00, $00, $00, $00, $00, $00, $00
+	byte	$66[7]
+	byte	$00, $66, $66, $00, $00, $00, $00, $00, $00, $fe, $db, $db, $db, $de, $d8, $d8
+	byte	$d8, $d8, $d8, $00, $00, $00, $00, $3e, $63, $06, $1c, $36, $63, $63, $36, $1c
+	byte	$30, $63, $3e, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $7f
+	byte	$7f, $7f, $7f, $00, $00, $00, $00, $00, $00, $18, $3c, $7e, $18, $18, $18, $7e
+	byte	$3c, $18, $7e, $00, $00, $00, $00, $00, $00, $18, $3c, $7e, $18, $18, $18, $18
+	byte	$18, $18, $18, $00, $00, $00, $00, $00, $00, $18, $18, $18, $18, $18, $18, $18
+	byte	$7e, $3c, $18, $00, $00, $00, $00, $00, $00, $00, $00, $18, $30, $7f, $30, $18
+	byte	$00[11]
+	byte	$0c, $06, $7f, $06, $0c, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00, $03, $03, $03, $7f, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$14, $36, $7f, $36, $14, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $08
+	byte	$1c, $1c, $3e, $3e, $7f, $7f, $00, $00, $00, $00, $00, $00, $00, $00, $00, $7f
+	byte	$7f, $3e, $3e, $1c, $1c, $08, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00[14]
+	byte	$18, $3c, $3c, $3c, $18, $18, $18, $00, $18, $18, $00, $00, $00, $00, $66, $66
+	byte	$66, $24, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00, $36, $36, $7f, $36, $36, $36, $7f, $36, $36, $00, $00, $00, $00, $18, $18
+	byte	$3e, $63, $43, $03, $3e, $60, $60, $61, $63, $3e, $18, $18, $00, $00, $00, $00
+	byte	$00, $00, $43, $63, $30, $18, $0c, $06, $63, $61, $00, $00, $00, $00, $00, $00
+	byte	$1c, $36, $36, $1c, $6e, $3b, $33, $33, $33, $6e, $00, $00, $00, $00, $00, $00
+	byte	$0c, $0c, $0c, $06, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$30, $18, $0c, $0c, $0c, $0c, $0c, $0c, $18, $30, $00, $00, $00, $00, $00, $00
+	byte	$0c, $18, $30, $30, $30, $30, $30, $30, $18, $0c, $00, $00, $00, $00, $00, $00
+	byte	$00, $00, $00, $66, $3c, $ff, $3c, $66, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00, $00, $00, $18, $18, $7e, $18, $18, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00[8]
+	byte	$18, $18, $18, $0c, $00, $00, $00, $00, $00, $00, $00, $00, $00, $7f, $00, $00
+	byte	$00[16]
+	byte	$18, $18, $00, $00, $00, $00, $00, $00, $00, $00, $40, $60, $30, $18, $0c, $06
+	byte	$03, $01, $00, $00, $00, $00, $00, $00, $1c, $36, $63, $63, $6b, $6b, $63, $63
+	byte	$36, $1c, $00, $00, $00, $00, $00, $00, $18, $1c, $1e, $18, $18, $18, $18, $18
+	byte	$18, $7e, $00, $00, $00, $00, $00, $00, $3e, $63, $60, $30, $18, $0c, $06, $03
+	byte	$63, $7f, $00, $00, $00, $00, $00, $00, $3e, $63, $60, $60, $3c, $60, $60, $60
+	byte	$63, $3e, $00, $00, $00, $00, $00, $00, $30, $38, $3c, $36, $33, $7f, $30, $30
+	byte	$30, $78, $00, $00, $00, $00, $00, $00, $7f, $03, $03, $03, $3f, $60, $60, $60
+	byte	$63, $3e, $00, $00, $00, $00, $00, $00, $1c, $06, $03, $03, $3f, $63, $63, $63
+	byte	$63, $3e, $00, $00, $00, $00, $00, $00, $7f, $63, $60, $60, $30, $18, $0c, $0c
+	byte	$0c, $0c, $00, $00, $00, $00, $00, $00, $3e, $63, $63, $63, $3e, $63, $63, $63
+	byte	$63, $3e, $00, $00, $00, $00, $00, $00, $3e, $63, $63, $63, $7e, $60, $60, $60
+	byte	$30, $1e, $00, $00, $00, $00, $00, $00, $00, $00, $00, $18, $18, $00, $00, $00
+	byte	$18, $18, $00, $00, $00, $00, $00, $00, $00, $00, $00, $18, $18, $00, $00, $00
+	byte	$18, $18, $0c, $00, $00, $00, $00, $00, $00, $60, $30, $18, $0c, $06, $0c, $18
+	byte	$30, $60, $00, $00, $00, $00, $00, $00, $00, $00, $00, $7e, $00, $00, $7e, $00
+	byte	$00[9]
+	byte	$06, $0c, $18, $30, $60, $30, $18, $0c, $06, $00, $00, $00, $00, $00, $00, $3e
+	byte	$63, $63, $30, $18, $18, $18, $00, $18, $18, $00, $00, $00, $00, $00, $00, $00
+	byte	$3e, $63, $63, $7b, $7b, $7b, $3b, $03, $3e, $00, $00, $00, $00, $00, $00, $08
+	byte	$1c, $36, $63, $63, $7f, $63, $63, $63, $63, $00, $00, $00, $00, $00, $00, $3f
+	byte	$66, $66, $66, $3e, $66, $66, $66, $66, $3f, $00, $00, $00, $00, $00, $00, $3c
+	byte	$66, $43, $03, $03, $03, $03, $43, $66, $3c, $00, $00, $00, $00, $00, $00, $1f
+	byte	$36, $66, $66, $66, $66, $66, $66, $36, $1f, $00, $00, $00, $00, $00, $00, $7f
+	byte	$66, $46, $16, $1e, $16, $06, $46, $66, $7f, $00, $00, $00, $00, $00, $00, $7f
+	byte	$66, $46, $16, $1e, $16, $06, $06, $06, $0f, $00, $00, $00, $00, $00, $00, $3c
+	byte	$66, $43, $03, $03, $7b, $63, $63, $66, $5c, $00, $00, $00, $00, $00, $00, $63
+	byte	$63, $63, $63, $7f, $63, $63, $63, $63, $63, $00, $00, $00, $00, $00, $00, $3c
+	byte	$18[8]
+	byte	$3c, $00, $00, $00, $00, $00, $00, $78, $30, $30, $30, $30, $30, $33, $33, $33
+	byte	$1e, $00, $00, $00, $00, $00, $00, $67, $66, $66, $36, $1e, $1e, $36, $66, $66
+	byte	$67, $00, $00, $00, $00, $00, $00, $0f, $06, $06, $06, $06, $06, $06, $46, $66
+	byte	$7f, $00, $00, $00, $00, $00, $00, $63, $77, $7f, $7f, $6b, $63, $63, $63, $63
+	byte	$63, $00, $00, $00, $00, $00, $00, $63, $67, $6f, $7f, $7b, $73, $63, $63, $63
+	byte	$63, $00, $00, $00, $00, $00, $00, $3e, $63, $63, $63, $63, $63, $63, $63, $63
+	byte	$3e, $00, $00, $00, $00, $00, $00, $3f, $66, $66, $66, $3e, $06, $06, $06, $06
+	byte	$0f, $00, $00, $00, $00, $00, $00, $3e, $63, $63, $63, $63, $63, $63, $6b, $7b
+	byte	$3e, $30, $70, $00, $00, $00, $00, $3f, $66, $66, $66, $3e, $36, $66, $66, $66
+	byte	$67, $00, $00, $00, $00, $00, $00, $3e, $63, $63, $06, $1c, $30, $60, $63, $63
+	byte	$3e, $00, $00, $00, $00, $00, $00, $7e, $7e, $5a, $18, $18, $18, $18, $18, $18
+	byte	$3c, $00, $00, $00, $00, $00, $00, $63, $63, $63, $63, $63, $63, $63, $63, $63
+	byte	$3e, $00, $00, $00, $00, $00, $00, $63, $63, $63, $63, $63, $63, $63, $36, $1c
+	byte	$08, $00, $00, $00, $00, $00, $00, $63, $63, $63, $63, $6b, $6b, $6b, $7f, $77
+	byte	$36, $00, $00, $00, $00, $00, $00, $63, $63, $36, $3e, $1c, $1c, $3e, $36, $63
+	byte	$63, $00, $00, $00, $00, $00, $00, $66, $66, $66, $66, $3c, $18, $18, $18, $18
+	byte	$3c, $00, $00, $00, $00, $00, $00, $7f, $63, $61, $30, $18, $0c, $06, $43, $63
+	byte	$7f, $00, $00, $00, $00, $00, $00, $3c, $0c, $0c, $0c, $0c, $0c, $0c, $0c, $0c
+	byte	$3c, $00, $00, $00, $00, $00, $00, $00, $01, $03, $07, $0e, $1c, $38, $70, $60
+	byte	$40, $00, $00, $00, $00, $00, $00, $3c, $30, $30, $30, $30, $30, $30, $30, $30
+	byte	$3c, $00, $00, $00, $1c, $36, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00[17]
+	byte	$ff, $00, $00, $0c, $18, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00[9]
+	byte	$1e, $30, $3e, $33, $33, $33, $6e, $00, $00, $00, $00, $00, $00, $07, $06, $06
+	byte	$1e, $36, $66, $66, $66, $66, $3e, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$3e, $63, $03, $03, $03, $63, $3e, $00, $00, $00, $00, $00, $00, $38, $30, $30
+	byte	$3c, $36, $33, $33, $33, $33, $6e, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$3e, $63, $7f, $03, $03, $63, $3e, $00, $00, $00, $00, $00, $00, $38, $6c, $4c
+	byte	$0c, $1e, $0c, $0c, $0c, $0c, $1e, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$6e, $33, $33, $33, $33, $33, $3e, $30, $33, $1e, $00, $00, $00, $07, $06, $06
+	byte	$36, $6e, $66, $66, $66, $66, $67, $00, $00, $00, $00, $00, $00, $18, $18, $00
+	byte	$1c, $18, $18, $18, $18, $18, $3c, $00, $00, $00, $00, $00, $00, $60, $60, $00
+	byte	$70, $60, $60, $60, $60, $60, $60, $66, $66, $3c, $00, $00, $00, $07, $06, $06
+	byte	$66, $36, $1e, $1e, $36, $66, $67, $00, $00, $00, $00, $00, $00, $1c, $18, $18
+	byte	$18[6]
+	byte	$3c, $00, $00, $00, $00, $00, $00, $00, $00, $00, $37, $7f, $6b, $6b, $6b, $6b
+	byte	$63, $00, $00, $00, $00, $00, $00, $00, $00, $00, $3b, $66, $66, $66, $66, $66
+	byte	$66, $00, $00, $00, $00, $00, $00, $00, $00, $00, $3e, $63, $63, $63, $63, $63
+	byte	$3e, $00, $00, $00, $00, $00, $00, $00, $00, $00, $3b, $66, $66, $66, $66, $66
+	byte	$3e, $06, $06, $0f, $00, $00, $00, $00, $00, $00, $6e, $33, $33, $33, $33, $33
+	byte	$3e, $30, $30, $78, $00, $00, $00, $00, $00, $00, $3b, $6e, $66, $06, $06, $06
+	byte	$0f, $00, $00, $00, $00, $00, $00, $00, $00, $00, $3e, $63, $06, $1c, $30, $63
+	byte	$3e, $00, $00, $00, $00, $00, $00, $08, $0c, $0c, $3f, $0c, $0c, $0c, $0c, $6c
+	byte	$38, $00, $00, $00, $00, $00, $00, $00, $00, $00, $33, $33, $33, $33, $33, $33
+	byte	$6e, $00, $00, $00, $00, $00, $00, $00, $00, $00, $63, $63, $63, $63, $63, $36
+	byte	$1c, $00, $00, $00, $00, $00, $00, $00, $00, $00, $63, $63, $6b, $6b, $6b, $7f
+	byte	$36, $00, $00, $00, $00, $00, $00, $00, $00, $00, $63, $36, $1c, $1c, $1c, $36
+	byte	$63, $00, $00, $00, $00, $00, $00, $00, $00, $00, $63, $63, $63, $63, $63, $63
+	byte	$7e, $60, $30, $1f, $00, $00, $00, $00, $00, $00, $7f, $33, $18, $0c, $06, $63
+	byte	$7f, $00, $00, $00, $00, $00, $00, $70, $18, $18, $18, $0e, $18, $18, $18, $18
+	byte	$70, $00, $00, $00, $00, $00, $00, $18, $18, $18, $18, $18, $18, $18, $18, $18
+	byte	$18, $00, $00, $00, $00, $00, $00, $0e, $18, $18, $18, $70, $18, $18, $18, $18
+	byte	$0e, $00, $00, $00, $6e, $3b, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00[10]
+	byte	$08, $1c, $36, $63, $63, $63, $7f, $00, $00, $00, $00, $00, $00, $3c, $66, $43
+	byte	$03, $03, $03, $03, $43, $66, $3c, $18, $30, $1e, $00, $00, $00, $00, $33, $00
+	byte	$33[6]
+	byte	$6e, $00, $00, $00, $00, $00, $60, $30, $18, $00, $3e, $63, $7f, $03, $03, $63
+	byte	$3e, $00, $00, $00, $00, $00, $08, $1c, $36, $00, $1e, $30, $3e, $33, $33, $33
+	byte	$6e, $00, $00, $00, $00, $00, $00, $00, $33, $00, $1e, $30, $3e, $33, $33, $33
+	byte	$6e, $00, $00, $00, $00, $00, $1c, $36, $1c, $00, $33, $33, $33, $33, $33, $33
+	byte	$6e, $00, $00, $00, $00, $00, $60, $30, $18, $00, $3e, $63, $03, $03, $03, $63
+	byte	$3e, $00, $00, $00, $00, $00, $00, $00, $00, $00, $3e, $63, $03, $03, $03, $63
+	byte	$3e, $18, $30, $1e, $00, $00, $00, $1c, $58, $78, $38, $18, $1c, $1e, $1a, $18
+	byte	$3c, $00, $00, $00, $00, $00, $00, $00, $63, $00, $3e, $63, $7f, $03, $03, $63
+	byte	$3e, $00, $00, $00, $66, $33, $00, $3e, $63, $63, $63, $63, $63, $63, $63, $63
+	byte	$3e, $00, $00, $00, $00, $00, $cc, $66, $33, $00, $3e, $63, $63, $63, $63, $63
+	byte	$3e, $00, $00, $00, $00, $00, $18, $3c, $66, $00, $1c, $18, $18, $18, $18, $18
+	byte	$3c, $00, $00, $00, $30, $18, $00, $7f, $63, $61, $30, $18, $0c, $06, $43, $63
+	byte	$7f, $00, $00, $00, $00, $63, $00, $08, $1c, $36, $63, $63, $7f, $63, $63, $63
+	byte	$63, $00, $00, $00, $30, $18, $00, $3c, $66, $43, $03, $03, $03, $03, $43, $66
+	byte	$3c, $00, $00, $00, $30, $18, $00, $7f, $66, $46, $16, $1e, $16, $06, $46, $66
+	byte	$7f, $00, $00, $00, $0c, $06, $00, $0f, $06, $06, $06, $06, $06, $06, $46, $66
+	byte	$7f, $00, $00, $00, $30, $18, $00, $1c, $18, $18, $18, $18, $18, $18, $18, $18
+	byte	$3c, $00, $00, $00, $00, $00, $08, $1c, $36, $00, $3e, $63, $63, $63, $63, $63
+	byte	$3e, $00, $00, $00, $00, $00, $00, $00, $63, $00, $3e, $63, $63, $63, $63, $63
+	byte	$3e, $00, $00, $00, $00, $00, $00, $6f, $46, $26, $06, $06, $06, $06, $46, $66
+	byte	$7f, $00, $00, $00, $00, $00, $00, $6e, $4c, $2c, $0c, $0c, $0c, $0c, $0c, $0c
+	byte	$1e, $00, $00, $00, $30, $18, $00, $3e, $63, $63, $06, $1c, $30, $60, $63, $63
+	byte	$3e, $00, $00, $00, $00, $00, $60, $30, $18, $00, $3e, $63, $06, $1c, $30, $63
+	byte	$3e, $00, $00, $00, $00, $63, $00, $3e, $63, $63, $63, $63, $63, $63, $63, $63
+	byte	$3e, $00, $00, $00, $00, $63, $00, $63, $63, $63, $63, $63, $63, $63, $63, $63
+	byte	$3e, $00, $00, $00, $6c, $38, $00, $7e, $7e, $5a, $18, $18, $18, $18, $18, $18
+	byte	$3c, $00, $00, $00, $00, $00, $60, $48, $2c, $0c, $3f, $0c, $0c, $0c, $0c, $6c
+	byte	$38, $00, $00, $00, $00, $00, $00, $0f, $26, $36, $1e, $0e, $07, $07, $46, $66
+	byte	$7f, $00, $00, $00, $00, $00, $00, $00, $00, $63, $36, $1c, $1c, $36, $63, $00
+	byte	$00[6]
+	byte	$36, $1c, $08, $00, $3e, $63, $03, $03, $03, $63, $3e, $00, $00, $00, $00, $00
+	byte	$30, $18, $0c, $00, $1e, $30, $3e, $33, $33, $33, $6e, $00, $00, $00, $00, $00
+	byte	$60, $30, $18, $00, $1c, $18, $18, $18, $18, $18, $3c, $00, $00, $00, $00, $00
+	byte	$60, $30, $18, $00, $3e, $63, $63, $63, $63, $63, $3e, $00, $00, $00, $00, $00
+	byte	$30, $18, $0c, $00, $33, $33, $33, $33, $33, $33, $6e, $00, $00, $00, $00, $00
+	byte	$00, $08, $1c, $36, $63, $63, $7f, $63, $63, $63, $63, $18, $0c, $78, $00, $00
+	byte	$00, $00, $00, $00, $1e, $30, $3e, $33, $33, $33, $6e, $18, $0c, $78, $36, $1c
+	byte	$00, $7f, $63, $61, $30, $18, $0c, $06, $43, $63, $7f, $00, $00, $00, $00, $00
+	byte	$36, $1c, $08, $00, $7f, $33, $18, $0c, $06, $63, $7f, $00, $00, $00, $00, $00
+	byte	$00, $7f, $66, $46, $16, $1e, $16, $06, $46, $66, $7f, $18, $0c, $78, $00, $00
+	byte	$00, $00, $00, $00, $3e, $63, $7f, $03, $03, $63, $3e, $18, $0c, $78, $00, $00
+	byte	$00, $3c, $66, $03, $1f, $03, $0f, $03, $03, $66, $3c, $00, $00, $00, $00, $00
+	byte	$60, $30, $18, $00, $7f, $33, $18, $0c, $06, $63, $7f, $00, $00, $00, $6c, $38
+	byte	$00, $3c, $66, $43, $03, $03, $03, $03, $43, $66, $3c, $00, $00, $00, $00, $00
+	byte	$00, $00, $00, $00, $3e, $63, $06, $1c, $30, $63, $3e, $18, $30, $1e, $00, $00
+	byte	$00[6]
+	byte	$6c, $36, $1b, $36, $6c, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$1b, $36, $6c, $36, $1b, $00, $00, $00, $88, $22, $88, $22, $88, $22, $88, $22
+	byte	$88, $22, $88, $22, $88, $22, $88, $22, $aa, $55, $aa, $55, $aa, $55, $aa, $55
+	byte	$aa, $55, $aa, $55, $aa, $55, $aa, $55, $bb, $ee, $bb, $ee, $bb, $ee, $bb, $ee
+	byte	$bb, $ee, $bb, $ee, $bb, $ee, $bb, $ee, $18, $18, $18, $18, $18, $18, $18, $18
+	byte	$18[15]
+	byte	$1f, $18, $18, $18, $18, $18, $18, $18, $18, $30, $18, $00, $08, $1c, $36, $63
+	byte	$63, $7f, $63, $63, $63, $63, $00, $00, $00, $1c, $36, $00, $08, $1c, $36, $63
+	byte	$63, $7f, $63, $63, $63, $63, $00, $00, $00, $36, $1c, $00, $7f, $66, $46, $16
+	byte	$1e, $16, $06, $46, $66, $7f, $00, $00, $00, $00, $00, $00, $3e, $63, $63, $06
+	byte	$1c, $30, $60, $63, $63, $3e, $18, $30, $1e, $6c, $6c, $6c, $6c, $6c, $6f, $60
+	byte	$6f, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c
+	byte	$6c[9]
+	byte	$00[5]
+	byte	$7f, $60, $6f, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c
+	byte	$6f, $60, $7f, $00, $00, $00, $00, $00, $00, $00, $00, $18, $18, $00, $7f, $63
+	byte	$61, $30, $18, $0c, $06, $43, $63, $7f, $00, $00, $00, $00, $00, $00, $18, $18
+	byte	$00, $7f, $33, $18, $0c, $06, $63, $7f, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00, $00, $1f, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18
+	byte	$18, $18, $f8, $00, $00, $00, $00, $00, $00, $00, $00, $18, $18, $18, $18, $18
+	byte	$18, $18, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00, $00, $ff, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18
+	byte	$18, $18, $f8, $18, $18, $18, $18, $18, $18, $18, $18, $00, $00, $00, $00, $00
+	byte	$00, $00, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $18, $18, $18, $18, $18
+	byte	$18, $18, $ff, $18, $18, $18, $18, $18, $18, $18, $18, $63, $3e, $00, $08, $1c
+	byte	$36, $63, $63, $7f, $63, $63, $63, $63, $00, $00, $00, $00, $00, $00, $63, $3e
+	byte	$00, $1e, $30, $3e, $33, $33, $33, $6e, $00, $00, $00, $6c, $6c, $6c, $6c, $6c
+	byte	$ec, $0c, $fc, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$fc, $0c, $ec, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c
+	byte	$ef, $00, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$ff, $00, $ef, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c
+	byte	$ec, $0c, $ec, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $00, $00, $00, $00, $00
+	byte	$ff, $00, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $6c, $6c, $6c, $6c, $6c
+	byte	$ef, $00, $ef, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $00, $00, $00, $00, $00
+	byte	$63, $3e, $63, $63, $63, $63, $3e, $63, $00, $00, $00, $00, $00, $00, $30, $7e
+	byte	$30, $3c, $36, $33, $33, $33, $33, $6e, $00, $00, $00, $00, $00, $00, $1f, $36
+	byte	$66, $66, $6f, $66, $66, $66, $36, $1f, $00, $00, $00, $36, $1c, $00, $1f, $36
+	byte	$66[6]
+	byte	$36, $1f, $00, $00, $00, $00, $63, $00, $7f, $66, $46, $16, $1e, $16, $06, $46
+	byte	$66, $7f, $00, $00, $00, $6c, $38, $00, $38, $30, $30, $3c, $36, $33, $33, $33
+	byte	$33, $6e, $00, $00, $00, $36, $1c, $00, $63, $67, $6f, $7f, $7b, $73, $63, $63
+	byte	$63, $63, $00, $00, $00, $30, $18, $00, $3c, $18, $18, $18, $18, $18, $18, $18
+	byte	$18, $3c, $00, $00, $00, $3c, $66, $00, $3c, $18, $18, $18, $18, $18, $18, $18
+	byte	$18, $3c, $00, $00, $00, $00, $00, $36, $1c, $08, $00, $3e, $63, $7f, $03, $03
+	byte	$63, $3e, $00, $00, $00, $18, $18, $18, $18, $18, $18, $18, $1f, $00, $00, $00
+	byte	$00[12]
+	byte	$f8, $18, $18, $18, $18, $18, $18, $18, $18, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+	byte	$ff[9]
+	byte	$00[7]
+	byte	$ff[9]
+	byte	$00, $00, $00, $7e, $7e, $5a, $18, $18, $18, $18, $18, $18, $3c, $18, $30, $1e
+	byte	$1c, $36, $1c, $63, $63, $63, $63, $63, $63, $63, $63, $63, $3e, $00, $00, $00
+	byte	$ff[7]
+	byte	$00[9]
+	byte	$30, $18, $00, $3e, $63, $63, $63, $63, $63, $63, $63, $63, $3e, $00, $00, $00
+	byte	$00, $00, $00, $1e, $33, $33, $33, $1b, $33, $63, $63, $63, $33, $00, $00, $00
+	byte	$1c, $36, $00, $3e, $63, $63, $63, $63, $63, $63, $63, $63, $3e, $00, $00, $00
+	byte	$30, $18, $00, $63, $67, $6f, $7f, $7b, $73, $63, $63, $63, $63, $00, $00, $00
+	byte	$00, $00, $60, $30, $18, $00, $3b, $66, $66, $66, $66, $66, $66, $00, $00, $00
+	byte	$00, $00, $36, $1c, $08, $00, $3b, $66, $66, $66, $66, $66, $66, $00, $00, $00
+	byte	$36, $1c, $00, $3e, $63, $63, $06, $1c, $30, $60, $63, $63, $3e, $00, $00, $00
+	byte	$00, $00, $36, $1c, $08, $00, $3e, $63, $06, $1c, $30, $63, $3e, $00, $00, $00
+	byte	$30, $18, $00, $3f, $66, $66, $66, $3e, $36, $66, $66, $66, $6f, $00, $00, $00
+	byte	$30, $18, $00, $63, $63, $63, $63, $63, $63, $63, $63, $63, $3e, $00, $00, $00
+	byte	$00, $00, $60, $30, $18, $00, $3b, $6e, $66, $06, $06, $06, $0f, $00, $00, $00
+	byte	$66, $33, $00, $63, $63, $63, $63, $63, $63, $63, $63, $63, $3e, $00, $00, $00
+	byte	$00, $00, $60, $30, $18, $00, $63, $63, $63, $63, $63, $63, $7e, $60, $30, $1f
+	byte	$30, $18, $00, $66, $66, $66, $66, $3c, $18, $18, $18, $18, $3c, $00, $00, $00
+	byte	$00, $00, $00, $08, $0c, $0c, $3f, $0c, $0c, $0c, $0c, $6c, $38, $18, $30, $1e
+	byte	$30, $18, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00[8]
+	byte	$7f, $00, $00, $00, $00, $00, $00, $00, $66, $33, $00, $00, $00, $00, $00, $00
+	byte	$00[21]
+	byte	$0c, $06, $3c, $36, $1c, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00, $00, $00, $63, $3e, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00, $00, $00, $00, $3e, $63, $06, $1c, $36, $63, $63, $36, $1c, $30, $63, $3e
+	byte	$00[8]
+	byte	$18, $00, $7e, $00, $18, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00[8]
+	byte	$18, $30, $1e, $00, $00, $00, $1c, $36, $36, $1c, $00, $00, $00, $00, $00, $00
+	byte	$00, $00, $00, $00, $63, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00, $00, $00, $18, $18, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00[5]
+	byte	$cc, $66, $33, $00, $33, $33, $33, $33, $33, $33, $6e, $00, $00, $00, $36, $1c
+	byte	$00, $3f, $66, $66, $66, $3e, $36, $66, $66, $66, $6f, $00, $00, $00, $00, $00
+	byte	$36, $1c, $08, $00, $3b, $6e, $66, $06, $06, $06, $0f, $00, $00, $00, $00, $00
+	byte	$00, $00, $00, $7e, $7e, $7e, $7e, $7e, $7e, $7e, $00, $00, $00, $00, $00, $00
+	byte	$00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+'-' st_font                 file "st4font.def"
+	byte	$00[55]
+	byte	$ff, $ff, $00, $00, $00, $00, $00, $00, $00, $18, $18, $18, $18, $18, $18, $18
+	byte	$18[9]
+	byte	$00[7]
+	byte	$ff, $ff, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18
+	byte	$ff, $ff, $00, $00, $00, $00, $00, $00, $00, $18, $18, $18, $18, $18, $18, $18
+	byte	$1f, $1f, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18
+	byte	$f8, $f8, $18, $18, $18, $18, $18, $18, $18, $00, $00, $00, $00, $00, $00, $00
+	byte	$1f, $1f, $18, $18, $18, $18, $18, $18, $18, $00, $00, $00, $00, $00, $00, $00
+	byte	$f8, $f8, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18
+	byte	$1f, $1f, $00, $00, $00, $00, $00, $00, $00, $18, $18, $18, $18, $18, $18, $18
+	byte	$f8, $f8, $00, $00, $00, $00, $00, $00, $00, $18, $18, $18, $18, $18, $18, $18
+	byte	$ff, $ff, $18, $18, $18, $18, $18, $18, $18, $00, $00, $18, $3c, $7e, $66, $66
+	byte	$66, $7e, $7e, $66, $66, $66, $66, $30, $18, $00, $00, $7e, $7e, $06, $06, $3e
+	byte	$3e, $06, $06, $06, $06, $7e, $7e, $18, $0c, $30, $18, $3c, $7e, $66, $66, $06
+	byte	$06, $06, $06, $66, $66, $7e, $3c, $00, $00, $30, $18, $66, $66, $66, $6e, $6e
+	byte	$7e, $7e, $76, $76, $66, $66, $66, $00, $00, $30, $18, $7c, $7e, $06, $06, $0e
+	byte	$1c, $38, $70, $60, $60, $7e, $3e, $00, $00, $30, $18, $7e, $7e, $30, $30, $18
+	byte	$18, $0c, $0c, $06, $06, $7e, $7e, $00, $00, $18, $18, $00, $7e, $7e, $30, $30
+	byte	$18, $18, $0c, $0c, $06, $7e, $7e, $00, $00, $30, $18, $3c, $7e, $66, $66, $66
+	byte	$66[5]
+	byte	$7e, $3c, $00, $00, $00, $00, $06, $06, $06, $06, $16, $1e, $0e, $06, $06, $06
+	byte	$7e, $7e, $00, $00, $00, $00, $00, $00, $00, $3c, $7c, $60, $7c, $7e, $66, $66
+	byte	$7e, $7c, $30, $18, $00, $00, $00, $00, $00, $3c, $7e, $66, $66, $7e, $06, $06
+	byte	$7e, $7c, $18, $0c, $00, $00, $30, $18, $00, $3c, $3e, $06, $06, $06, $06, $06
+	byte	$7e, $7c, $00, $00, $00, $00, $30, $18, $00, $3e, $7e, $66, $66, $66, $66, $66
+	byte	$66, $66, $00, $00, $00, $00, $30, $18, $00, $7c, $7e, $06, $0e, $3c, $70, $60
+	byte	$7e, $3e, $00, $00, $00, $00, $30, $18, $00, $7e, $7e, $30, $18, $18, $0c, $0c
+	byte	$7e, $7e, $00, $00, $00, $00, $18, $18, $00, $7e, $7e, $30, $18, $18, $0c, $0c
+	byte	$7e, $7e, $00, $00, $00, $00, $30, $18, $00, $3c, $7e, $66, $66, $66, $66, $66
+	byte	$7e, $3c, $00, $00, $00, $00, $1c, $1c, $18, $18, $38, $3c, $1c, $18, $18, $18
+	byte	$3c, $3c, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+	byte	$00[6]
+	byte	$18[8]
+	byte	$00, $00, $18, $18, $00, $00, $00, $00, $66, $66, $66, $66, $00, $00, $00, $00
+	byte	$00[9]
+	byte	$66, $66, $ff, $ff, $66, $66, $ff, $ff, $66, $66, $00, $00, $00, $00, $18, $18
+	byte	$7c, $7e, $06, $06, $3e, $7c, $60, $60, $7e, $3e, $18, $18, $00, $00, $00, $66
+	byte	$66, $30, $30, $18, $18, $0c, $0c, $66, $66, $00, $00, $00, $00, $00, $3c, $7e
+	byte	$66, $66, $3c, $1c, $1c, $fc, $fe, $66, $66, $fe, $fc, $00, $00, $00, $00, $18
+	byte	$18, $18, $18, $18, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $30
+	byte	$18, $1c, $0c, $0c, $0c, $0c, $0c, $0c, $1c, $18, $30, $00, $00, $00, $00, $0c
+	byte	$18, $38, $30, $30, $30, $30, $30, $30, $38, $18, $0c, $00, $00, $00, $00, $00
+	byte	$66, $66, $3c, $3c, $ff, $ff, $3c, $3c, $66, $66, $00, $00, $00, $00, $00, $00
+	byte	$00, $18, $18, $18, $7e, $7e, $18, $18, $18, $00, $00, $00, $00, $00, $00, $00
+	byte	$00[6]
+	byte	$18[5]
+	byte	$0c, $04, $00, $00, $00, $00, $00, $00, $7e, $7e, $00, $00, $00, $00, $00, $00
+	byte	$00[13]
+	byte	$18, $18, $18, $00, $00, $00, $00, $60, $60, $60, $30, $30, $18, $18, $0c, $0c
+	byte	$06, $06, $06, $00, $00, $00, $00, $3c, $7e, $66, $66, $66, $76, $6e, $66, $66
+	byte	$66, $7e, $3c, $00, $00, $00, $00, $18, $18, $1c, $1c, $18, $18, $18, $18, $18
+	byte	$18, $7e, $7e, $00, $00, $00, $00, $3c, $7e, $66, $66, $30, $30, $18, $18, $0c
+	byte	$0c, $7e, $7e, $00, $00, $00, $00, $7e, $7e, $30, $30, $18, $18, $30, $30, $66
+	byte	$66, $7e, $3c, $00, $00, $00, $00, $30, $30, $38, $38, $3c, $3c, $36, $36, $7e
+	byte	$7e, $30, $30, $00, $00, $00, $00, $7e, $7e, $06, $06, $3e, $7e, $60, $60, $60
+	byte	$66, $7e, $3c, $00, $00, $00, $00, $38, $3c, $0e, $06, $06, $3e, $7e, $66, $66
+	byte	$66, $7e, $3c, $00, $00, $00, $00, $7e, $7e, $60, $60, $30, $30, $18, $18, $0c
+	byte	$0c, $0c, $0c, $00, $00, $00, $00, $3c, $7e, $66, $66, $3c, $3c, $66, $66, $66
+	byte	$66, $7e, $3c, $00, $00, $00, $00, $3c, $7e, $66, $66, $7e, $7c, $60, $60, $60
+	byte	$70, $3c, $1c, $00, $00, $00, $00, $00, $00, $00, $18, $18, $18, $00, $00, $00
+	byte	$18, $18, $18, $00, $00, $00, $00, $00, $00, $00, $18, $18, $18, $00, $00, $18
+	byte	$18, $18, $18, $0c, $04, $00, $00, $00, $70, $38, $1c, $0e, $07, $0e, $1c, $38
+	byte	$70, $00, $00, $00, $00, $00, $00, $00, $00, $00, $7e, $7e, $00, $00, $7e, $7e
+	byte	$00[8]
+	byte	$0e, $1c, $38, $70, $e0, $70, $38, $1c, $0e, $00, $00, $00, $00, $00, $00, $3c
+	byte	$7e, $66, $66, $30, $30, $18, $18, $18, $00, $18, $18, $00, $00, $00, $00, $3c
+	byte	$7e, $66, $66, $66, $66, $36, $06, $66, $66, $7e, $3c, $00, $00, $00, $00, $18
+	byte	$3c, $7e, $66, $66, $66, $7e, $7e, $66, $66, $66, $66, $00, $00, $00, $00, $3e
+	byte	$7e, $66, $66, $7e, $3e, $66, $66, $66, $66, $7e, $3e, $00, $00, $00, $00, $3c
+	byte	$7e, $66, $66, $06, $06, $06, $06, $66, $66, $7e, $3c, $00, $00, $00, $00, $3e
+	byte	$7e, $66, $66, $66, $66, $66, $66, $66, $66, $7e, $3e, $00, $00, $00, $00, $7e
+	byte	$7e, $06, $06, $3e, $3e, $06, $06, $06, $06, $7e, $7e, $00, $00, $00, $00, $7e
+	byte	$7e, $06, $06, $3e, $3e, $06, $06, $06, $06, $06, $06, $00, $00, $00, $00, $7c
+	byte	$7e, $06, $06, $76, $76, $66, $66, $66, $66, $7e, $3c, $00, $00, $00, $00, $66
+	byte	$66, $66, $66, $7e, $7e, $66, $66, $66, $66, $66, $66, $00, $00, $00, $00, $7e
+	byte	$7e, $18, $18, $18, $18, $18, $18, $18, $18, $7e, $7e, $00, $00, $00, $00, $60
+	byte	$60[7]
+	byte	$66, $66, $7e, $3c, $00, $00, $00, $00, $66, $66, $36, $36, $1e, $1e, $36, $36
+	byte	$66, $66, $c6, $c6, $00, $00, $00, $00, $06, $06, $06, $06, $06, $06, $06, $06
+	byte	$06, $06, $7e, $7e, $00, $00, $00, $00, $c6, $c6, $ee, $ee, $fe, $d6, $d6, $c6
+	byte	$c6, $c6, $c6, $c6, $00, $00, $00, $00, $66, $66, $66, $6e, $6e, $7e, $7e, $76
+	byte	$76, $66, $66, $66, $00, $00, $00, $00, $3c, $7e, $66, $66, $66, $66, $66, $66
+	byte	$66, $66, $7e, $3c, $00, $00, $00, $00, $3e, $7e, $66, $66, $66, $66, $7e, $3e
+	byte	$06, $06, $06, $06, $00, $00, $00, $00, $3c, $7e, $66, $66, $66, $66, $66, $66
+	byte	$66, $56, $3e, $6c, $00, $00, $00, $00, $3e, $7e, $66, $66, $66, $7e, $3e, $36
+	byte	$66, $66, $c6, $c6, $00, $00, $00, $00, $7c, $7e, $06, $06, $0e, $1c, $38, $70
+	byte	$60, $60, $7e, $3e, $00, $00, $00, $00, $7e, $7e, $18, $18, $18, $18, $18, $18
+	byte	$18, $18, $18, $18, $00, $00, $00, $00, $66, $66, $66, $66, $66, $66, $66, $66
+	byte	$66, $66, $7e, $3c, $00, $00, $00, $00, $66, $66, $66, $66, $66, $66, $66, $66
+	byte	$3c, $3c, $18, $18, $00, $00, $00, $00, $c6, $c6, $c6, $c6, $c6, $d6, $d6, $fe
+	byte	$fe, $ee, $c6, $82, $00, $00, $00, $00, $66, $66, $66, $3c, $3c, $18, $18, $3c
+	byte	$3c, $66, $66, $66, $00, $00, $00, $00, $66, $66, $66, $66, $66, $3c, $3c, $18
+	byte	$18, $18, $18, $18, $00, $00, $00, $00, $7e, $7e, $30, $30, $18, $18, $0c, $0c
+	byte	$06, $06, $7e, $7e, $00, $00, $00, $00, $3c, $3c, $0c, $0c, $0c, $0c, $0c, $0c
+	byte	$0c, $0c, $3c, $3c, $00, $00, $00, $00, $06, $06, $0c, $0c, $18, $18, $30, $30
+	byte	$60, $60, $c0, $c0, $00, $00, $00, $00, $3c, $3c, $30, $30, $30, $30, $30, $30
+	byte	$30, $30, $3c, $3c, $00, $00, $00, $00, $18, $18, $3c, $3c, $66, $66, $00, $00
+	byte	$00[18]
+	byte	$fe, $fe, $00, $00, $00, $00, $0c, $0c, $18, $18, $00, $00, $00, $00, $00, $00
+	byte	$00[9]
+	byte	$3c, $7c, $60, $7c, $7e, $66, $66, $7e, $7c, $00, $00, $00, $00, $06, $06, $06
+	byte	$3e, $7e, $66, $66, $66, $66, $66, $7e, $3e, $00, $00, $00, $00, $00, $00, $00
+	byte	$3c, $3e, $06, $06, $06, $06, $06, $7e, $7c, $00, $00, $00, $00, $60, $60, $60
+	byte	$7c, $7e, $66, $66, $66, $66, $66, $7e, $7c, $00, $00, $00, $00, $00, $00, $00
+	byte	$3c, $7e, $66, $66, $7e, $06, $06, $7e, $7c, $00, $00, $00, $00, $70, $78, $18
+	byte	$18, $7e, $7e, $18, $18, $18, $18, $18, $18, $00, $00, $00, $00, $00, $00, $00
+	byte	$7c, $7e, $66, $66, $66, $66, $7e, $7c, $60, $7e, $3e, $00, $00, $06, $06, $06
+	byte	$3e, $7e, $66, $66, $66, $66, $66, $66, $66, $00, $00, $00, $00, $18, $18, $00
+	byte	$1c, $1c, $18, $18, $18, $18, $18, $3c, $3c, $00, $00, $00, $00, $30, $30, $00
+	byte	$30[9]
+	byte	$3e, $1e, $00, $00, $06, $06, $06, $36, $36, $1e, $1e, $1e, $36, $36, $66, $66
+	byte	$00, $00, $00, $00, $1c, $1c, $18, $18, $18, $18, $18, $18, $18, $18, $3c, $3c
+	byte	$00[7]
+	byte	$6c, $fe, $fe, $d6, $d6, $c6, $c6, $c6, $c6, $00, $00, $00, $00, $00, $00, $00
+	byte	$3e, $7e, $66, $66, $66, $66, $66, $66, $66, $00, $00, $00, $00, $00, $00, $00
+	byte	$3c, $7e, $66, $66, $66, $66, $66, $7e, $3c, $00, $00, $00, $00, $00, $00, $00
+	byte	$3e, $7e, $66, $66, $66, $66, $66, $7e, $3e, $06, $06, $00, $00, $00, $00, $00
+	byte	$7c, $7e, $66, $66, $66, $66, $66, $7e, $7c, $60, $60, $00, $00, $00, $00, $00
+	byte	$3e, $7e, $66, $06, $06, $06, $06, $06, $06, $00, $00, $00, $00, $00, $00, $00
+	byte	$7c, $7e, $06, $0e, $3c, $70, $60, $7e, $3e, $00, $00, $00, $00, $00, $18, $18
+	byte	$7e, $7e, $18, $18, $18, $18, $18, $78, $70, $00, $00, $00, $00, $00, $00, $00
+	byte	$66[7]
+	byte	$7e, $7c, $00, $00, $00, $00, $00, $00, $00, $66, $66, $66, $66, $66, $3c, $3c
+	byte	$18, $18, $00, $00, $00, $00, $00, $00, $00, $c6, $c6, $d6, $d6, $fe, $fe, $ee
+	byte	$c6, $82, $00, $00, $00, $00, $00, $00, $00, $66, $66, $3c, $3c, $18, $3c, $3c
+	byte	$66, $66, $00, $00, $00, $00, $00, $00, $00, $66, $66, $66, $66, $66, $66, $7e
+	byte	$7c, $60, $7e, $3e, $00, $00, $00, $00, $00, $7e, $7e, $30, $18, $18, $0c, $0c
+	byte	$7e, $7e, $00, $00, $00, $00, $30, $18, $18, $18, $18, $0c, $0c, $18, $18, $18
+	byte	$18, $30, $00, $00, $00, $00, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18
+	byte	$18, $18, $00, $00, $00, $00, $0c, $18, $18, $18, $18, $30, $30, $18, $18, $18
+	byte	$18, $0c, $00, $00, $00, $00, $6c, $7e, $36, $00, $00, $00, $00, $00, $00, $00
+	byte	$00[9]
+	byte	$18, $18, $18, $18, $18, $18, $00, $00, $00, $00, $00
+'-' ataripalette            file "ataripalettep2.def"
+	byte	$00[5]
+	byte	$11, $11, $11, $00, $22, $22, $22, $00, $33, $33, $33, $00, $44, $44, $44, $00
+	byte	$55, $55, $55, $00, $66, $66, $66, $00, $77, $77, $77, $00, $88, $88, $88, $00
+	byte	$99, $99, $99, $00, $aa, $aa, $aa, $00, $bb, $bb, $bb, $00, $cc, $cc, $cc, $00
+	byte	$dd, $dd, $dd, $00, $ee, $ee, $ee, $00, $ff, $ff, $ff, $00, $00, $0a, $20, $00
+	byte	$00, $14, $40, $00, $00, $1e, $60, $00, $00, $28, $80, $00, $00, $32, $9f, $00
+	byte	$00, $3c, $bf, $00, $00, $46, $df, $00, $00, $50, $ff, $00, $1c, $63, $ff, $00
+	byte	$39, $77, $ff, $00, $55, $8a, $ff, $00, $71, $9e, $ff, $00, $8e, $b1, $ff, $00
+	byte	$aa, $c5, $ff, $00, $c6, $d8, $ff, $00, $e3, $ec, $ff, $00, $00, $00, $20, $00
+	byte	$00, $00, $40, $00, $00, $00, $60, $00, $00, $00, $80, $00, $00, $00, $9f, $00
+	byte	$00, $00, $bf, $00, $00, $00, $df, $00, $00, $00, $ff, $00, $1c, $1c, $ff, $00
+	byte	$39, $39, $ff, $00, $55, $55, $ff, $00, $71, $71, $ff, $00, $8e, $8e, $ff, $00
+	byte	$aa, $aa, $ff, $00, $c6, $c6, $ff, $00, $e3, $e3, $ff, $00, $10, $00, $20, $00
+	byte	$20, $00, $40, $00, $30, $00, $60, $00, $40, $00, $80, $00, $50, $00, $9f, $00
+	byte	$60, $00, $bf, $00, $70, $00, $df, $00, $80, $00, $ff, $00, $8e, $1c, $ff, $00
+	byte	$9c, $39, $ff, $00, $aa, $55, $ff, $00, $b8, $71, $ff, $00, $c7, $8e, $ff, $00
+	byte	$d5, $aa, $ff, $00, $e3, $c6, $ff, $00, $f1, $e3, $ff, $00, $20, $00, $20, $00
+	byte	$40, $00, $40, $00, $60, $00, $60, $00, $80, $00, $80, $00, $9f, $00, $9f, $00
+	byte	$bf, $00, $bf, $00, $df, $00, $df, $00, $ff, $00, $ff, $00, $ff, $1c, $ff, $00
+	byte	$ff, $39, $ff, $00, $ff, $55, $ff, $00, $ff, $71, $ff, $00, $ff, $8e, $ff, $00
+	byte	$ff, $aa, $ff, $00, $ff, $c6, $ff, $00, $ff, $e3, $ff, $00, $20, $00, $10, $00
+	byte	$40, $00, $20, $00, $60, $00, $30, $00, $80, $00, $40, $00, $9f, $00, $50, $00
+	byte	$bf, $00, $60, $00, $df, $00, $70, $00, $ff, $00, $80, $00, $ff, $1c, $8e, $00
+	byte	$ff, $39, $9c, $00, $ff, $55, $aa, $00, $ff, $71, $b8, $00, $ff, $8e, $c7, $00
+	byte	$ff, $aa, $d5, $00, $ff, $c6, $e3, $00, $ff, $e3, $f1, $00, $20, $00, $00, $00
+	byte	$40, $00, $00, $00, $60, $00, $00, $00, $80, $00, $00, $00, $9f, $00, $00, $00
+	byte	$bf, $00, $00, $00, $df, $00, $00, $00, $ff, $00, $00, $00, $ff, $1c, $1c, $00
+	byte	$ff, $39, $39, $00, $ff, $55, $55, $00, $ff, $71, $71, $00, $ff, $8e, $8e, $00
+	byte	$ff, $aa, $aa, $00, $ff, $c6, $c6, $00, $ff, $e3, $e3, $00, $20, $08, $00, $00
+	byte	$40, $10, $00, $00, $60, $18, $00, $00, $80, $20, $00, $00, $9f, $28, $00, $00
+	byte	$bf, $30, $00, $00, $df, $38, $00, $00, $ff, $40, $00, $00, $ff, $55, $1c, $00
+	byte	$ff, $6a, $39, $00, $ff, $80, $55, $00, $ff, $95, $71, $00, $ff, $aa, $8e, $00
+	byte	$ff, $bf, $aa, $00, $ff, $d5, $c6, $00, $ff, $ea, $e3, $00, $20, $10, $00, $00
+	byte	$40, $20, $00, $00, $60, $30, $00, $00, $80, $40, $00, $00, $9f, $50, $00, $00
+	byte	$bf, $60, $00, $00, $df, $70, $00, $00, $ff, $80, $00, $00, $ff, $8e, $1c, $00
+	byte	$ff, $9c, $39, $00, $ff, $aa, $55, $00, $ff, $b8, $71, $00, $ff, $c7, $8e, $00
+	byte	$ff, $d5, $aa, $00, $ff, $e3, $c6, $00, $ff, $f1, $e3, $00, $20, $18, $00, $00
+	byte	$40, $30, $00, $00, $60, $48, $00, $00, $80, $60, $00, $00, $9f, $78, $00, $00
+	byte	$bf, $90, $00, $00, $df, $a8, $00, $00, $ff, $c0, $00, $00, $ff, $c7, $1c, $00
+	byte	$ff, $ce, $39, $00, $ff, $d5, $55, $00, $ff, $dc, $71, $00, $ff, $e3, $8e, $00
+	byte	$ff, $ea, $aa, $00, $ff, $f1, $c6, $00, $ff, $f8, $e3, $00, $18, $20, $00, $00
+	byte	$30, $40, $00, $00, $48, $60, $00, $00, $60, $80, $00, $00, $78, $9f, $00, $00
+	byte	$90, $bf, $00, $00, $a8, $df, $00, $00, $c0, $ff, $00, $00, $c7, $ff, $1c, $00
+	byte	$ce, $ff, $39, $00, $d5, $ff, $55, $00, $dc, $ff, $71, $00, $e3, $ff, $8e, $00
+	byte	$ea, $ff, $aa, $00, $f1, $ff, $c6, $00, $f8, $ff, $e3, $00, $00, $20, $00, $00
+	byte	$00, $40, $00, $00, $00, $60, $00, $00, $00, $80, $00, $00, $00, $9f, $00, $00
+	byte	$00, $bf, $00, $00, $00, $df, $00, $00, $00, $ff, $00, $00, $1c, $ff, $1c, $00
+	byte	$39, $ff, $39, $00, $55, $ff, $55, $00, $71, $ff, $71, $00, $8e, $ff, $8e, $00
+	byte	$aa, $ff, $aa, $00, $c6, $ff, $c6, $00, $e3, $ff, $e3, $00, $00, $20, $0a, $00
+	byte	$00, $40, $14, $00, $00, $60, $1e, $00, $00, $80, $28, $00, $00, $9f, $32, $00
+	byte	$00, $bf, $3c, $00, $00, $df, $46, $00, $00, $ff, $50, $00, $1c, $ff, $63, $00
+	byte	$39, $ff, $77, $00, $55, $ff, $8a, $00, $71, $ff, $9e, $00, $8e, $ff, $b1, $00
+	byte	$aa, $ff, $c5, $00, $c6, $ff, $d8, $00, $e3, $ff, $ec, $00, $00, $20, $14, $00
+	byte	$00, $40, $28, $00, $00, $60, $3c, $00, $00, $80, $50, $00, $00, $9f, $64, $00
+	byte	$00, $bf, $78, $00, $00, $df, $8c, $00, $00, $ff, $a0, $00, $1c, $ff, $ab, $00
+	byte	$39, $ff, $b5, $00, $55, $ff, $c0, $00, $71, $ff, $ca, $00, $8e, $ff, $d5, $00
+	byte	$aa, $ff, $df, $00, $c6, $ff, $ea, $00, $e3, $ff, $f4, $00, $00, $20, $20, $00
+	byte	$00, $40, $40, $00, $00, $60, $60, $00, $00, $80, $80, $00, $00, $9f, $9f, $00
+	byte	$00, $bf, $bf, $00, $00, $df, $df, $00, $00, $ff, $ff, $00, $1c, $ff, $ff, $00
+	byte	$39, $ff, $ff, $00, $55, $ff, $ff, $00, $71, $ff, $ff, $00, $8e, $ff, $ff, $00
+	byte	$aa, $ff, $ff, $00, $c6, $ff, $ff, $00, $e3, $ff, $ff, $00, $00, $14, $20, $00
+	byte	$00, $28, $40, $00, $00, $3c, $60, $00, $00, $50, $80, $00, $00, $64, $9f, $00
+	byte	$00, $78, $bf, $00, $00, $8c, $df, $00, $00, $a0, $ff, $00, $1c, $ab, $ff, $00
+	byte	$39, $b5, $ff, $00, $55, $c0, $ff, $00, $71, $ca, $ff, $00, $8e, $d5, $ff, $00
+	byte	$aa, $df, $ff, $00, $c6, $ea, $ff, $00, $e3, $f4, $ff
+'-' 
+'-' '**********************************************************************************
+'-' '
+'-' '        Timings and colors definitions
+'-' '
+'-' '**********************************************************************************
+'-' 
+'-' timingsxxt      long $70810000, $70810000, $70810000, $70810000, $70810000, $20880000 'streamer sets for text mode, to add to timings[0..5]
+	byte	$00, $00, $81, $70, $00, $00, $81, $70, $00, $00, $81, $70, $00, $00, $81, $70
+	byte	$00, $00, $81, $70, $00, $00, $88, $20
+'-' 
+'-' '                     bf.hs, hs,  bf.vis  visible, lr bord, pixel, ud bord,  up p., vsync, down p., mode, cpl, scanlines,  clock,                  hubset                  reserved
+'-' timings000      long   16,   80,    20,    1024,    112,     8,     48,      16,      16,    16,      0,  100,   480,     354693878,   %1_110000__11_0110_1100__1111_1011,   0
+	byte	$10, $00, $00, $00, $50, $00, $00, $00, $14, $00, $00, $00, $00, $04, $00, $00
+	byte	$70, $00, $00, $00, $08, $00, $00, $00, $30, $00, $00, $00, $10, $00, $00, $00
+	byte	$10, $00, $00, $00, $10, $00, $00, $00, $00, $00, $00, $00, $64, $00, $00, $00
+	byte	$e0, $01, $00, $00, $f6, $32, $24, $15, $fb, $6c, $c3, $01, $00, $00, $00, $00
+'-' timings064      long   18,   64,    16,     928,     24,     8,     24,      24,      32,    24,     64,  110,   496,     319215686,   %1_110010__11_0010_1101__1111_1011,   0
+	byte	$12, $00, $00, $00, $40, $00, $00, $00, $10, $00, $00, $00, $a0, $03, $00, $00
+	byte	$18, $00, $00, $00, $08, $00, $00, $00, $18, $00, $00, $00, $18, $00, $00, $00
+	byte	$20, $00, $00, $00, $18, $00, $00, $00, $40, $00, $00, $00, $6e, $00, $00, $00
+	byte	$f0, $01, $00, $00, $46, $d8, $06, $13, $fb, $2d, $cb, $01, $00, $00, $00, $00
+'-' timings128      long   16,   64,    16,     816,      8,     8,     8,       32,      64,    32,    128,  100,   480,     283750000,   %1_111111__11_1000_1011__1111_1011,   0
+	byte	$10, $00, $00, $00, $40, $00, $00, $00, $10, $00, $00, $00, $30, $03, $00, $00
+	byte	$08, $00, $00, $00, $08, $00, $00, $00, $08, $00, $00, $00, $20, $00, $00, $00
+	byte	$40, $00, $00, $00, $20, $00, $00, $00, $80, $00, $00, $00, $64, $00, $00, $00
+	byte	$e0, $01, $00, $00, $70, $ae, $e9, $10, $fb, $8b, $ff, $01, $00, $00, $00, $00
+'-' timings192      long   16,   80,    20,    1024,      0,     8,     0,       16,      16,    16,    192,  128,   576,     354693878,   %1_110000__11_0110_1100__1111_1011,   0
+	byte	$10, $00, $00, $00, $50, $00, $00, $00, $14, $00, $00, $00, $00, $04, $00, $00
+	byte	$00, $00, $00, $00, $08, $00, $00, $00, $00, $00, $00, $00, $10, $00, $00, $00
+	byte	$10, $00, $00, $00, $10, $00, $00, $00, $c0, $00, $00, $00, $80, $00, $00, $00
+	byte	$40, $02, $00, $00, $f6, $32, $24, $15, $fb, $6c, $c3, $01, $00, $00, $00, $00
+'-' timings256      long   80,  160,    84,     816,      8,     8,     8,        8,      12,     8,    256,  100,   480,     357959184,   %1_110000__11_0110_0100__1111_1011,   0
+	byte	$50, $00, $00, $00, $a0, $00, $00, $00, $54, $00, $00, $00, $30, $03, $00, $00
+	byte	$08, $00, $00, $00, $08, $00, $00, $00, $08, $00, $00, $00, $08, $00, $00, $00
+	byte	$0c, $00, $00, $00, $08, $00, $00, $00, $00, $01, $00, $00, $64, $00, $00, $00
+	byte	$e0, $01, $00, $00, $10, $06, $56, $15, $fb, $64, $c3, $01, $00, $00, $00, $00
+'-' timings320      long   80,   50,    80,     816,      8,     8,     8,        8,      12,     8,    320,  100,   480,     322162162,   %1_100100__10_0101_0011__1111_1011,   0
+	byte	$50, $00, $00, $00, $32, $00, $00, $00, $50, $00, $00, $00, $30, $03, $00, $00
+	byte	$08, $00, $00, $00, $08, $00, $00, $00, $08, $00, $00, $00, $08, $00, $00, $00
+	byte	$0c, $00, $00, $00, $08, $00, $00, $00, $40, $01, $00, $00, $64, $00, $00, $00
+	byte	$e0, $01, $00, $00, $f2, $cd, $33, $13, $fb, $53, $92, $01, $00, $00, $00, $00
+'-' timings384      long   24,   48,    24,     816,      8,     8,     8,        8,      12,     8,    384,  100,   480,     286363636,   %1_010101__01_0011_1010__1111_1011,   0
+	byte	$18, $00, $00, $00, $30, $00, $00, $00, $18, $00, $00, $00, $30, $03, $00, $00
+	byte	$08, $00, $00, $00, $08, $00, $00, $00, $08, $00, $00, $00, $08, $00, $00, $00
+	byte	$0c, $00, $00, $00, $08, $00, $00, $00, $80, $01, $00, $00, $64, $00, $00, $00
+	byte	$e0, $01, $00, $00, $f4, $8f, $11, $11, $fb, $3a, $55, $01, $00, $00, $00, $00
+'-' timings448      long   40,   64,    42,     880,      0,     8,     0,        8,      12,     8,    448,  110,   480,     322162162,   %1_100100__10_0101_0011__1111_1011,   0
+	byte	$28, $00, $00, $00, $40, $00, $00, $00, $2a, $00, $00, $00, $70, $03, $00, $00
+	byte	$00, $00, $00, $00, $08, $00, $00, $00, $00, $00, $00, $00, $08, $00, $00, $00
+	byte	$0c, $00, $00, $00, $08, $00, $00, $00, $c0, $01, $00, $00, $6e, $00, $00, $00
+	byte	$e0, $01, $00, $00, $f2, $cd, $33, $13, $fb, $53, $92, $01, $00, $00, $00, $00
+'-' 
+'-' vgacolors       byte   0, 117, 199, 151, 39, 71, 246, 10, 5, 123, 203, 155, 43, 75, 234, 15
+	byte	$00, $75, $c7, $97, $27, $47, $f6, $0a, $05, $7b, $cb, $9b, $2b, $4b, $ea, $0f
+'-' 
+'-' hdmi            setq    #9
+	byte	$28, $12, $64, $fd
+'-'                 rdlong  framebuf,  ptra                 'read pointers
+	byte	$00, $2f, $05, $fb
+'-' 
+'-'                 setq2   #255
+	byte	$29, $fe, $65, $fd
+'-'                 rdlong  $000, paletteptr                'read palette
+	byte	$9d, $00, $00, $fb
+'-' 
+'-'                 wrlong  #aend,#0                         'write driver length to hub#0: DEBUG/demo
+	byte	$00, $5a, $6d, $fc
+'-'                 setcmod #$100                           'enable HDMI mode
+	byte	$3c, $00, $66, $fd
+'-'                 mov     ii,#7
+	byte	$07, $44, $05, $f6
+'-'                 shl     ii,#6
+	byte	$06, $44, $65, $f0
+'-'                 add     ii,hbase
+	byte	$a0, $44, $01, $f1
+'-'                 drvl    ii                                 '#7<<6 + hdmi_base      ' enable HDMI pins
+	byte	$58, $44, $61, $fd
+'-'                 wrpin   ##%10110_1111_0111_10_00000_0, ii  '#7<<6 + hdmi_base      ' a '123 ohm BITDAC for pins
+	byte	$7b, $0b, $80, $ff, $a2, $00, $0b, $fc
+'-' 
+'-'                 setxfrq ##$0CCCCCCC+1                   'set streamer freq to 1/10th clk
+	byte	$66, $66, $86, $ff, $1d, $9a, $65, $fd
+'-' 
+'-' 
+'-' 'Start the frame rendering loop
+'-' 
+'-' p101            setq    #12
+	byte	$28, $18, $64, $fd
+'-'                 rdlong  m_bs,modeptr                     ' read timings
+	byte	$9c, $00, $01, $fb
+'-'                 rdlong framebuf,ptra                     ' if mode changed, the framebuffer will change,too
+	byte	$00, $2f, $05, $fb
+'-'                 testb   i_modenum,#9 wc                  ' bit #8 set = graphics modes, not yet implemented
+	byte	$09, $14, $15, $f4
+'-'          if_c   jmp #p200                                                                ' jump to graphics mode: TODO, now it will return to p901
+	byte	$84, $01, $90, $cd
+'-' 
+'-' p901            add     frames,#1
+	byte	$01, $22, $05, $f1
+'-'                 rdlong  fontstart,fontnumptr             ' TODO: free byte in char buf = font select
+	byte	$9f, $2c, $01, $fb
+'-'                 add     fontstart,fontbuf
+	byte	$98, $2c, $01, $f1
+'-'                 rdlong  cursorx, cursorptr               ' read cursor position
+	byte	$9b, $24, $01, $fb
+'-'                 getbyte cursory, cursorx,#1              ' y position at byte #1
+	byte	$92, $26, $e9, $f8
+'-'                 getbyte cursorsh,cursorx,#2              ' shape at byte #2
+	byte	$92, $20, $f1, $f8
+'-'                 and     cursorx,#255                     ' clear the cursor x varioble from y and shape
+	byte	$ff, $24, $05, $f5
+'-' 
+'-'                 mov     borderptr2,borderptr             ' borderptr points to border colors table start
+	byte	$99, $42, $01, $f6
+'-'                 rdlong  border,borderptr2                ' borderptr2 will change at every char line pointing to the individual border color
+	byte	$a1, $fe, $00, $fb
+'-'                 add     borderptr2,#4
+	byte	$04, $42, $05, $f1
+'-'                 shl     border,#8                        ' HDMI driver needs rgb0 format
+	byte	$08, $fe, $64, $f0
+'-' 
+'-'                 rdlong  t1,commandptr                    ' A mailbox interface, read the command
+	byte	$9e, $4e, $01, $fb
+'-'                 add     commandptr,#4
+	byte	$04, $3c, $05, $f1
+'-'                 rdlong  t2,commandptr                    ' read the argument
+	byte	$9e, $50, $01, $fb
+'-'                 sub     commandptr,#4                    ' restore the pionter
+	byte	$04, $3c, $85, $f1
+'-'                 cmp     t1,#256  wcz                     '
+	byte	$00, $4f, $1d, $f2
+'-'          if_lt  wrlut   t2,t1                            ' command 0..255-> set the color in LUT
+	byte	$a7, $50, $31, $cc
+'-'                 mov     t1, #257                         ' 257=idle
+	byte	$01, $4f, $05, $f6
+'-' 
+'-'                 wrlong  t1,commandptr                    ' write 257 to hub variable so the program can test if command was done
+	byte	$9e, $4e, $61, $fc
+'-'  '' up porch
+'-' 
+'-'                 mov     hsync0,sync_000                  '
+	byte	$7b, $48, $01, $f6
+'-'                 mov     hsync1,sync_001
+	byte	$7c, $4a, $01, $f6
+'-'                 callpa  i_upporch ,#blank
+	byte	$4c, $0e, $45, $fb
+'-'                 wrbyte  #0,vblankptr
+	byte	$9a, $00, $48, $fc
+'-' 
+'-' '' cursor blinking
+'-' 
+'-'                 testb   frames,#4 wz                     ' cursor blinks at framerate/16, todo: define
+	byte	$04, $22, $0d, $f4
+'-'          if_z   mov     cursorx,#129                     ' to switch the cursor off, move it out of the screen
+	byte	$81, $24, $05, $a6
+'-' 
+'-'                 mov     ii, i_vborder wz                 ' read upper border parameter
+	byte	$86, $44, $09, $f6
+'-'                 if_z jmp #p111                           ' if zero, don't make a border
+	byte	$0c, $00, $90, $ad
+'-' 
+'-' '' border, if exists
+'-' 
+'-' up_border       call    #hsync                           ' make a border
+	byte	$24, $01, $b0, $fd
+'-'                 xcont   m_vi,border
+	byte	$7f, $06, $c1, $fc
+'-'                 djnz    ii,#up_border
+	byte	$fd, $45, $6d, $fb
+'-' 
+'-' '' active lines
+'-' 
+'-' p111            mov     ii,i_lines                      ' read active lines count
+	byte	$8c, $44, $01, $f6
+'-'                 mov     linenum,#0                      ' set line number to 0
+	byte	$00, $1c, $05, $f6
+'-' 
+'-' line1           mov     cursorpos2,cursorx              ' we need another var for cursor as this code will repeat 16x for every char line
+	byte	$92, $2a, $01, $f6
+'-' 
+'-'                 getnib  fontline,linenum,#0             ' fontline is 0 to 15, a line in font def
+	byte	$8e, $4c, $41, $f8
+'-'                 mov     framebuf2,framebuf              ' compute a line start in the framebuffer, which is (line div 16)*cpl
+	byte	$97, $46, $01, $f6
+'-'                 mov     linestart,linenum               ' linestart will be used for checking cursor y and compute line start addr in the buffer
+	byte	$8e, $1a, $01, $f6
+'-'                 shr     linestart,#4                    ' scanline to char line
+	byte	$04, $1a, $45, $f0
+'-'                 cmp     linestart,cursory wz            ' if the cursor is not here
+	byte	$93, $1a, $09, $f2
+'-'           if_nz mov     cursorpos2,#129                 ' move it out of the screen
+	byte	$81, $2a, $05, $56
+'-'                 mul     linestart,i_cpl                 ' compute the address of char line in the buffer
+	byte	$8b, $1a, $01, $fa
+'-'                 shl     linestart,#2
+	byte	$02, $1a, $65, $f0
+'-'                 add     framebuf2,linestart             ' and add it to the buffer start address
+	byte	$8d, $46, $01, $f1
+'-' 
+'-'                 call    #hsync                          ' now call hsync to gain some time between xconts
+	byte	$e8, $00, $b0, $fd
+'-' 
+'-'                 cmp     fontline,#0 wz
+	byte	$00, $4c, $0d, $f2
+'-'           if_nz jmp     #p102                           ' if fontline =0, get a border color
+	byte	$0c, $00, $90, $5d
+'-' 
+'-'                 rdlong  border,borderptr2
+	byte	$a1, $fe, $00, $fb
+'-'                 add     borderptr2,#4
+	byte	$04, $42, $05, $f1
+'-'                 shl     border,#8
+	byte	$08, $fe, $64, $f0
+'-' 
+'-' p102            getword t1,m_border,#0                  ' else use the same border color for all the character line
+	byte	$84, $4e, $31, $f9
+'-'                 cmp     t1, #0 wz
+	byte	$00, $4e, $0d, $f2
+'-'           if_nz xcont   m_border,border                 ' display a left border
+	byte	$7f, $08, $c1, $5c
+'-'                 cmp     fontline,cursorsh wcz           ' if the cursor have to be not displayed due to its shape
+	byte	$90, $4c, $19, $f2
+'-'           if_c  mov     cursorpos,#129                  ' move it out of the screen
+	byte	$81, $28, $05, $c6
+'-'          if_nc  mov     cursorpos,cursorpos2
+	byte	$95, $28, $01, $36
+'-'                 add     cursorpos,#1                    ' we will substract #1 below so compensate this here
+	byte	$01, $28, $05, $f1
+'-'                 mov     t2,fontstart                    ' font definition pointer
+	byte	$96, $50, $01, $f6
+'-'                 add     t2,fontline                     ' add a current font line
+	byte	$a6, $50, $01, $f1
+'-'                 rep     @p103,i_cpl                     ' display cpl chars
+	byte	$8b, $28, $d8, $fc
+'-' ''---------------------------------------------------------------------------------------
+'-'                         rdlong  char,framebuf2          ' read a long char                          '1
+	byte	$a3, $52, $01, $fb
+'-'                         getbyte backcolor,char,#2       ' byte #2 - background color                '2
+	byte	$a9, $54, $f1, $f8
+'-'                         getbyte charcolor,char,#3       ' byte #3 - foreground color                '3
+	byte	$a9, $56, $f9, $f8
+'-'                         getbyte char,char, #0           ' byte #0 - char code                       '4
+	byte	$a9, $52, $e1, $f8
+'-'                         add     framebuf2,#4            ' point to the next long                    '5
+	byte	$04, $46, $05, $f1
+'-'                         shl     char,#4                 ' 1 char=16 bytes in font def               '6
+	byte	$04, $52, $65, $f0
+'-'                         add     char,t2                 ' add this to font/line pointer             '7
+	byte	$a8, $52, $01, $f1
+'-'                         rdbyte  t1,char                 ' and get 8 pixels prom there               '8
+	byte	$a9, $4e, $c1, $fa
+'-'                         sub     cursorpos,#1 wz         ' if there is a cursor                      '9
+	byte	$01, $28, $8d, $f1
+'-'                 if_z    xor     t1, #$FF                ' reverse the colors                        '10
+	byte	$ff, $4e, $65, $a5
+'-'                                                  ' prepare to sprite function, not yet implemented
+'-'                         mergeb  t1                                              ' convert to 16-color mode                                      '11
+	byte	$61, $4e, $61, $fd
+'-'                         xcont   m_lut1,t1               ' and display this                          '12
+	byte	$a7, $0a, $c1, $fc
+'-' 
+'-'                         rdlut   t1,backcolor            ' read a background color from palette      '13
+	byte	$aa, $4e, $a1, $fa
+'-'                         wrlut   t1,lutaddr              ' and write it to LUT #0 or #32             '14
+	byte	$8f, $4e, $31, $fc
+'-'                         add     lutaddr,#1                                                          '15
+	byte	$01, $1e, $05, $f1
+'-' 
+'-'                         rdlut   t1,charcolor            ' the same for the foreground               '16
+	byte	$ab, $4e, $a1, $fa
+'-'                         wrlut   t1,lutaddr                                                          '17
+	byte	$8f, $4e, $31, $fc
+'-'                         sub     lutaddr,#1                                                          '18
+	byte	$01, $1e, $85, $f1
+'-' 
+'-'                         bitnot  m_lut1,#16                                                          '19
+	byte	$10, $0a, $e5, $f4
+'-'                         xor     lutaddr,#32             ' use LUT #0-1 and 32-33                    '20
+	byte	$20, $1e, $65, $f5
+'-' 
+'-' '------------------------ only 8 nops left :(
+'-' 
+'-' '' rep end ----------------------------------------------------------------------------
+'-' 
+'-' 
+'-' p103            getword t1,m_border,#0
+	byte	$84, $4e, $31, $f9
+'-'                 cmp     t1, #0 wz
+	byte	$00, $4e, $0d, $f2
+'-'                 if_nz xcont   m_border,border            'display a right border if exists
+	byte	$7f, $08, $c1, $5c
+'-' 
+'-'                 add     linenum, #1
+	byte	$01, $1c, $05, $f1
+'-'                 djnz    ii,#line1                       ' and goto next line if not all were displayed
+	byte	$cd, $45, $6d, $fb
+'-' 
+'-' '' end of active screen
+'-' 
+'-'                 wrlong  #1,vblankptr
+	byte	$9a, $02, $68, $fc
+'-'                 mov     ii,i_vborder wz                  'make a lower border if exists
+	byte	$86, $44, $09, $f6
+'-'           if_z jmp #p112
+	byte	$18, $00, $90, $ad
+'-' 
+'-'                  rdlong  border,borderptr2
+	byte	$a1, $fe, $00, $fb
+'-'                  add     borderptr2,#4
+	byte	$04, $42, $05, $f1
+'-'                  shl     border,#8
+	byte	$08, $fe, $64, $f0
+'-' down_border      call    #hsync
+	byte	$2c, $00, $b0, $fd
+'-'                  xcont   m_vi,border
+	byte	$7f, $06, $c1, $fc
+'-'                  djnz    ii,#down_border
+	byte	$fd, $45, $6d, $fb
+'-' 
+'-' p112             callpa  i_downporch ,#blank             'bottom blanks
+	byte	$05, $12, $45, $fb
+'-' 
+'-'                  mov     hsync0,sync_222                 'vsync on
+	byte	$7d, $48, $01, $f6
+'-'                  mov     hsync1,sync_223
+	byte	$7e, $4a, $01, $f6
+'-'                  callpa  i_vsync,#blank                  'vertical sync blanks
+	byte	$02, $10, $45, $fb
+'-'                  jmp     #p101                            'loop
+	byte	$68, $fe, $9f, $fd
+'-' 
+'-' 
+'-' ' The bitmap driver will start here
+'-' p200                     jmp    #p901
+	byte	$78, $fe, $9f, $fd
+'-' 
+'-' 
+'-' '--------------------------------------------------------------------------
+'-' 
+'-' 
+'-' 
+'-' blank           call    #hsync                          'blank lines
+	byte	$08, $00, $b0, $fd
+'-'                 xcont   m_vi,hsync0
+	byte	$a4, $06, $c1, $fc
+'-'         _ret_   djnz    pa,#blank
+	byte	$fd, $ed, $6f, $0b
+'-' 
+'-' hsync           xcont   m_bs,hsync0                     'horizontal sync
+	byte	$a4, $00, $c1, $fc
+'-'                 xzero   m_sn,hsync1
+	byte	$a5, $02, $b1, $fc
+'-'         _ret_   xcont   m_bv,hsync0
+	byte	$a4, $04, $c1, $0c
+'-' 
+'-' '' consts and vars
+'-' 
+'-' sync_000        long    %1101010100_1101010100_1101010100_10    '
+	byte	$52, $4d, $35, $d5
+'-' sync_001        long    %1101010100_1101010100_0010101011_10    '        hsync
+	byte	$ae, $42, $35, $d5
+'-' sync_222        long    %0101010100_0101010100_0101010100_10    'vsync
+	byte	$52, $45, $15, $55
+'-' sync_223        long    %0101010100_0101010100_1010101011_10    'vsync + hsync
+	byte	$ae, $4a, $15, $55
+'-' 
+'-' border          long    %00000000_00011010_00101100_00000000
+	byte	$00, $2c, $1a, $00
+'-' 
+'-' '------ these longs will be set by setmode function
+'-' 
+'-' m_bs            long    0        'blanks before sync
+	byte	$00, $00, $00, $00
+'-' m_sn            long    0        'sync
+	byte	$00, $00, $00, $00
+'-' m_bv            long    0        'blanks before visible
+	byte	$00, $00, $00, $00
+'-' m_vi            long    0        'visible pixels #
+	byte	$00, $00, $00, $00
+'-' m_border        long    0        'left/right borders
+	byte	$00, $00, $00, $00
+'-' m_lut1          long    0        'characters
+	byte	$00, $00, $00, $00
+'-' i_vborder       long    0        'up/down borders
+	byte	$00, $00, $00, $00
+'-' i_upporch       long    0        'up porch lines
+	byte	$00, $00, $00, $00
+'-' i_vsync         long    0        'vsync lines
+	byte	$00, $00, $00, $00
+'-' i_downporch     long    0        'down porch lines
+	byte	$00, $00, $00, $00
+'-' i_modenum       long    0        'mode #
+	byte	$00, $00, $00, $00
+'-' i_cpl               long    0        'chars per line
+	byte	$00, $00, $00, $00
+'-' i_lines         long    0        'scanlines #
+	byte	$00, $00, $00, $00
+'-' 
+'-' linestart       long    0
+	byte	$00, $00, $00, $00
+'-' linenum         long    0
+	byte	$00, $00, $00, $00
+'-' lutaddr         long    256
+	byte	$00, $01, $00, $00
+'-' 
+'-' cursorsh        long    14
+	byte	$0e, $00, $00, $00
+'-' frames          long    0
+	byte	$00, $00, $00, $00
+'-' cursorx         long    0
+	byte	$00, $00, $00, $00
+'-' cursory         long    0
+	byte	$00, $00, $00, $00
+'-' cursorpos       long    0
+	byte	$00, $00, $00, $00
+'-' cursorpos2      long    0
+	byte	$00, $00, $00, $00
+'-' fontstart       long    0
+	byte	$00, $00, $00, $00
+'-' 
+'-' framebuf        res     1
+'-' fontbuf         res     1
+'-' borderptr       res     1
+'-' vblankptr       res     1
+'-' cursorptr       res     1
+'-' modeptr         res     1
+'-' paletteptr      res     1
+'-' commandptr      res     1
+'-' 
+'-' fontnumptr      res     1
+'-' hbase           res     1
+'-' borderptr2      res     1
+'-' 
+'-' ii              res     1
+'-' framebuf2       res     1
+'-' hsync0          res     1
+'-' hsync1          res     1
+'-' fontline        res     1
+'-' t1              res     1
+'-' t2              res     1
+'-' char            res     1
+'-' backcolor       res     1
+'-' charcolor       res     1
+'-' repnum res 1
+'-' aend             long 0
+	byte	$00, $00, $00, $00
+objmem
+	long	0[1]
+	org	COG_BSS_START
+_var01
+	res	1
+_var02
+	res	1
+_var03
+	res	1
+_var04
+	res	1
+_var05
+	res	1
+_var06
+	res	1
+_var07
+	res	1
+arg01
+	res	1
+arg02
+	res	1
+arg03
+	res	1
+arg04
+	res	1
+arg05
+	res	1
+arg06
+	res	1
+arg07
+	res	1
+arg08
+	res	1
+arg09
+	res	1
+arg10
+	res	1
+arg11
+	res	1
+arg12
+	res	1
+arg13
+	res	1
+arg14
+	res	1
+arg15
+	res	1
+arg16
+	res	1
+arg17
+	res	1
+arg18
+	res	1
+local01
+	res	1
+local02
+	res	1
+local03
+	res	1
+local04
+	res	1
+local05
+	res	1
+local06
+	res	1
+local07
+	res	1
+local08
+	res	1
+local09
+	res	1
+local10
+	res	1
+local11
+	res	1
+local12
+	res	1
+local13
+	res	1
+local14
+	res	1
+local15
+	res	1
+local16
+	res	1
+local17
+	res	1
+local18
+	res	1
+local19
+	res	1
+local20
+	res	1
+local21
+	res	1
+local22
+	res	1
+local23
+	res	1
+local24
+	res	1
+local25
+	res	1
+local26
+	res	1
+local27
+	res	1
+local28
+	res	1
+local29
+	res	1
+local30
+	res	1
+local31
+	res	1
+local32
+	res	1
+local33
+	res	1
+local34
+	res	1
+local35
+	res	1
+local36
+	res	1
+local37
+	res	1
+local38
+	res	1
+local39
+	res	1
+local40
+	res	1
+local41
+	res	1
+local42
+	res	1
+local43
+	res	1
+local44
+	res	1
+local45
+	res	1
+local46
+	res	1
+local47
+	res	1
+local48
+	res	1
+local49
+	res	1
+local50
+	res	1
+local51
+	res	1
+local52
+	res	1
+local53
+	res	1
+local54
+	res	1
+local55
+	res	1
+local56
+	res	1
+local57
+	res	1
+local58
+	res	1
+local59
+	res	1
+local60
+	res	1
+local61
+	res	1
+local62
+	res	1
+local63
+	res	1
+local64
+	res	1
+local65
+	res	1
+local66
+	res	1
+local67
+	res	1
+local68
+	res	1
+muldiva_
+	res	1
+muldivb_
+	res	1
+	fit	480
