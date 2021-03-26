@@ -225,11 +225,11 @@ hubentry
 ' 
 ' pub dummy()
 _dummy
-	mov	COUNT_, #26
+	mov	COUNT_, #29
 	call	#pushregs_
 ' '' this is not a main program.
 ' 
-' start(0,48)
+' start(64,48)
 	add	objptr, #44
 	mov	local01, objptr
 ' 
@@ -250,7 +250,7 @@ _dummy
 ' setmode(mode)
 ' 
 ' '' mode:nt_bb_cc_vv_hh
-' '' hh - h.zoom, vv-v.zoom, cc-c.depth, 
+' '' hh - h.zoom, vv-v.zoom, cc-c.depth,
 ' '' bb - borders/total pixels, 00-wide/1140, 01 medium/1026, 10 narrow/912, 11 no border, 1024 px PAL, 880 px NTSC
 ' 
 ' if (mode<512)  '' text modes
@@ -264,28 +264,28 @@ _dummy
 	sub	ptr__dat__, ##7168
 	call	#__system__longmove
 '   if (mode==0)                                'PAL 50 Hz signaling 1140x624, active 800x480, 100x30 text, wide border, 2 colors per pixel, 00_00_00_00_00=0, 354_693_878 Hz
-	add	objptr, #228
-	add	ptr__dat__, ##7192
 '     longmove(@timings,@timings000,16)
+'   if (mode==64)                               'PAL 50 Hz signaling 1026x624, active 880x496, 110x31 text, medium border, 2 colors per pixel 00_01_00_00_00=64, 319_215_686 Hz
+	add	objptr, #228
+	add	ptr__dat__, ##7256
+'     longmove(@timings,@timings064,16)
 	mov	arg01, objptr
 	mov	arg02, ptr__dat__
 	mov	arg03, #16
 	sub	objptr, #228
-	sub	ptr__dat__, ##7192
+	sub	ptr__dat__, ##7256
 	call	#__system__longmove
-'   if (mode==64)                               'PAL 50 Hz signaling 1026x624, active 880x496, 110x31 text, medium border, 2 colors per pixel 00_01_00_00_00=64, 319_215_686 Hz
-'     longmove(@timings,@timings064,16)
 '   if (mode==128)                              'PAL 50 Hz signaling 912x624, active 800x480, 100x30 text, medium border, 2 colors per pixel 00_10_00_00_00=64, 283750000z
 '     longmove(@timings,@timings128,16)
 '   if (mode==192)                              'PAL 50 Hz signaling 1140x624, active 1024x576, 128x36 text, borderless, 2 colors per pixel 00_11_00_00_00=6192, 354_693_878 Hz
 '     longmove(@timings,@timings192,16)
-'   if (mode==256)                              'NTSC 50 Hz signaling 1140x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_00_00_00_00=256, 357959184 Hz 
+'   if (mode==256)                              'NTSC 50 Hz signaling 1140x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_00_00_00_00=256, 357959184 Hz
 '     longmove(@timings,@timings256,16)
-'   if (mode==320)                              'NTSC 50 Hz signaling 1026x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_01_00_00_00=320, 322162162 Hz 
+'   if (mode==320)                              'NTSC 50 Hz signaling 1026x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_01_00_00_00=320, 322162162 Hz
 '     longmove(@timings,@timings320,16)
-'   if (mode==384)                              'NTSC 50 Hz signaling 912x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_10_00_00_00=384, 286363636 Hz 
+'   if (mode==384)                              'NTSC 50 Hz signaling 912x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_10_00_00_00=384, 286363636 Hz
 '     longmove(@timings,@timings384,16)
-'   if (mode==448)                              'NTSC 50 Hz signaling 1026x524, active 880x496, 110x31 text, borderless, 2 colors per pixel, 01_11_00_00_00=496, 322162162 Hz 
+'   if (mode==448)                              'NTSC 50 Hz signaling 1026x524, active 880x496, 110x31 text, borderless, 2 colors per pixel, 01_11_00_00_00=496, 322162162 Hz
 '     longmove(@timings,@timings448,16)
 ' 
 '   repeat i from 0 to 5
@@ -326,60 +326,63 @@ LR__0002
 ' 
 ' cpl:=timings[11]
 	sub	objptr, #12
-	rdlong	local09, objptr
+	rdlong	local08, objptr
 	add	objptr, #20
-	wrlong	local09, objptr
+	wrlong	local08, objptr
 	sub	objptr, #16
-	rdlong	local10, objptr
-	shr	local10, #4
+	rdlong	local09, objptr
+	shr	local09, #4
 ' lines:=timings[12]>>4
 	add	objptr, #20
-	wrlong	local10, objptr
+	wrlong	local09, objptr
 	sub	objptr, #4
-	rdlong	local11, objptr
+	rdlong	local06, objptr
 	add	objptr, #4
-	rdlong	local12, objptr
-	qmul	local11, local12
-	getqx	local13
+	rdlong	local10, objptr
+	qmul	local06, local10
+	getqx	local11
 ' buflen:=cpl*lines
 	sub	objptr, #100
-	wrlong	local13, objptr
+	wrlong	local11, objptr
 	sub	objptr, #196
-	shl	local13, #2
-	mov	local14, ##507904
-	sub	local14, local13
-' buf_ptr:=$7C000-4*buflen    
-	wrlong	local14, objptr
-	add	objptr, #212
-	mov	local15, objptr
+	shl	local11, #2
+	mov	local12, ##507904
+	sub	local12, local11
+' buf_ptr:=$7C000-4*buflen
+	wrlong	local12, objptr
+	add	objptr, #228
+	mov	local13, objptr
+' mode_ptr:=@timings
+	sub	objptr, #208
+	wrlong	local13, objptr
+	add	objptr, #192
+	mov	local14, objptr
+' 
+' 
 ' 
 ' vblank_ptr:=@vblank
 	sub	objptr, #200
-	wrlong	local15, objptr
+	wrlong	local14, objptr
 	add	objptr, #188
-	mov	local16, objptr
+	mov	local15, objptr
 ' cursor_ptr:=@cursor_x
 	sub	objptr, #184
-	wrlong	local16, objptr
-	add	objptr, #212
-	mov	local17, objptr
-' mode_ptr:=@timings
-	sub	objptr, #208
-	wrlong	local17, objptr
+	wrlong	local15, objptr
 	add	ptr__dat__, ##6144
+' 
 ' palette_ptr:=@ataripalette
-	add	objptr, #4
+	add	objptr, #8
 	wrlong	ptr__dat__, objptr
 	add	objptr, #276
-	mov	local18, objptr
+	mov	local16, objptr
 ' command_ptr:=@cmd1
 	sub	objptr, #272
-	wrlong	local18, objptr
+	wrlong	local16, objptr
 	add	objptr, #280
-	mov	local19, objptr
+	mov	local17, objptr
 ' fontnum_ptr:=@fontnum
 	sub	objptr, #276
-	wrlong	local19, objptr
+	wrlong	local17, objptr
 ' 
 ' fontnum:=0  ' PC type font ' TODO: font# in buffer byte #1
 	add	objptr, #276
@@ -422,27 +425,27 @@ LR__0002
 	coginit	arg01, arg02 wc
  if_b	neg	arg01, #1
 	mov	result1, arg01
-	mov	local20, result1
+	mov	local18, result1
 	add	objptr, #40
-	wrlong	local20, objptr
+	wrlong	local18, objptr
 	sub	objptr, #40
 ' waitms(20)
-	mov	local21, #20
-	rdlong	local22, #20
+	mov	local19, #20
+	rdlong	local20, #20
 	loc	pa,	#(@LR__0004-@LR__0003)
 	call	#FCACHE_LOAD_
 LR__0003
-	cmps	local21, ##1000 wcz
- if_a	waitx	local22
- if_a	sub	local21, ##1000
+	cmps	local19, ##1000 wcz
+ if_a	waitx	local20
+ if_a	sub	local19, ##1000
  if_a	jmp	#LR__0003
 LR__0004
-	cmps	local21, #0 wcz
+	cmps	local19, #0 wcz
  if_be	jmp	#LR__0005
-	mov	muldiva_, local22
+	mov	muldiva_, local20
 	mov	muldivb_, ##1000
 	call	#divide_
-	qmul	local21, muldivb_
+	qmul	local19, muldivb_
 	getqx	arg01
 	waitx	arg01
 LR__0005
@@ -469,7 +472,7 @@ LR__0007
 LR__0008
 LR__0009
 LR__0010
-'  setwritecolors(fc,bc)
+' setwritecolors(fc,bc)
 ' 
 ' 
 ' write_color:=ff
@@ -478,35 +481,39 @@ LR__0010
 ' write_background:=bb
 	add	objptr, #4
 	wrlong	#0, objptr
-' setbordercolors(0,255,0)
+' cursor_x:=0
+	sub	objptr, #8
+	wrbyte	#0, objptr
+' cursor_y:=0
+	add	objptr, #1
+	wrbyte	#0, objptr
+' setbordercolors(0,0,0)
 	mov	arg03, #0
-	mov	arg01, ##65280
-' 
-' ''---------- Set border color for all screen - rgb
+	mov	arg01, #0
 ' 
 ' color:=r<<16+g<<8+b  ''' todo!!! border buffer has to be defined like a main buffer
 ' 
 ' repeat i from 0 to lines+1
-	mov	local23, #0
-	add	objptr, #88
-	rdlong	local24, objptr
+	mov	local21, #0
+	add	objptr, #95
+	rdlong	local22, objptr
 	sub	objptr, #296
-	add	local24, #1
-	cmps	local24, #0 wcz
- if_a	mov	local25, #1
- if_be	neg	local25, #1
-	add	local24, local25
+	add	local22, #1
+	cmps	local22, #0 wcz
+ if_a	mov	local23, #1
+ if_be	neg	local23, #1
+	add	local22, local23
 	loc	pa,	#(@LR__0012-@LR__0011)
 	call	#FCACHE_LOAD_
 LR__0011
-	mov	local26, local23
-	shl	local26, #2
+	mov	local24, local21
+	shl	local24, #2
 	add	objptr, #44
-	add	local26, objptr
+	add	local24, objptr
 '   bordercolor[i]:=color
-	wrlong	arg01, local26
-	add	local23, local25
-	cmp	local23, local24 wz
+	wrlong	arg01, local24
+	add	local21, local23
+	cmp	local21, local22 wz
 	sub	objptr, #44
  if_ne	jmp	#LR__0011
 LR__0012
@@ -526,15 +533,77 @@ LR__0012
 	rdlong	result1, objptr
 	sub	objptr, #40
 ' writeln(string("Hello, World!"))
-	mov	arg01, ##@LR__0056
+	mov	arg01, ##@LR__0061
 	call	#_writeln
 ' writeln(string("You started the driver instead of your main program!"))
-	mov	arg01, ##@LR__0057
+	mov	arg01, ##@LR__0062
 	call	#_writeln
-' cogstop(cogid)
-	cogid	result1
-	cogstop	result1
-	mov	result1, #0
+' writeln(inttohex(buf_ptr,8))
+	rdlong	arg01, objptr
+	mov	arg02, #8
+' 
+' j:=i
+' pos:=d-1
+	mov	local25, #7
+' k:=0
+	add	objptr, #216
+	add	arg02, objptr
+' n_string[d]:=0
+	wrbyte	#0, arg02
+' repeat k from 0 to d-1
+	mov	local26, #0
+	sub	objptr, #216
+	loc	pa,	#(@LR__0014-@LR__0013)
+	call	#FCACHE_LOAD_
+LR__0013
+	mov	local27, local26
+	add	objptr, #216
+	add	local27, objptr
+'   n_string[k]:=48
+	wrbyte	#48, local27
+	add	local26, #1
+	cmp	local26, #8 wz
+	sub	objptr, #216
+ if_ne	jmp	#LR__0013
+LR__0014
+' if (j<>0)
+	cmp	arg01, #0 wz
+ if_e	jmp	#LR__0017
+' 
+'   repeat while (pos>-1)
+LR__0015
+	cmps	local25, ##-1 wcz
+ if_be	jmp	#LR__0016
+	mov	local28, arg01
+	and	local28, #15
+'     q:=j+//16
+'     if (q>9)
+	cmps	local28, #9 wcz
+'       q:=q+7
+ if_a	add	local28, #7
+'     q:=48+q
+	add	local28, #48
+	mov	local29, local25
+	add	objptr, #216
+	add	local29, objptr
+'     n_string[pos]:=q
+	wrbyte	local28, local29
+'     j:=j+/16
+	shr	arg01, #4
+'     pos-=1
+	sub	local25, #1
+	sub	objptr, #216
+	jmp	#LR__0015
+LR__0016
+LR__0017
+	add	objptr, #216
+	mov	result1, objptr
+	sub	objptr, #216
+' 
+' q:=@n_string
+' return q
+	mov	arg01, result1
+	call	#_writeln
 	mov	ptra, fp
 	call	#popregs_
 _dummy_ret
@@ -553,14 +622,14 @@ _outtextxy
 	mov	local02, #0
 	mov	arg01, arg03
 	mov	local03, #0
-	loc	pa,	#(@LR__0014-@LR__0013)
+	loc	pa,	#(@LR__0019-@LR__0018)
 	call	#FCACHE_LOAD_
-LR__0013
+LR__0018
 	rdbyte	local04, arg01 wz
  if_ne	add	local03, #1
  if_ne	add	arg01, #1
- if_ne	jmp	#LR__0013
-LR__0014
+ if_ne	jmp	#LR__0018
+LR__0019
 	mov	result1, local03
 	mov	local05, result1
 	sub	local05, #1
@@ -568,9 +637,9 @@ LR__0014
  if_a	mov	local06, #1
  if_be	neg	local06, #1
 	add	local05, local06
-	loc	pa,	#(@LR__0016-@LR__0015)
+	loc	pa,	#(@LR__0021-@LR__0020)
 	call	#FCACHE_LOAD_
-LR__0015
+LR__0020
 	add	objptr, #292
 	rdlong	local07, objptr
 	sub	objptr, #292
@@ -591,8 +660,8 @@ LR__0015
 	wrlong	local10, local09
 	add	local02, local06
 	cmp	local02, local05 wz
- if_ne	jmp	#LR__0015
-LR__0016
+ if_ne	jmp	#LR__0020
+LR__0021
 	mov	ptra, fp
 	call	#popregs_
 _outtextxy_ret
@@ -625,27 +694,27 @@ _write
 	sub	objptr, #200
 	mov	arg01, local01
 	mov	local06, #0
-	loc	pa,	#(@LR__0018-@LR__0017)
+	loc	pa,	#(@LR__0023-@LR__0022)
 	call	#FCACHE_LOAD_
-LR__0017
+LR__0022
 	rdbyte	local07, arg01 wz
  if_ne	add	local06, #1
  if_ne	add	arg01, #1
- if_ne	jmp	#LR__0017
-LR__0018
+ if_ne	jmp	#LR__0022
+LR__0023
 	mov	result1, local06
 	add	local05, local06
 	mov	local08, local05
-	loc	pa,	#(@LR__0020-@LR__0019)
+	loc	pa,	#(@LR__0025-@LR__0024)
 	call	#FCACHE_LOAD_
 ' repeat while ncx>cpl-1
-LR__0019
+LR__0024
 	add	objptr, #292
 	rdlong	local05, objptr
 	sub	objptr, #292
 	sub	local05, #1
 	cmps	local08, local05 wcz
- if_be	jmp	#LR__0021
+ if_be	jmp	#LR__0026
 '   ncx-=cpl
 	add	objptr, #292
 	rdlong	local09, objptr
@@ -653,17 +722,17 @@ LR__0019
 	sub	local08, local09
 '   ncy+=1
 	add	local04, #1
-	jmp	#LR__0019
-LR__0020
-LR__0021
+	jmp	#LR__0024
+LR__0025
+LR__0026
 ' repeat while ncy>lines-1
-LR__0022
+LR__0027
 	add	objptr, #296
 	rdlong	local05, objptr
 	sub	objptr, #296
 	sub	local05, #1
 	cmps	local04, local05 wcz
- if_be	jmp	#LR__0023
+ if_be	jmp	#LR__0028
 '   ncy-=1
 	sub	local04, #1
 '   scrollup()
@@ -674,21 +743,21 @@ LR__0022
 	sub	local05, #1
 	wrbyte	local05, objptr
 	sub	objptr, #201
-	jmp	#LR__0022
-LR__0023
+	jmp	#LR__0027
+LR__0028
 ' 
 ' repeat iii from 0 to strsize(text)-1
 	mov	local10, #0
 	mov	arg01, local01
 	mov	local06, #0
-	loc	pa,	#(@LR__0025-@LR__0024)
+	loc	pa,	#(@LR__0030-@LR__0029)
 	call	#FCACHE_LOAD_
-LR__0024
+LR__0029
 	rdbyte	local07, arg01 wz
  if_ne	add	local06, #1
  if_ne	add	arg01, #1
- if_ne	jmp	#LR__0024
-LR__0025
+ if_ne	jmp	#LR__0029
+LR__0030
 	mov	result1, local06
 	mov	local11, result1
 	sub	local11, #1
@@ -696,9 +765,9 @@ LR__0025
  if_a	mov	local12, #1
  if_be	neg	local12, #1
 	add	local11, local12
-	loc	pa,	#(@LR__0027-@LR__0026)
+	loc	pa,	#(@LR__0032-@LR__0031)
 	call	#FCACHE_LOAD_
-LR__0026
+LR__0031
 	add	objptr, #292
 	rdlong	local13, objptr
 	sub	objptr, #91
@@ -721,8 +790,8 @@ LR__0026
 	wrlong	local17, local16
 	add	local10, local12
 	cmp	local10, local11 wz
- if_ne	jmp	#LR__0026
-LR__0027
+ if_ne	jmp	#LR__0031
+LR__0032
 ' 
 ' outtextxy(cursor_x,cursor_y,text)
 	add	objptr, #200
@@ -771,7 +840,7 @@ _writeln
 	rdbyte	local02, objptr
 	sub	objptr, #201
 	cmps	local02, local01 wcz
- if_be	jmp	#LR__0028
+ if_be	jmp	#LR__0033
 '   scrollup()
 	call	#_scrollup
 	add	objptr, #296
@@ -781,7 +850,7 @@ _writeln
 	sub	objptr, #95
 	wrbyte	local03, objptr
 	sub	objptr, #201
-LR__0028
+LR__0033
 	mov	ptra, fp
 	call	#popregs_
 _writeln_ret
@@ -828,9 +897,9 @@ _scrollup
  if_a	mov	local07, #1
  if_be	neg	local07, #1
 	add	local04, local07
-	loc	pa,	#(@LR__0030-@LR__0029)
+	loc	pa,	#(@LR__0035-@LR__0034)
 	call	#FCACHE_LOAD_
-LR__0029
+LR__0034
 	mov	local08, local03
 	shl	local08, #2
 	rdlong	local09, objptr
@@ -842,8 +911,8 @@ LR__0029
 	wrlong	local10, local09
 	add	local03, local07
 	cmp	local03, local04 wz
- if_ne	jmp	#LR__0029
-LR__0030
+ if_ne	jmp	#LR__0034
+LR__0035
 	mov	ptra, fp
 	call	#popregs_
 _scrollup_ret
@@ -854,52 +923,52 @@ hubexit
 __system__bytemove
 	mov	_var01, arg01
 	cmps	arg01, arg02 wcz
- if_ae	jmp	#LR__0038
-	loc	pa,	#(@LR__0032-@LR__0031)
+ if_ae	jmp	#LR__0043
+	loc	pa,	#(@LR__0037-@LR__0036)
 	call	#FCACHE_LOAD_
-LR__0031
+LR__0036
 	cmps	arg03, #3 wcz
- if_be	jmp	#LR__0033
+ if_be	jmp	#LR__0038
 	rdlong	_var02, arg02
 	wrlong	_var02, arg01
 	add	arg01, #4
 	add	arg02, #4
 	sub	arg03, #4
-	jmp	#LR__0031
-LR__0032
-LR__0033
+	jmp	#LR__0036
+LR__0037
+LR__0038
 	mov	_var03, arg03 wz
- if_e	jmp	#LR__0044
-	loc	pa,	#(@LR__0036-@LR__0034)
+ if_e	jmp	#LR__0049
+	loc	pa,	#(@LR__0041-@LR__0039)
 	call	#FCACHE_LOAD_
-LR__0034
-	rep	@LR__0037, _var03
-LR__0035
+LR__0039
+	rep	@LR__0042, _var03
+LR__0040
 	rdbyte	_var02, arg02
 	wrbyte	_var02, arg01
 	add	arg01, #1
 	add	arg02, #1
-LR__0036
-LR__0037
-	jmp	#LR__0044
-LR__0038
+LR__0041
+LR__0042
+	jmp	#LR__0049
+LR__0043
 	add	arg01, arg03
 	add	arg02, arg03
 	mov	_var04, arg03 wz
- if_e	jmp	#LR__0043
-	loc	pa,	#(@LR__0041-@LR__0039)
+ if_e	jmp	#LR__0048
+	loc	pa,	#(@LR__0046-@LR__0044)
 	call	#FCACHE_LOAD_
-LR__0039
-	rep	@LR__0042, _var04
-LR__0040
+LR__0044
+	rep	@LR__0047, _var04
+LR__0045
 	sub	arg01, #1
 	sub	arg02, #1
 	rdbyte	_var02, arg02
 	wrbyte	_var02, arg01
-LR__0041
-LR__0042
-LR__0043
-LR__0044
+LR__0046
+LR__0047
+LR__0048
+LR__0049
 	mov	result1, _var01
 __system__bytemove_ret
 	ret
@@ -907,49 +976,49 @@ __system__bytemove_ret
 __system__longmove
 	mov	_var01, arg01
 	cmps	arg01, arg02 wcz
- if_ae	jmp	#LR__0049
+ if_ae	jmp	#LR__0054
 	mov	_var02, arg03 wz
- if_e	jmp	#LR__0055
-	loc	pa,	#(@LR__0047-@LR__0045)
+ if_e	jmp	#LR__0060
+	loc	pa,	#(@LR__0052-@LR__0050)
 	call	#FCACHE_LOAD_
-LR__0045
-	rep	@LR__0048, _var02
-LR__0046
+LR__0050
+	rep	@LR__0053, _var02
+LR__0051
 	rdlong	_var03, arg02
 	wrlong	_var03, arg01
 	add	arg01, #4
 	add	arg02, #4
-LR__0047
-LR__0048
-	jmp	#LR__0055
-LR__0049
+LR__0052
+LR__0053
+	jmp	#LR__0060
+LR__0054
 	mov	_var04, arg03
 	shl	_var04, #2
 	add	arg01, _var04
 	add	arg02, _var04
 	mov	_var05, arg03 wz
- if_e	jmp	#LR__0054
-	loc	pa,	#(@LR__0052-@LR__0050)
+ if_e	jmp	#LR__0059
+	loc	pa,	#(@LR__0057-@LR__0055)
 	call	#FCACHE_LOAD_
-LR__0050
-	rep	@LR__0053, _var05
-LR__0051
+LR__0055
+	rep	@LR__0058, _var05
+LR__0056
 	sub	arg01, #4
 	sub	arg02, #4
 	rdlong	_var03, arg02
 	wrlong	_var03, arg01
-LR__0052
-LR__0053
-LR__0054
-LR__0055
+LR__0057
+LR__0058
+LR__0059
+LR__0060
 	mov	result1, _var01
 __system__longmove_ret
 	ret
 
-LR__0056
+LR__0061
 	byte	"Hello, World!"
 	byte	0
-LR__0057
+LR__0062
 	byte	"You started the driver instead of your main program!"
 	byte	0
 	alignl
@@ -1482,346 +1551,303 @@ _dat_
 '-' 
 '-' hdmi            setq    #9
 	byte	$28, $12, $64, $fd
-'-'                 rdlong  framebuf,  ptra++               'read pointers
-	byte	$61, $61, $05, $fb
+'-'                 rdlong  framebuf,  ptra                 'read pointers
+	byte	$00, $2f, $05, $fb
 '-' 
 '-'                 setq2   #255
 	byte	$29, $fe, $65, $fd
 '-'                 rdlong  $000, paletteptr                'read palette
-	byte	$b6, $00, $00, $fb
+	byte	$9d, $00, $00, $fb
 '-' 
-'-'                 wrlong  #charcolor,#0
-	byte	$00, $88, $6d, $fc
+'-'                 wrlong  #aend,#0                         'write driver length to hub#0: DEBUG/demo
+	byte	$00, $5a, $6d, $fc
 '-'                 setcmod #$100                           'enable HDMI mode
 	byte	$3c, $00, $66, $fd
 '-'                 mov     ii,#7
-	byte	$07, $76, $05, $f6
+	byte	$07, $44, $05, $f6
 '-'                 shl     ii,#6
-	byte	$06, $76, $65, $f0
+	byte	$06, $44, $65, $f0
 '-'                 add     ii,hbase
-	byte	$b9, $76, $01, $f1
-'-'                 drvl    ii                               ' #7<<6 + hdmi_base               'enable HDMI pins
-	byte	$58, $76, $61, $fd
+	byte	$a0, $44, $01, $f1
+'-'                 drvl    ii                                 '#7<<6 + hdmi_base      ' enable HDMI pins
+	byte	$58, $44, $61, $fd
 '-'                 wrpin   ##%10110_1111_0111_10_00000_0, ii  '#7<<6 + hdmi_base      ' a '123 ohm BITDAC for pins
-	byte	$7b, $0b, $80, $ff, $bb, $00, $0b, $fc
+	byte	$7b, $0b, $80, $ff, $a2, $00, $0b, $fc
 '-' 
-'-'                 setxfrq ##$0CCCCCCC+1                   'set streamer freq to 1/10th clk (25 MHz)
+'-'                 setxfrq ##$0CCCCCCC+1                   'set streamer freq to 1/10th clk
 	byte	$66, $66, $86, $ff, $1d, $9a, $65, $fd
 '-' 
 '-' 
-'-' '' Blank lines before the frame
+'-' 'Start the frame rendering loop
 '-' 
 '-' p101            setq    #12
 	byte	$28, $18, $64, $fd
 '-'                 rdlong  m_bs,modeptr                     ' read timings
-	byte	$b5, $28, $01, $fb
-'-'                 testb   i_modenum,#9 wc                  ' bit #8 set = graphics mode
-	byte	$09, $3c, $15, $f4
-'-'          if_c   jmp #p200								 ' jump to graphics mode       
+	byte	$9c, $00, $01, $fb
+'-'                 rdlong framebuf,ptra                     ' if mode changed, the framebuffer will change,too
+	byte	$00, $2f, $05, $fb
+'-'                 testb   i_modenum,#9 wc                  ' bit #8 set = graphics modes, not yet implemented
+	byte	$09, $14, $15, $f4
+'-'          if_c   jmp #p200                                                                ' jump to graphics mode: TODO, now it will return to p901
 	byte	$84, $01, $90, $cd
+'-' 
 '-' p901            add     frames,#1
-	byte	$01, $4c, $05, $f1
-'-'                   rdlong  fontstart,fontnumptr           ' todo: free byte in char buf = font select
-	byte	$b8, $56, $01, $fb
-'-'                   add     fontstart,fontbuf
-	byte	$b1, $56, $01, $f1
-'-'                 rdlong  cursorx, cursorptr
-	byte	$b4, $4e, $01, $fb
-'-'                 getbyte cursory, cursorx,#1
-	byte	$a7, $50, $e9, $f8
-'-'                 getbyte cursorsh,cursorx,#2
-	byte	$a7, $4a, $f1, $f8
-'-'                 and     cursorx,#255
-	byte	$ff, $4e, $05, $f5
+	byte	$01, $22, $05, $f1
+'-'                 rdlong  fontstart,fontnumptr             ' TODO: free byte in char buf = font select
+	byte	$9f, $2c, $01, $fb
+'-'                 add     fontstart,fontbuf
+	byte	$98, $2c, $01, $f1
+'-'                 rdlong  cursorx, cursorptr               ' read cursor position
+	byte	$9b, $24, $01, $fb
+'-'                 getbyte cursory, cursorx,#1              ' y position at byte #1
+	byte	$92, $26, $e9, $f8
+'-'                 getbyte cursorsh,cursorx,#2              ' shape at byte #2
+	byte	$92, $20, $f1, $f8
+'-'                 and     cursorx,#255                     ' clear the cursor x varioble from y and shape
+	byte	$ff, $24, $05, $f5
 '-' 
-'-'                 mov     borderptr2,borderptr
-	byte	$b2, $74, $01, $f6
-'-'                 rdlong  border,borderptr2
-	byte	$ba, $26, $01, $fb
+'-'                 mov     borderptr2,borderptr             ' borderptr points to border colors table start
+	byte	$99, $42, $01, $f6
+'-'                 rdlong  border,borderptr2                ' borderptr2 will change at every char line pointing to the individual border color
+	byte	$a1, $fe, $00, $fb
 '-'                 add     borderptr2,#4
-	byte	$04, $74, $05, $f1
-'-'                 shl     border,#8
-	byte	$08, $26, $65, $f0
+	byte	$04, $42, $05, $f1
+'-'                 shl     border,#8                        ' HDMI driver needs rgb0 format
+	byte	$08, $fe, $64, $f0
 '-' 
-'-'                 rdlong  t1,commandptr
-	byte	$b7, $80, $01, $fb
+'-'                 rdlong  t1,commandptr                    ' A mailbox interface, read the command
+	byte	$9e, $4e, $01, $fb
 '-'                 add     commandptr,#4
-	byte	$04, $6e, $05, $f1
-'-'                 rdlong  t2,commandptr
-	byte	$b7, $82, $01, $fb
-'-'                 sub     commandptr,#4
-	byte	$04, $6e, $85, $f1
-'-'                 cmp     t1,#257  wcz
-	byte	$01, $81, $1d, $f2
-'-'          if_lt  wrlut   t2,t1
-	byte	$c0, $82, $31, $cc
-'-'                 mov     t1, #257
-	byte	$01, $81, $05, $f6
-'-'                 wrlong  t1,commandptr
-	byte	$b7, $80, $61, $fc
-'-'                 mov     hsync0,sync_000                 'vsync off
-	byte	$8f, $7a, $01, $f6
+	byte	$04, $3c, $05, $f1
+'-'                 rdlong  t2,commandptr                    ' read the argument
+	byte	$9e, $50, $01, $fb
+'-'                 sub     commandptr,#4                    ' restore the pionter
+	byte	$04, $3c, $85, $f1
+'-'                 cmp     t1,#256  wcz                     '
+	byte	$00, $4f, $1d, $f2
+'-'          if_lt  wrlut   t2,t1                            ' command 0..255-> set the color in LUT
+	byte	$a7, $50, $31, $cc
+'-'                 mov     t1, #257                         ' 257=idle
+	byte	$01, $4f, $05, $f6
+'-' 
+'-'                 wrlong  t1,commandptr                    ' write 257 to hub variable so the program can test if command was done
+	byte	$9e, $4e, $61, $fc
+'-'  '' up porch
+'-' 
+'-'                 mov     hsync0,sync_000                  '
+	byte	$7b, $48, $01, $f6
 '-'                 mov     hsync1,sync_001
-	byte	$90, $7c, $01, $f6
+	byte	$7c, $4a, $01, $f6
 '-'                 callpa  i_upporch ,#blank
-	byte	$61, $36, $45, $fb
+	byte	$4c, $0e, $45, $fb
 '-'                 wrbyte  #0,vblankptr
-	byte	$b3, $00, $48, $fc
+	byte	$9a, $00, $48, $fc
 '-' 
-'-' '' Upper border.
+'-' '' cursor blinking
 '-' 
-'-'                 testb   frames,#4 wz                    'cursor blinks at framerate/16, todo: define
-	byte	$04, $4c, $0d, $f4
-'-'          if_z   mov     cursorx,#129
-	byte	$81, $4e, $05, $a6
+'-'                 testb   frames,#4 wz                     ' cursor blinks at framerate/16, todo: define
+	byte	$04, $22, $0d, $f4
+'-'          if_z   mov     cursorx,#129                     ' to switch the cursor off, move it out of the screen
+	byte	$81, $24, $05, $a6
 '-' 
-'-' 
-'-'                  mov     ii, i_vborder wz
-	byte	$9a, $76, $09, $f6
-'-'     
-'-'                  if_z jmp #p111
+'-'                 mov     ii, i_vborder wz                 ' read upper border parameter
+	byte	$86, $44, $09, $f6
+'-'                 if_z jmp #p111                           ' if zero, don't make a border
 	byte	$0c, $00, $90, $ad
 '-' 
-'-' up_border       call    #hsync
-	byte	$78, $01, $b0, $fd
+'-' '' border, if exists
+'-' 
+'-' up_border       call    #hsync                           ' make a border
+	byte	$24, $01, $b0, $fd
 '-'                 xcont   m_vi,border
-	byte	$93, $2e, $c1, $fc
+	byte	$7f, $06, $c1, $fc
 '-'                 djnz    ii,#up_border
-	byte	$fd, $77, $6d, $fb
+	byte	$fd, $45, $6d, $fb
 '-' 
-'-' '' 480 active lines
+'-' '' active lines
 '-' 
-'-' p111            mov     ii,i_lines
-	byte	$a0, $76, $01, $f6
-'-'                 mov     linenum,#0
-	byte	$00, $44, $05, $f6
+'-' p111            mov     ii,i_lines                      ' read active lines count
+	byte	$8c, $44, $01, $f6
+'-'                 mov     linenum,#0                      ' set line number to 0
+	byte	$00, $1c, $05, $f6
 '-' 
-'-' line1           mov     cursorpos2,cursorx
-	byte	$a7, $54, $01, $f6
+'-' line1           mov     cursorpos2,cursorx              ' we need another var for cursor as this code will repeat 16x for every char line
+	byte	$92, $2a, $01, $f6
 '-' 
-'-'                 getnib  fontline,linenum,#0             'fontline is 0 to 15, a line in font def
-	byte	$a2, $7e, $41, $f8
-'-'                 mov     framebuf2,framebuf              'compute a line start in the framebuffer, which is (line div 16)*100
-	byte	$b0, $78, $01, $f6
-'-'                 mov     linestart,linenum
-	byte	$a2, $42, $01, $f6
-'-'                 shr     linestart,#4
-	byte	$04, $42, $45, $f0
-'-'                 cmp     linestart,cursory wz
-	byte	$a8, $42, $09, $f2
-'-'           if_nz mov     cursorpos2,#129
-	byte	$81, $54, $05, $56
-'-'                 mul     linestart,i_cpl
-	byte	$9f, $42, $01, $fa
+'-'                 getnib  fontline,linenum,#0             ' fontline is 0 to 15, a line in font def
+	byte	$8e, $4c, $41, $f8
+'-'                 mov     framebuf2,framebuf              ' compute a line start in the framebuffer, which is (line div 16)*cpl
+	byte	$97, $46, $01, $f6
+'-'                 mov     linestart,linenum               ' linestart will be used for checking cursor y and compute line start addr in the buffer
+	byte	$8e, $1a, $01, $f6
+'-'                 shr     linestart,#4                    ' scanline to char line
+	byte	$04, $1a, $45, $f0
+'-'                 cmp     linestart,cursory wz            ' if the cursor is not here
+	byte	$93, $1a, $09, $f2
+'-'           if_nz mov     cursorpos2,#129                 ' move it out of the screen
+	byte	$81, $2a, $05, $56
+'-'                 mul     linestart,i_cpl                 ' compute the address of char line in the buffer
+	byte	$8b, $1a, $01, $fa
 '-'                 shl     linestart,#2
-	byte	$02, $42, $65, $f0
-'-'                 add     framebuf2,linestart
-	byte	$a1, $78, $01, $f1
-'-'                 call    #hsync
-	byte	$3c, $01, $b0, $fd
+	byte	$02, $1a, $65, $f0
+'-'                 add     framebuf2,linestart             ' and add it to the buffer start address
+	byte	$8d, $46, $01, $f1
+'-' 
+'-'                 call    #hsync                          ' now call hsync to gain some time between xconts
+	byte	$e8, $00, $b0, $fd
+'-' 
 '-'                 cmp     fontline,#0 wz
-	byte	$00, $7e, $0d, $f2
-'-'           if_nz jmp     #p102                          'if fontline >0, display it
+	byte	$00, $4c, $0d, $f2
+'-'           if_nz jmp     #p102                           ' if fontline =0, get a border color
 	byte	$0c, $00, $90, $5d
 '-' 
 '-'                 rdlong  border,borderptr2
-	byte	$ba, $26, $01, $fb
+	byte	$a1, $fe, $00, $fb
 '-'                 add     borderptr2,#4
-	byte	$04, $74, $05, $f1
+	byte	$04, $42, $05, $f1
 '-'                 shl     border,#8
-	byte	$08, $26, $65, $f0
+	byte	$08, $fe, $64, $f0
 '-' 
-'-' p102            getword t1,m_border,#0
-	byte	$98, $80, $31, $f9
+'-' p102            getword t1,m_border,#0                  ' else use the same border color for all the character line
+	byte	$84, $4e, $31, $f9
 '-'                 cmp     t1, #0 wz
-	byte	$00, $80, $0d, $f2
-'-'           if_nz xcont   m_border,border                 'display a left border
-	byte	$93, $30, $c1, $5c
-'-'                 cmp     fontline,cursorsh wcz
-	byte	$a5, $7e, $19, $f2
-'-'           if_c  mov     cursorpos,#129
-	byte	$81, $52, $05, $c6
+	byte	$00, $4e, $0d, $f2
+'-'           if_nz xcont   m_border,border                 ' display a left border
+	byte	$7f, $08, $c1, $5c
+'-'                 cmp     fontline,cursorsh wcz           ' if the cursor have to be not displayed due to its shape
+	byte	$90, $4c, $19, $f2
+'-'           if_c  mov     cursorpos,#129                  ' move it out of the screen
+	byte	$81, $28, $05, $c6
 '-'          if_nc  mov     cursorpos,cursorpos2
-	byte	$aa, $52, $01, $36
-'-'                 add     cursorpos,#1
-	byte	$01, $52, $05, $f1
-'-'                 mov     t2,fontstart
-	byte	$ab, $82, $01, $f6
-'-'                 add     t2,fontline
-	byte	$bf, $82, $01, $f1
-'-'                 rep     @p103,i_cpl                      'display cpl chars
-	byte	$9f, $28, $d8, $fc
+	byte	$95, $28, $01, $36
+'-'                 add     cursorpos,#1                    ' we will substract #1 below so compensate this here
+	byte	$01, $28, $05, $f1
+'-'                 mov     t2,fontstart                    ' font definition pointer
+	byte	$96, $50, $01, $f6
+'-'                 add     t2,fontline                     ' add a current font line
+	byte	$a6, $50, $01, $f1
+'-'                 rep     @p103,i_cpl                     ' display cpl chars
+	byte	$8b, $28, $d8, $fc
 '-' ''---------------------------------------------------------------------------------------
-'-'                         rdlong  char,framebuf2                                                      '1
-	byte	$bc, $84, $01, $fb
-'-'                         getbyte backcolor,char,#2                                                   '2
-	byte	$c2, $86, $f1, $f8
-'-'                         getbyte charcolor,char,#3                                                   '3
-	byte	$c2, $88, $f9, $f8
-'-'                         getbyte char,char, #0                                                       '4
-	byte	$c2, $84, $e1, $f8
-'-'                         add     framebuf2,#4                                                        '5
-	byte	$04, $78, $05, $f1
-'-'                         shl     char,#4                                                             '6
-	byte	$04, $84, $65, $f0
-'-'                         add     char,t2                                                             '7
-	byte	$c1, $84, $01, $f1
-'-'                         rdbyte  t1,char                                                             '8
-	byte	$c2, $80, $c1, $fa
-'-'                         sub     cursorpos,#1 wz                                                     '9
-	byte	$01, $52, $8d, $f1
-'-'                 if_z    xor     t1, #$FF                                                            '10
-	byte	$ff, $80, $65, $a5
+'-'                         rdlong  char,framebuf2          ' read a long char                          '1
+	byte	$a3, $52, $01, $fb
+'-'                         getbyte backcolor,char,#2       ' byte #2 - background color                '2
+	byte	$a9, $54, $f1, $f8
+'-'                         getbyte charcolor,char,#3       ' byte #3 - foreground color                '3
+	byte	$a9, $56, $f9, $f8
+'-'                         getbyte char,char, #0           ' byte #0 - char code                       '4
+	byte	$a9, $52, $e1, $f8
+'-'                         add     framebuf2,#4            ' point to the next long                    '5
+	byte	$04, $46, $05, $f1
+'-'                         shl     char,#4                 ' 1 char=16 bytes in font def               '6
+	byte	$04, $52, $65, $f0
+'-'                         add     char,t2                 ' add this to font/line pointer             '7
+	byte	$a8, $52, $01, $f1
+'-'                         rdbyte  t1,char                 ' and get 8 pixels prom there               '8
+	byte	$a9, $4e, $c1, $fa
+'-'                         sub     cursorpos,#1 wz         ' if there is a cursor                      '9
+	byte	$01, $28, $8d, $f1
+'-'                 if_z    xor     t1, #$FF                ' reverse the colors                        '10
+	byte	$ff, $4e, $65, $a5
+'-'                                                  ' prepare to sprite function, not yet implemented
+'-'                         mergeb  t1                                              ' convert to 16-color mode                                      '11
+	byte	$61, $4e, $61, $fd
+'-'                         xcont   m_lut1,t1               ' and display this                          '12
+	byte	$a7, $0a, $c1, $fc
 '-' 
-'-'                         mergeb  t1																	'11
-	byte	$61, $80, $61, $fd
-'-'                         xcont   m_lut1,t1                                                           '12
-	byte	$c0, $32, $c1, $fc
-'-' 
-'-'                         rdlut   t1,backcolor                                                        '13
-	byte	$c3, $80, $a1, $fa
-'-'                         wrlut   t1,lutaddr                                                          '14
-	byte	$a4, $80, $31, $fc
+'-'                         rdlut   t1,backcolor            ' read a background color from palette      '13
+	byte	$aa, $4e, $a1, $fa
+'-'                         wrlut   t1,lutaddr              ' and write it to LUT #0 or #32             '14
+	byte	$8f, $4e, $31, $fc
 '-'                         add     lutaddr,#1                                                          '15
-	byte	$01, $48, $05, $f1
+	byte	$01, $1e, $05, $f1
 '-' 
-'-'                         rdlut   t1,charcolor                                                        '16
-	byte	$c4, $80, $a1, $fa
+'-'                         rdlut   t1,charcolor            ' the same for the foreground               '16
+	byte	$ab, $4e, $a1, $fa
 '-'                         wrlut   t1,lutaddr                                                          '17
-	byte	$a4, $80, $31, $fc
+	byte	$8f, $4e, $31, $fc
 '-'                         sub     lutaddr,#1                                                          '18
-	byte	$01, $48, $85, $f1
+	byte	$01, $1e, $85, $f1
 '-' 
-'-'                         xor     m_lut1,a00010000                                                    '19
-	byte	$a3, $32, $61, $f5
-'-'                         xor     lutaddr,#32                                                         '20
-	byte	$20, $48, $65, $f5
-'-'            
-'-' ' 8 nops left      
-'-'     
+'-'                         bitnot  m_lut1,#16                                                          '19
+	byte	$10, $0a, $e5, $f4
+'-'                         xor     lutaddr,#32             ' use LUT #0-1 and 32-33                    '20
+	byte	$20, $1e, $65, $f5
+'-' 
+'-' '------------------------ only 8 nops left :(
 '-' 
 '-' '' rep end ----------------------------------------------------------------------------
 '-' 
 '-' 
 '-' p103            getword t1,m_border,#0
-	byte	$98, $80, $31, $f9
+	byte	$84, $4e, $31, $f9
 '-'                 cmp     t1, #0 wz
-	byte	$00, $80, $0d, $f2
-'-'                 if_nz xcont   m_border,border                     'display a right border
-	byte	$93, $30, $c1, $5c
+	byte	$00, $4e, $0d, $f2
+'-'                 if_nz xcont   m_border,border            'display a right border if exists
+	byte	$7f, $08, $c1, $5c
 '-' 
 '-'                 add     linenum, #1
-	byte	$01, $44, $05, $f1
-'-'                 djnz    ii,#line1
-	byte	$cd, $77, $6d, $fb
+	byte	$01, $1c, $05, $f1
+'-'                 djnz    ii,#line1                       ' and goto next line if not all were displayed
+	byte	$cd, $45, $6d, $fb
 '-' 
 '-' '' end of active screen
+'-' 
 '-'                 wrlong  #1,vblankptr
-	byte	$b3, $02, $68, $fc
-'-'                 mov     ii,i_vborder wz                         'lower border
-	byte	$9a, $76, $09, $f6
+	byte	$9a, $02, $68, $fc
+'-'                 mov     ii,i_vborder wz                  'make a lower border if exists
+	byte	$86, $44, $09, $f6
 '-'           if_z jmp #p112
 	byte	$18, $00, $90, $ad
-'-'                   
+'-' 
 '-'                  rdlong  border,borderptr2
-	byte	$ba, $26, $01, $fb
+	byte	$a1, $fe, $00, $fb
 '-'                  add     borderptr2,#4
-	byte	$04, $74, $05, $f1
+	byte	$04, $42, $05, $f1
 '-'                  shl     border,#8
-	byte	$08, $26, $65, $f0
+	byte	$08, $fe, $64, $f0
 '-' down_border      call    #hsync
-	byte	$80, $00, $b0, $fd
+	byte	$2c, $00, $b0, $fd
 '-'                  xcont   m_vi,border
-	byte	$93, $2e, $c1, $fc
+	byte	$7f, $06, $c1, $fc
 '-'                  djnz    ii,#down_border
-	byte	$fd, $77, $6d, $fb
-'-' p112             callpa  i_downporch ,#blank                  'bottom blanks
-	byte	$1a, $3a, $45, $fb
+	byte	$fd, $45, $6d, $fb
 '-' 
-'-'                 mov     hsync0,sync_222                      'vsync on
-	byte	$91, $7a, $01, $f6
-'-'                 mov     hsync1,sync_223
-	byte	$92, $7c, $01, $f6
-'-'                 callpa  i_vsync,#blank                       'vertical sync blanks
-	byte	$17, $38, $45, $fb
-'-'                 jmp     #p101                                'loop
-	byte	$6c, $fe, $9f, $fd
-'-'                 
-'-'                 
-'-' p200			
+'-' p112             callpa  i_downporch ,#blank             'bottom blanks
+	byte	$05, $12, $45, $fb
+'-' 
+'-'                  mov     hsync0,sync_222                 'vsync on
+	byte	$7d, $48, $01, $f6
+'-'                  mov     hsync1,sync_223
+	byte	$7e, $4a, $01, $f6
+'-'                  callpa  i_vsync,#blank                  'vertical sync blanks
+	byte	$02, $10, $45, $fb
+'-'                  jmp     #p101                            'loop
+	byte	$68, $fe, $9f, $fd
 '-' 
 '-' 
-'-'                 rep     @p203,pixels                      'display 100 chars
-	byte	$ae, $28, $d8, $fc
-'-' ''---------------------------------------------------------------------------------------
-'-'                         rdlong  char,framebuf2                                                      '2
-	byte	$bc, $84, $01, $fb
-'-'                         getbyte backcolor,char,#2                                                   '4
-	byte	$c2, $86, $f1, $f8
-'-'                         getbyte charcolor,char,#3                                                   '6
-	byte	$c2, $88, $f9, $f8
-'-'                         getbyte char,char, #0                                                       '8
-	byte	$c2, $84, $e1, $f8
-'-'                         add     framebuf2,#4                                                        '10
-	byte	$04, $78, $05, $f1
-'-'                         shl     char,#4                                                             '12
-	byte	$04, $84, $65, $f0
-'-'                         add     char,t2                                                             '14
-	byte	$c1, $84, $01, $f1
-'-'                         rdbyte  t1,char                                                             '16
-	byte	$c2, $80, $c1, $fa
-'-'                         sub     cursorpos,#1 wz                                                     '18
-	byte	$01, $52, $8d, $f1
-'-'                 if_z    xor     t1, #$FF                                                            '20
-	byte	$ff, $80, $65, $a5
+'-' ' The bitmap driver will start here
+'-' p200                     jmp    #p901
+	byte	$78, $fe, $9f, $fd
 '-' 
 '-' 
-'-'                         mergeb  t1
-	byte	$61, $80, $61, $fd
-'-'                         xcont   m_lut1,t1                                                           '22
-	byte	$c0, $32, $c1, $fc
-'-' 
-'-'                         rdlut   t1,backcolor                                                        '25
-	byte	$c3, $80, $a1, $fa
-'-'                         wrlut   t1,lutaddr                                                          '28
-	byte	$a4, $80, $31, $fc
-'-'                         add     lutaddr,#1                                                          '30
-	byte	$01, $48, $05, $f1
-'-' 
-'-'                         rdlut   t1,charcolor                                                        '33
-	byte	$c4, $80, $a1, $fa
-'-'                         wrlut   t1,lutaddr                                                          '46
-	byte	$a4, $80, $31, $fc
-'-'                         sub     lutaddr,#1                                                          '38
-	byte	$01, $48, $85, $f1
-'-' 
-'-'                         xor     m_lut1,a00010000                                                    '40
-	byte	$a3, $32, $61, $f5
-'-'                         xor     lutaddr,#32                                                         '42    .....    38 left
-	byte	$20, $48, $65, $f5
-'-' 
-'-' '' rep end ----------------------------------------------------------------------------
+'-' '--------------------------------------------------------------------------
 '-' 
 '-' 
-'-' 
-'-' p203                jmp    #p901             
-	byte	$24, $fe, $9f, $fd
-'-' 
-'-' '' Subroutines
 '-' 
 '-' blank           call    #hsync                          'blank lines
 	byte	$08, $00, $b0, $fd
 '-'                 xcont   m_vi,hsync0
-	byte	$bd, $2e, $c1, $fc
+	byte	$a4, $06, $c1, $fc
 '-'         _ret_   djnz    pa,#blank
 	byte	$fd, $ed, $6f, $0b
 '-' 
 '-' hsync           xcont   m_bs,hsync0                     'horizontal sync
-	byte	$bd, $28, $c1, $fc
+	byte	$a4, $00, $c1, $fc
 '-'                 xzero   m_sn,hsync1
-	byte	$be, $2a, $b1, $fc
+	byte	$a5, $02, $b1, $fc
 '-'         _ret_   xcont   m_bv,hsync0
-	byte	$bd, $2c, $c1, $0c
+	byte	$a4, $04, $c1, $0c
 '-' 
 '-' '' consts and vars
 '-' 
@@ -1837,39 +1863,39 @@ _dat_
 '-' border          long    %00000000_00011010_00101100_00000000
 	byte	$00, $2c, $1a, $00
 '-' 
-'-' m_bs            long    $70810000 + hdmi_base<<17 + 16          'before sync
-	byte	$10, $00, $e1, $70
-'-' m_sn            long    $70810000 + hdmi_base<<17 + 80          'sync
-	byte	$50, $00, $e1, $70
-'-' m_bv            long    $70810000 + hdmi_base<<17 + 20          'before visible
-	byte	$14, $00, $e1, $70
-'-' m_vi            long    $70810000 + hdmi_base<<17 + 1024        'visible 1024
-	byte	$00, $04, $e1, $70
-'-' m_border        long    $70810000 + hdmi_base<<17 + 112         'immediate 112
-	byte	$70, $00, $e1, $70
-'-' m_lut1          long    $20880000 + hdmi_base<<17 + 8          ' imm+lut, 1 char
-	byte	$08, $00, $e8, $20
-'-' i_vborder       long    48
-	byte	$30, $00, $00, $00
-'-' i_upporch       long    16
-	byte	$10, $00, $00, $00
-'-' i_vsync         long    16
-	byte	$10, $00, $00, $00
-'-' i_downporch     long    16
-	byte	$10, $00, $00, $00
-'-' i_modenum       long    0
+'-' '------ these longs will be set by setmode function
+'-' 
+'-' m_bs            long    0        'blanks before sync
 	byte	$00, $00, $00, $00
-'-' i_cpl		    long    0
+'-' m_sn            long    0        'sync
 	byte	$00, $00, $00, $00
-'-' i_lines         long    0
+'-' m_bv            long    0        'blanks before visible
+	byte	$00, $00, $00, $00
+'-' m_vi            long    0        'visible pixels #
+	byte	$00, $00, $00, $00
+'-' m_border        long    0        'left/right borders
+	byte	$00, $00, $00, $00
+'-' m_lut1          long    0        'characters
+	byte	$00, $00, $00, $00
+'-' i_vborder       long    0        'up/down borders
+	byte	$00, $00, $00, $00
+'-' i_upporch       long    0        'up porch lines
+	byte	$00, $00, $00, $00
+'-' i_vsync         long    0        'vsync lines
+	byte	$00, $00, $00, $00
+'-' i_downporch     long    0        'down porch lines
+	byte	$00, $00, $00, $00
+'-' i_modenum       long    0        'mode #
+	byte	$00, $00, $00, $00
+'-' i_cpl               long    0        'chars per line
+	byte	$00, $00, $00, $00
+'-' i_lines         long    0        'scanlines #
 	byte	$00, $00, $00, $00
 '-' 
 '-' linestart       long    0
 	byte	$00, $00, $00, $00
 '-' linenum         long    0
 	byte	$00, $00, $00, $00
-'-' a00010000       long    $00010000
-	byte	$00, $00, $01, $00
 '-' lutaddr         long    256
 	byte	$00, $01, $00, $00
 '-' 
@@ -1887,15 +1913,7 @@ _dat_
 	byte	$00, $00, $00, $00
 '-' fontstart       long    0
 	byte	$00, $00, $00, $00
-'-'  
-'-' spritex			long    0
-	byte	$00, $00, $00, $00
-'-' spritey         long    0
-	byte	$00, $00, $00, $00
-'-' pixels          long    1024
-	byte	$00, $04, $00, $00
-'-' a576 long 576
-	byte	$40, $02, $00, $00
+'-' 
 '-' framebuf        res     1
 '-' fontbuf         res     1
 '-' borderptr       res     1
@@ -1920,10 +1938,7 @@ _dat_
 '-' backcolor       res     1
 '-' charcolor       res     1
 '-' repnum res 1
-'-' 
-'-'                 fit     496                     '
-'-' 
-'-' end             long 0
+'-' aend             long 0
 	byte	$00, $00, $00, $00
 objmem
 	long	0[1]
@@ -1997,6 +2012,12 @@ local24
 local25
 	res	1
 local26
+	res	1
+local27
+	res	1
+local28
+	res	1
+local29
 	res	1
 muldiva_
 	res	1
