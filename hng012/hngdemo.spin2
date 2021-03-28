@@ -219,7 +219,7 @@ repeat
     v. waitvbl(25)
     v.setscreencolors (getrnd() & 255,getrnd() & 255)
 
- v.setscreencolors (151,145)
+  v.setscreencolors (151,145)
 
   v.outtextxy (50-(strsize(s7)>>1),12,s7)
   v.waitvbl(50)
@@ -432,9 +432,7 @@ repeat
   v.outtextxy(0,18,@teststring)
   v.outtextxy(1,19,string("pc.exe                105321    2021.03.23 12:34"))
 
-
-
-  v.waitvbl(12000)
+  v.waitvbl(2400)
   v.setmode(448)
 
 dat

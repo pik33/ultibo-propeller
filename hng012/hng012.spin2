@@ -132,6 +132,7 @@ long cmd2              'cmd long #2 (parameter)
 long fontnum           'offset to font
 long streamer[6]       'streamer constants
 byte colors[16]        'vga colors
+long graphmode
 
 ''--------- timings
 ' 0  m_bs        - before sync,             16      80
@@ -160,11 +161,44 @@ byte colors[16]        'vga colors
 pub dummy()
 '' this is not a main program.
 
-start(64,48)
-writeln(string("Hello, World!"))
-writeln(string("You started the driver instead of your main program!"))
-writeln(inttohex(buf_ptr,8))
-
+start(544,48)
+repeat
+  cls(4,$00000000)
+  waitvbl(50)
+  cls(4,$11111111)
+  waitvbl(50)
+  cls(4,$22222222)
+  waitvbl(50)
+  cls(4,$33333333)
+  waitvbl(50)
+  cls(4,$44444444)
+  waitvbl(50)
+  cls(4,$55555555)
+  waitvbl(50)
+  cls(4,$66666666)
+  waitvbl(50)
+  cls(4,$77777777)
+  waitvbl(50)
+  cls(4,$88888888)
+  waitvbl(50)
+  cls(4,$99999999)
+  waitvbl(50)
+  cls(4,$aaaaaaaa)
+  waitvbl(50)
+  cls(4,$bbbbbbbb)
+  waitvbl(50)
+  cls(4,$cccccccc)
+  waitvbl(50)
+  cls(4,$dddddddd)
+  waitvbl(50)
+  cls(4,$eeeeeeee)
+  waitvbl(50)
+  cls(4,$ffffffff)
+  waitvbl(50)
+  writeln(string("Hello, World!"))
+  writeln(string("You started the driver instead of your main program!"))
+  writeln(inttohex(buf_ptr,8))
+  waitvbl(100)
 '*************************************************************************
 '                                                                        *
 ' Font related functions                                                 *
@@ -347,7 +381,10 @@ repeat until cmd1==257
 
 pub cls(fc,bc)   :c
 
-c:=fc<<24+bc<<16+$20
+if (graphmode<512)
+  c:=fc<<24+bc<<16+$20
+else
+  c:=bc
 longfill(buf_ptr,c,buflen)
 setwritecolors(fc,bc)
 cursor_x:=0
@@ -553,7 +590,7 @@ return q
 
 pub setmode(mode) | i
 
-'' mode:nt_bb_cc_vv_hh
+'' mode:tn_bb_cc_vv_hh
 '' hh - h.zoom, vv-v.zoom, cc-c.depth,
 '' bb - borders/total pixels, 00-wide/1140, 01 medium/1026, 10 narrow/912, 11 no border, 1024 px PAL, 880 px NTSC
 
@@ -581,11 +618,22 @@ if (mode<512)  '' text modes
   clkfreq:=timings[13]
   hubset(timings[14])
 
+if (mode==544)    '' 10 00 10 00 00 Pal 50Hz, wide borders,4bpp
+  longmove(@streamer,@timingsxg4,6)
+  longmove(@timings,@timings544,16)
+  repeat i from 0 to 5
+    timings[i]:=timings[i]+streamer[i]+hdmibase<<17
+  repeat i from 0 to 15
+  clkfreq:=timings[13]
+  hubset(timings[14])
+
+
 cpl:=timings[11]
 lines:=timings[12]>>4
 buflen:=cpl*lines
 buf_ptr:=$7C000-4*buflen
 mode_ptr:=@timings
+graphmode:=mode
 
 '--------- Start the driver with graphics mode 'mode' at pins 'base'
 
@@ -640,9 +688,10 @@ return cog
 '
 '**********************************************************************************
 dat
-vga_font                file "vgafont.def"
-st_font                 file "st4font.def"
-ataripalette            file "ataripalettep2.def"
+vga_font       file "vgafont.def"
+st_font        file "st4font.def"
+ataripalette   file "ataripalettep2.def"
+vga16		   long  $00000000,$00008000,$00800000,$00808000,$80000000,$80008000,$80400000,$AAAAAA00,$55555500,$0000FF00,$00FF0000,$00FFFF00,$FF000000,$FF00FF00,$FFFF0000,$FFFFFF00
 
 '**********************************************************************************
 '
@@ -651,6 +700,7 @@ ataripalette            file "ataripalettep2.def"
 '**********************************************************************************
 
 timingsxxt      long $70810000, $70810000, $70810000, $70810000, $70810000, $20880000 'streamer sets for text mode, to add to timings[0..5]
+timingsxg4      long $70810000, $70810000, $70810000, $70810000, $70810000, $208f0000 'streamer sets for 4bpp mode, to add to timings[0..5]
 
 '                     bf.hs, hs,  bf.vis  visible, lr bord, pixel, ud bord,  up p., vsync, down p., mode, cpl, scanlines,  clock,                  hubset                  reserved
 timings000      long   16,   80,    20,    1024,    112,     8,     48,      16,      16,    16,      0,  100,   480,     354693878,   %1_110000__11_0110_1100__1111_1011,   0
@@ -662,8 +712,10 @@ timings320      long   80,   50,    80,     816,      8,     8,     8,        8,
 timings384      long   24,   48,    24,     816,      8,     8,     8,        8,      12,     8,    384,  100,   480,     286363636,   %1_010101__01_0011_1010__1111_1011,   0
 timings448      long   40,   64,    42,     880,      0,     8,     0,        8,      12,     8,    448,  110,   480,     322162162,   %1_100100__10_0101_0011__1111_1011,   0
 
-vgacolors       byte   0, 117, 199, 151, 39, 71, 246, 10, 5, 123, 203, 155, 43, 75, 234, 15
+timings544      long   16,   80,    20,    1024,    112,     8,     48,      16,      16,    16,    544,  100,   480,     354693878,   %1_110000__11_0110_1100__1111_1011,   0
 
+
+vgacolors       byte   0, 117, 199, 151, 39, 71, 246, 10, 5, 123, 203, 155, 43, 75, 234, 15
 
 '**********************************************************************************
 '
@@ -678,6 +730,10 @@ hdmi            setq    #9
 
                 setq2   #255
                 rdlong  $000, paletteptr                'read palette
+                add     paletteptr,##1024                ' Atari type 256 colors  
+                 setq2   #15
+                 rdlong  480,paletteptr                  ' 16 color palette at 480
+                
 
                 wrlong  #aend,#0                         'write driver length to hub#0: DEBUG/demo
                 setcmod #$100                           'enable HDMI mode
@@ -694,11 +750,10 @@ hdmi            setq    #9
 
 p101            setq    #12
                 rdlong  m_bs,modeptr                     ' read timings
-                rdlong framebuf,ptra                     ' if mode changed, the framebuffer will change,too
-                testb   i_modenum,#9 wc                  ' bit #8 set = graphics modes, not yet implemented
-         if_c   jmp #p200                                                                ' jump to graphics mode: TODO, now it will return to p901
-
-p901            add     frames,#1
+                rdlong  framebuf,ptra                     ' if mode changed, the framebuffer will change,too
+   '             testb   i_modenum,#9,wc
+    '        if_c     
+                add     frames,#1
                 rdlong  fontstart,fontnumptr             ' TODO: free byte in char buf = font select
                 add     fontstart,fontbuf
                 rdlong  cursorx, cursorptr               ' read cursor position
@@ -751,7 +806,7 @@ line1           mov     cursorpos2,cursorx              ' we need another var fo
                 getnib  fontline,linenum,#0             ' fontline is 0 to 15, a line in font def
                 mov     framebuf2,framebuf              ' compute a line start in the framebuffer, which is (line div 16)*cpl
                 mov     linestart,linenum               ' linestart will be used for checking cursor y and compute line start addr in the buffer
-                shr     linestart,#4                    ' scanline to char line
+                shr     linestart,ashr                  ' scanline to char line
                 cmp     linestart,cursory wz            ' if the cursor is not here
           if_nz mov     cursorpos2,#129                 ' move it out of the screen
                 mul     linestart,i_cpl                 ' compute the address of char line in the buffer
@@ -770,12 +825,20 @@ line1           mov     cursorpos2,cursorx              ' we need another var fo
 p102            getword t1,m_border,#0                  ' else use the same border color for all the character line
                 cmp     t1, #0 wz
           if_nz xcont   m_border,border                 ' display a left border
+           
+                         testb   i_modenum,#9 wc                  ' bit #8 set = graphics modes, not yet implemented
+                         if_c mov ashr, #1
+                         if_c   jmp     #p200            
+                mov ashr,#4
                 cmp     fontline,cursorsh wcz           ' if the cursor have to be not displayed due to its shape
           if_c  mov     cursorpos,#129                  ' move it out of the screen
          if_nc  mov     cursorpos,cursorpos2
                 add     cursorpos,#1                    ' we will substract #1 below so compensate this here
                 mov     t2,fontstart                    ' font definition pointer
                 add     t2,fontline                     ' add a current font line
+                
+          
+                
                 rep     @p103,i_cpl                     ' display cpl chars
 ''---------------------------------------------------------------------------------------
                         rdlong  char,framebuf2          ' read a long char                          '1
@@ -837,7 +900,24 @@ p112             callpa  i_downporch ,#blank             'bottom blanks
 
 
 ' The bitmap driver will start here
-p200                     jmp    #p901
+p200                    
+                                             
+                        rep     @p201,i_cpl                     ' display cpl pixels
+'         
+''---------------------------------------------------------------------------------------
+                        rdlong  t1,framebuf2          ' read a long char                          '1
+                        add     framebuf2,#4            ' point to the next long                    '5
+                        xcont   m_lut1,t1              ' and display this                          '12
+
+
+'------------------------ only 8 nops left :(
+
+'' rep end ----------------------------------------------------------------------------
+                        
+p201                       jmp #p103
+'' rep end ----------------------------------------------------------------------------
+
+
 
 
 '--------------------------------------------------------------------------
@@ -876,7 +956,7 @@ i_downporch     long    0        'down porch lines
 i_modenum       long    0        'mode #
 i_cpl               long    0        'chars per line
 i_lines         long    0        'scanlines #
-
+ashr            long    4
 linestart       long    0
 linenum         long    0
 lutaddr         long    256
