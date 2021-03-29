@@ -12,7 +12,7 @@ obj
 
 v: "hng012"
 
-pub demo() | random,  j, k, s1,s2,s3,s4,s5,s6,s7,s8
+pub demo() | random, l, j, k, s1,s2,s3,s4,s5,s6,s7,s8
 
 s1:=string("A HDMI Nostalgic text driver demo")
 s2:=string("It uses 8x16 font")
@@ -28,10 +28,12 @@ s8:=string("1234567890")
 v.start(448,hdmi_base)
 
 j:=0
-
+l:=0
 repeat
-
-  v.cls(v.c_green,v.c_black)
+  l+=1
+  if l==16
+    l:=1
+  v.cls(v.getvgacolor(l),v.c_black)
   v.waitvbl(60)
 
   v.writeln(string("P2 Retromachine DOS v. 0.00"))
@@ -45,7 +47,11 @@ repeat
   v.writeln(string("...generating 524 lines at 60 Hz or 624 lines at 50 Hz"))
   v.writeln(string("The P2 clock is based on PAL/NTSC color carrier frequency multiplied by a constant"))
   v.waitvbl(120)
+  if (l==1) | (l==9)
+    v.crlf
+    v.writeln(string("Did you ever see a BLUE monitor?"))
   v.crlf()
+  
   v.write(string("The driver fits in "))
   v.write(v.inttostr(long[0]))
   v.writeln (string(" longs."))
