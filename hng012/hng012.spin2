@@ -108,11 +108,12 @@ long cursor_ptr        'cursor position pointer
 long mode_ptr          'graphics mode # pointer
 long palette_ptr       '256-color palette pointer
 long command_ptr       'command variable (mailbox interface, used to change a palette color) pointer
+long dl_ptr            'display list pointer
 long fontnum_ptr       'offset to font pointer : TODO - remove this, use byte #1 in the buffer
+long hdmibase          'HDMI pin#
 
 '----------
 
-long hdmibase          'HDMI pin#
 long cog               'driver cog#
 long bordercolor[38]   'border colors, TODO: move this to the buffer
 long buflen            'buffer length in longs
@@ -580,6 +581,7 @@ q:=@n_string
 return q
 
 
+
 '*************************************************************************
 '                                                                        *
 '  Mode setting and driver start                                                          *
@@ -595,23 +597,17 @@ pub setmode(mode) | i
 '' bb - borders/total pixels, 00-wide/1140, 01 medium/1026, 10 narrow/912, 11 no border, 1024 px PAL, 880 px NTSC
 
 if (mode<512)  '' text modes
+  
   longmove(@streamer,@timingsxxt,6)
-  if (mode==0)                                'PAL 50 Hz signaling 1140x624, active 800x480, 100x30 text, wide border, 2 colors per pixel, 00_00_00_00_00=0, 354_693_878 Hz
-    longmove(@timings,@timings000,16)
-  if (mode==64)                               'PAL 50 Hz signaling 1026x624, active 880x496, 110x31 text, medium border, 2 colors per pixel 00_01_00_00_00=64, 319_215_686 Hz
-    longmove(@timings,@timings064,16)
-  if (mode==128)                              'PAL 50 Hz signaling 912x624, active 800x480, 100x30 text, medium border, 2 colors per pixel 00_10_00_00_00=64, 283750000z
-    longmove(@timings,@timings128,16)
-  if (mode==192)                              'PAL 50 Hz signaling 1140x624, active 1024x576, 128x36 text, borderless, 2 colors per pixel 00_11_00_00_00=6192, 354_693_878 Hz
-    longmove(@timings,@timings192,16)
-  if (mode==256)                              'NTSC 50 Hz signaling 1140x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_00_00_00_00=256, 357959184 Hz
-    longmove(@timings,@timings256,16)
-  if (mode==320)                              'NTSC 50 Hz signaling 1026x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_01_00_00_00=320, 322162162 Hz
-    longmove(@timings,@timings320,16)
-  if (mode==384)                              'NTSC 50 Hz signaling 912x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_10_00_00_00=384, 286363636 Hz
-    longmove(@timings,@timings384,16)
-  if (mode==448)                              'NTSC 50 Hz signaling 1026x524, active 880x496, 110x31 text, borderless, 2 colors per pixel, 01_11_00_00_00=496, 322162162 Hz
-    longmove(@timings,@timings448,16)
+  case  mode                               
+    000:  longmove(@timings,@timings000,16)   'PAL 50 Hz signaling 1140x624, active 800x480, 100x30 text, wide border, 2 colors per pixel, 00_00_00_00_00=0, 354_693_878 Hz
+    064:  longmove(@timings,@timings064,16)   'PAL 50 Hz signaling 1026x624, active 880x496, 110x31 text, medium border, 2 colors per pixel 00_01_00_00_00=64, 319_215_686 Hz
+    128:  longmove(@timings,@timings128,16)   'PAL 50 Hz signaling 912x624, active 800x480, 100x30 text, medium border, 2 colors per pixel 00_10_00_00_00=64, 283750000z
+    192:  longmove(@timings,@timings192,16)   'PAL 50 Hz signaling 1140x624, active 1024x576, 128x36 text, borderless, 2 colors per pixel 00_11_00_00_00=6192, 354_693_878 Hz
+    256:  longmove(@timings,@timings256,16)   'NTSC 50 Hz signaling 1140x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_00_00_00_00=256, 357959184 Hz
+    320:  longmove(@timings,@timings320,16)   'NTSC 50 Hz signaling 1026x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_01_00_00_00=320, 322162162 Hz
+    384:  longmove(@timings,@timings384,16)   'NTSC 50 Hz signaling 912x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_10_00_00_00=384, 286363636 Hz
+    448:  longmove(@timings,@timings448,16)   'NTSC 50 Hz signaling 1026x524, active 880x496, 110x31 text, borderless, 2 colors per pixel, 01_11_00_00_00=496, 322162162 Hz
 
   repeat i from 0 to 5
     timings[i]:=timings[i]+streamer[i]+hdmibase<<17
@@ -627,13 +623,42 @@ if (mode==544)    '' 10 00 10 00 00 Pal 50Hz, wide borders,4bpp
   clkfreq:=timings[13]
   hubset(timings[14])
 
-
 cpl:=timings[11]
 lines:=timings[12]>>4
 buflen:=cpl*lines
-buf_ptr:=$7C000-4*buflen
+if mode>=512
+  buflen:=buflen*8
+buf_ptr:=$80000-4*buflen
 mode_ptr:=@timings
 graphmode:=mode
+
+'---------- Make a display list
+
+pub makedl (mode)
+
+'' display list
+'' %rrrr_rrrr_gggg_gggg_bbbb_bbbb_0000_0000 - display a border using rr gg bb
+'' %aaaa_aaaa_aaaa_aaaa_aaaa_1bbr_rrzz_nnnn - display a text line nnnn with border bb 00 wide 01 medium 01 narrow,11 no border
+'' %aaaa_aaaa_aaaa_aaaa_aaaa_0bbr_cczz_rrrr - display graphic line, cc colors, 00-2,-1-4,10-16,11-256, zz-zoom 1-2-4-8
+'' rrrrr - reserved
+
+if (mode &256==0) 
+  dl_ptr:=buf_ptr-576 
+else 
+  dl_ptr:=buf_ptr-496
+
+if (mode==0)
+  repeat i from 0 to 47
+    long[dl_ptr+i]:=bordercolor[0]<<8
+  repeat i from 48 to 527
+    long[dl_ptr+i]:=(buf_ptr+cpl*((i-48)>>4)<<8)+$800+((i-48)+//16)<<4+%1100
+  repeat i from 528 to 575
+    long[dl_ptr+i]:=bordercolor[0]<<8    
+
+
+
+
+
 
 '--------- Start the driver with graphics mode 'mode' at pins 'base'
 
@@ -725,7 +750,7 @@ vgacolors       byte   0, 117, 199, 151, 39, 71, 246, 10, 5, 123, 203, 155, 43, 
 
 DAT             org
 
-hdmi            setq    #9
+hdmi            setq    #10
                 rdlong  framebuf,  ptra                 'read pointers
 
                 setq2   #255
@@ -977,7 +1002,7 @@ cursorptr       res     1
 modeptr         res     1
 paletteptr      res     1
 commandptr      res     1
-
+dlptr			res     1
 fontnumptr      res     1
 hbase           res     1
 borderptr2      res     1
@@ -995,6 +1020,13 @@ charcolor       res     1
 repnum res 1
 aend             long 0
                 fit     496                     '
+
+'' display list
+'' %rrrr_rrrr_gggg_gggg_bbbb_bbbb_0000_0000 - display a border using rr gg bb
+'' %aaaa_aaaa_aaaa_aaaa_aaaa_1bbr_nnnn_rrzz - display a text line nnnn with border bb 00 wide 01 medium 01 narrow,11 no border
+'' %aaaa_aaaa_aaaa_aaaa_aaaa_0bbr_rrrr_cczz - display graphic line, cc colors, 00-2,-1-4,10-16,11-256, zz-zoom 1-2-4-8
+'' rrrrr - reserved
+ 
 
 
 {{
