@@ -170,6 +170,7 @@ writeln(string("This is an alpha 0.13 version of displaylisted driver"))
 writeln(inttohex(buf_ptr,8))
 writeln(string("This line is reversed"))
 writeln(string("The text above is double height, while this line is single height"))
+writeln(string("Did you ever see a BLUE monitor?"))
 cogstop(cogid)
 
 '*************************************************************************

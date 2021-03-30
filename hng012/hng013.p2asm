@@ -666,6 +666,9 @@ LR__0019
 ' writeln(string("The text above is double height, while this line is single height"))
 	mov	arg01, ##@LR__0091
 	call	#_writeln
+' writeln(string("Did you ever see a BLUE monitor?"))
+	mov	arg01, ##@LR__0092
+	call	#_writeln
 ' cogstop(cogid)
 	cogid	result1
 	cogstop	result1
@@ -1458,6 +1461,9 @@ LR__0090
 	byte	0
 LR__0091
 	byte	"The text above is double height, while this line is single height"
+	byte	0
+LR__0092
+	byte	"Did you ever see a BLUE monitor?"
 	byte	0
 	alignl
 _dat_
