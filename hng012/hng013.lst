@@ -1,0 +1,3970 @@
+
+00000                 | 
+00000                 | #line 1 "D:/Programowanie/ultibo-propeller/hng012/hng013.p2asm"
+00000                 | ' 
+00000                 | ' 
+00000                 | ' hdmi_base       = 48             'must be a multiple of 8
+00000                 | con
+00000                 | 	hdmi_base = 48
+00000                 | ' _clkfreq        = 200_000_000    'start safe, hubset will do the rest. The clock will be changed to:
+00000                 | 	_clkfreq = 200000000
+00000                 | ' 
+00000                 | ' ' 354_689_500   200x Atari 8-bit PAL,  50x Amiga PAL  - real settings: 49,869-> 354_693_878  - 1.0000123 - mode 0 and 192
+00000                 | ' ' 357_954_500   200x Atari 8-bit NTSC, 50x Amiga NTSC - real settings: 49,877-> 357_959_184  - 1.0000131 - mode 256
+00000                 | ' 
+00000                 | ' ' 319_220_550   180x PAL  - real settings: 51,814-> 319_215_686 - 0.9999848 - mode 64
+00000                 | ' ' 322_159_050   180x NTSC - real settings: 37,596-> 322_162_162 - 1.0000097 - mode 320 and 448
+00000                 | ' 
+00000                 | ' ' 283_751_600   160x PAL  - real settings: 64,908-> 283_750_000 - 0.9999944 - mode 128
+00000                 | ' ' 286_363_600   160x NTSC - real settings: 22,315-> 286_363_636 - 1.0000001 - mode 384
+00000                 | ' 
+00000                 | ' ''--------- VGA DOS color definition constants
+00000                 | ' 
+00000                 | ' c_black         =    0
+00000                 | 	c_black = 0
+00000                 | ' c_blue          =  117
+00000                 | 	c_blue = 117
+00000                 | ' c_green         =  199
+00000                 | 	c_green = 199
+00000                 | ' c_cyan          =  149
+00000                 | 	c_cyan = 149
+00000                 | ' c_red           =   39
+00000                 | 	c_red = 39
+00000                 | ' c_magenta       =   71
+00000                 | 	c_magenta = 71
+00000                 | ' c_brown         =  246
+00000                 | 	c_brown = 246
+00000                 | ' c_lightgray     =   10
+00000                 | 	c_lightgray = 10
+00000                 | ' c_darkgray      =    5
+00000                 | 	c_darkgray = 5
+00000                 | ' c_lightblue     =  121
+00000                 | 	c_lightblue = 121
+00000                 | ' c_lightgreen    =  203
+00000                 | 	c_lightgreen = 203
+00000                 | ' c_lightcyan     =  155
+00000                 | 	c_lightcyan = 155
+00000                 | ' c_lightred      =   43
+00000                 | 	c_lightred = 43
+00000                 | ' c_lightmagenta  =   75
+00000                 | 	c_lightmagenta = 75
+00000                 | ' c_yellow        =  234
+00000                 | 	c_yellow = 234
+00000                 | ' c_white         =   15
+00000                 | 	c_white = 15
+00000                 | dat
+00000 000 00 00 00 00 | 	nop
+00004 001 01 EC 63 FD | 	cogid	pa
+00008 002 02 00 00 FF 
+0000c 003 04 EC E7 FC | 	coginit	pa,##$404
+00010                 | 	orgh	$10
+00010     00 00 00 00 | 	long	0	'reserved
+00014     00 00 00 00 | 	long	0 ' clock frequency: will default to 200000000
+00018     00 00 00 00 | 	long	0 ' clock mode: will default to $10009fb
+0001c     00 00 00 00 
+      ...             
+003f8     00 00 00 00 
+003fc     00 00 00 00 | 	orgh	$400
+00400     00 F6 04 06 |  _ret_	mov	result1, #0
+00404 000             | 	org	0
+00404 000             | entry
+00404 000 00 F0 0F F2 | 	cmp	ptra, #0 wz
+00408 001 94 00 90 5D |  if_ne	jmp	#spininit
+0040c 002 78 F0 03 F6 | 	mov	ptra, objptr
+00410 003 D4 F0 07 F1 | 	add	ptra, #212
+00414 004 14 EC 0F FB | 	rdlong	pa, #20 wz
+00418 005 68 00 90 5D |  if_ne	jmp	#skip_clock_set_
+0041c 006 00 00 64 FD | 	hubset	#0
+00420 007 04 80 80 FF 
+00424 008 00 F0 67 FD | 	hubset	##16779768
+00428 009 86 01 80 FF 
+0042c 00a 1F 80 66 FD | 	waitx	##200000
+00430 00b 04 80 00 FF 
+00434 00c FB ED 07 F6 | 	mov	pa, ##16779771
+00438 00d 00 EC 63 FD | 	hubset	pa
+0043c 00e 18 EC 67 FC | 	wrlong	pa, #24
+00440 00f E1 F5 85 FF 
+00444 010 14 00 6C FC | 	wrlong	##200000000, #20
+00448 011 38 00 90 FD | 	jmp	#skip_clock_set_
+0044c 012 00 00 00 00 
+      ...             
+0047c 01e 00 00 00 00 
+00480 01f 00 00 00 00 | 	orgf	32
+00484 020             | skip_clock_set_
+00484 020 04 EA 60 FD | 	locknew	__lockreg
+00488 021 79 EA 60 FC | 	wrlong	__lockreg, ptr___lockreg_
+0048c 022 F4 05 A0 FD | 	call	#_dummy
+00490 023             | cogexit
+00490 023 38 01 80 FF 
+00494 024 1F 00 66 FD | 	waitx	##160000
+00498 025 01 02 61 FD | 	cogid	arg01
+0049c 026 03 02 61 FD | 	cogstop	arg01
+004a0 027             | spininit
+004a0 027 00 F1 04 FB | 	rdlong	objptr, ptra
+004a4 028 04 F0 07 F1 | 	add	ptra, #4
+004a8 029 00 F7 04 FB | 	rdlong	result1, ptra
+004ac 02a 04 F0 07 F1 | 	add	ptra, #4
+004b0 02b 00 03 05 FB | 	rdlong	arg01, ptra
+004b4 02c 04 F0 07 F1 | 	add	ptra, #4
+004b8 02d 00 05 05 FB | 	rdlong	arg02, ptra
+004bc 02e 04 F0 07 F1 | 	add	ptra, #4
+004c0 02f 00 07 05 FB | 	rdlong	arg03, ptra
+004c4 030 04 F0 07 F1 | 	add	ptra, #4
+004c8 031 00 09 05 FB | 	rdlong	arg04, ptra
+004cc 032 10 F0 87 F1 | 	sub	ptra, #16
+004d0 033 2D F6 60 FD | 	call	result1
+004d4 034 B8 FF 9F FD | 	jmp	#cogexit
+004d8 035             | FCACHE_LOAD_
+004d8 035 2B 86 60 FD |     pop	fcache_tmpb_
+004dc 036 F6 87 00 F1 |     add	fcache_tmpb_, pa
+004e0 037 2A 86 60 FD |     push	fcache_tmpb_
+004e4 038 F6 87 80 F1 |     sub	fcache_tmpb_, pa
+004e8 039 02 EC 47 F0 |     shr	pa, #2
+004ec 03a F6 85 00 F6 |     mov	fcache_tmpa_, pa
+004f0 03b 00 85 04 F1 |     add	fcache_tmpa_, #$100
+004f4 03c 42 82 30 FC |     wrlut ret_instr_, fcache_tmpa_
+004f8 03d 01 EC 87 F1 |     sub	pa, #1
+004fc 03e 29 EC 63 FD |     setq2	pa
+00500 03f 43 00 02 FB |     rdlong	$100-0, fcache_tmpb_
+00504 040 00 03 80 FD |     jmp	#\$300 ' jmp to cache
+00508 041             | ret_instr_
+00508 041 2D 00 64 FD |     ret
+0050c 042             | fcache_tmpa_
+0050c 042 00 00 00 00 |     long 0
+00510 043             | fcache_tmpb_
+00510 043 00 00 00 00 |     long 0
+00514 044             | COUNT_
+00514 044 00 00 00 00 |     long 0
+00518 045             | RETADDR_
+00518 045 00 00 00 00 |     long 0
+0051c 046             | fp
+0051c 046 00 00 00 00 |     long 0
+00520 047             | gosub_
+00520 047 00 88 04 F6 |     mov  COUNT_, #0
+00524 048 81 EC 03 F6 |     mov  pa, arg01
+00528 049 2B 8A 60 FD |     pop  RETADDR_
+0052c 04a 1C 00 90 FD |     jmp  #pushregs_done_
+00530 04b             | pushregs_
+00530 04b 2B EC 63 FD |     pop  pa
+00534 04c 2B 8A 60 FD |     pop  RETADDR_
+00538 04d 04 88 94 FB |     tjz  COUNT_, #pushregs_done_
+0053c 04e 01 88 84 F1 |     sub  COUNT_, #1
+00540 04f 28 88 60 FD |     setq COUNT_
+00544 050 00 0B 65 FC |     wrlong local01, ptra
+00548 051 01 88 04 F1 |     add  COUNT_, #1
+0054c 052             | pushregs_done_
+0054c 052 02 88 64 F0 |     shl  COUNT_, #2
+00550 053 44 F0 03 F1 |     add  ptra, COUNT_
+00554 054 02 88 44 F0 |     shr  COUNT_, #2
+00558 055 28 04 64 FD |     setq #2 ' push 3 registers starting at COUNT_
+0055c 056 00 89 64 FC |     wrlong COUNT_, ptra
+00560 057 0C F0 07 F1 |     add    ptra, #12
+00564 058 F8 8D 00 F6 |     mov    fp, ptra
+00568 059 2C EC 63 FD |     jmp  pa
+0056c 05a             |  popregs_
+0056c 05a 2B EC 63 FD |     pop    pa
+00570 05b 0C F0 87 F1 |     sub    ptra, #12
+00574 05c 28 04 64 FD |     setq   #2
+00578 05d 00 89 04 FB |     rdlong COUNT_, ptra
+0057c 05e 06 88 94 FB |     tjz    COUNT_, #popregs__ret
+00580 05f 02 88 64 F0 |     shl    COUNT_, #2
+00584 060 44 F0 83 F1 |     sub    ptra, COUNT_
+00588 061 02 88 44 F0 |     shr    COUNT_, #2
+0058c 062 01 88 84 F1 |     sub    COUNT_, #1
+00590 063 28 88 60 FD |     setq   COUNT_
+00594 064 00 0B 05 FB |     rdlong local01, ptra
+00598 065             | popregs__ret
+00598 065 2A 8A 60 FD |     push   RETADDR_
+0059c 066 2C EC 63 FD |     jmp    pa
+005a0 067             | 
+005a0 067             | unsdivide_
+005a0 067 28 00 64 FD |        setq    #0
+005a4 068 B5 68 11 FD |        qdiv    muldiva_, muldivb_
+005a8 069 18 6A 61 FD |        getqx   muldivb_
+005ac 06a 19 68 61 0D |  _ret_ getqy   muldiva_
+005b0 06b             | 
+005b0 06b             | divide_
+005b0 06b B4 68 51 F6 |        abs     muldiva_,muldiva_     wc       'abs(x)
+005b4 06c 03 EE 84 F5 |        muxc    itmp2_,#%11                    'store sign of x
+005b8 06d B5 6A 59 F6 |        abs     muldivb_,muldivb_     wcz      'abs(y)
+005bc 06e 02 EE 64 C5 |  if_c  xor     itmp2_,#%10                    'store sign of y
+005c0 06f 2D 00 64 AD |  if_z  ret
+005c4 070 D8 FF BF FD |        call    #unsdivide_
+005c8 071 01 EE D4 F7 |        test    itmp2_,#1        wc       'restore sign, remainder
+005cc 072 B4 68 81 F6 |        negc    muldiva_,muldiva_ 
+005d0 073 02 EE D4 F7 |        test    itmp2_,#%10      wc       'restore sign, division result
+005d4 074 B5 6A 81 06 |  _ret_ negc    muldivb_,muldivb_
+005d8 075             | 
+005d8 075             | __lockreg
+005d8 075 00 00 00 00 | 	long	0
+005dc 076             | itmp1_
+005dc 076 00 00 00 00 | 	long	0
+005e0 077             | itmp2_
+005e0 077 00 00 00 00 | 	long	0
+005e4 078             | objptr
+005e4 078 50 36 00 00 | 	long	@objmem
+005e8 079             | ptr___lockreg_
+005e8 079 D8 05 00 00 | 	long	@__lockreg
+005ec 07a             | ptr__dat__
+005ec 07a 0C 15 00 00 | 	long	@_dat_
+005f0 07b             | result1
+005f0 07b 00 00 00 00 | 	long	0
+005f4 07c             | COG_BSS_START
+005f4 07c             | 	fit	480
+005f4                 | 	orgh
+005f4                 | hubentry
+005f4                 | 
+005f4                 | ' 
+005f4                 | ' ''--------- timings
+005f4                 | ' ' 0  m_bs        - before sync,             16      80
+005f4                 | ' ' 1  m_sn        - sync                     80     160
+005f4                 | ' ' 2  m_bv        - before visible           20      84
+005f4                 | ' ' 3  m_vi        - visible                1024     816
+005f4                 | ' ' 4  m_border    - left and right borders  112       8
+005f4                 | ' ' 5  m_lut1      - pixels per char           8       8
+005f4                 | ' ' 6  i_vborder   - up and down border       48       8
+005f4                 | ' ' 7  i_upporch   - up non visible           16       8
+005f4                 | ' ' 8  i_vsync     - vsync                    16      12
+005f4                 | ' ' 9  i_downporch - down non visible         16       8
+005f4                 | ' '10  mode #
+005f4                 | ' '11  cpl         - character per line
+005f4                 | ' '12  scanlines #
+005f4                 | ' '13  clock
+005f4                 | ' '14  hubset value for clock settings
+005f4                 | ' 
+005f4                 | ' 
+005f4                 | ' '*************************************************************************
+005f4                 | ' '                                                                        *
+005f4                 | ' '  A dummy start function if someone runs this driver alone              *
+005f4                 | ' '                                                                        *
+005f4                 | ' '*************************************************************************
+005f4                 | ' 
+005f4                 | ' pub dummy()|i
+005f4                 | _dummy
+005f4     2F 88 04 F6 | 	mov	COUNT_, #47
+005f8     4B 00 A0 FD | 	call	#pushregs_
+005fc                 | ' '' this is not a main program.
+005fc                 | ' 
+005fc                 | ' start(0,48)
+005fc     30 04 05 F6 | 	mov	arg02, #48
+00600     30 F0 04 F1 | 	add	objptr, #48
+00604     78 0A 01 F6 | 	mov	local01, objptr
+00608                 | ' 
+00608                 | ' ' initialize pointers and variables
+00608                 | ' 
+00608                 | ' border_ptr:=@bordercolor
+00608     28 F0 84 F1 | 	sub	objptr, #40
+0060c     78 0A 61 FC | 	wrlong	local01, objptr
+00610     7A 0C 01 F6 | 	mov	local02, ptr__dat__
+00614                 | ' font_ptr:=@vga_font
+00614     04 F0 84 F1 | 	sub	objptr, #4
+00618     78 0C 61 FC | 	wrlong	local02, objptr
+0061c                 | ' hdmibase:=base
+0061c     24 F0 04 F1 | 	add	objptr, #36
+00620     78 60 68 FC | 	wrlong	#48, objptr
+00624     28 F0 84 F1 | 	sub	objptr, #40
+00628                 | ' 
+00628                 | ' ' the mode has to be set here to enable computing the buffer length
+00628                 | ' 
+00628                 | ' setmode(mode)
+00628     00 02 05 F6 | 	mov	arg01, #0
+0062c     34 09 B0 FD | 	call	#_setmode
+00630                 | ' makedl(mode)
+00630     00 02 05 F6 | 	mov	arg01, #0
+00634                 | ' 
+00634                 | ' '' display list
+00634                 | ' '' %rrrr_rrrr_gggg_gggg_bbbb_bbbb_0000_0000 - display a border using rr gg bb
+00634                 | ' '' %aaaa_aaaa_aaaa_aaaa_aaaa_0bbr_cczz_rrrr - display graphic line, cc colors, 00-2,-1-4,10-16,11-256, zz-zoom 1-2-4-8
+00634                 | ' '' rrrrr - reserved
+00634                 | ' 
+00634                 | ' '  '%aaaa_aaaa_aaaa_aaaa_aazz_nnnn_llll_ll_01 - txt
+00634                 | ' 
+00634                 | ' 
+00634                 | ' if (mode &256==0) 
+00634     00 03 CD F7 | 	test	arg01, #256 wz
+00638     1C 00 90 5D |  if_ne	jmp	#LR__0001
+0063c     78 0E 01 FB | 	rdlong	local03, objptr
+00640     04 00 00 FF 
+00644     00 0F 85 F1 | 	sub	local03, ##2304
+00648                 | '   dl_ptr:=buf_ptr-4*576 
+00648     20 F0 04 F1 | 	add	objptr, #32
+0064c     78 0E 61 FC | 	wrlong	local03, objptr
+00650     20 F0 84 F1 | 	sub	objptr, #32
+00654                 | ' else 
+00654     14 00 90 FD | 	jmp	#LR__0002
+00658                 | LR__0001
+00658     78 10 01 FB | 	rdlong	local04, objptr
+0065c     F0 11 85 F1 | 	sub	local04, #496
+00660                 | '   dl_ptr:=buf_ptr-496
+00660     20 F0 04 F1 | 	add	objptr, #32
+00664     78 10 61 FC | 	wrlong	local04, objptr
+00668     20 F0 84 F1 | 	sub	objptr, #32
+0066c                 | LR__0002
+0066c                 | ' 
+0066c                 | ' if (mode==0)
+0066c     00 02 0D F2 | 	cmp	arg01, #0 wz
+00670     50 02 90 5D |  if_ne	jmp	#LR__0011
+00674                 | '   repeat i from 0 to 47
+00674     00 12 05 F6 | 	mov	local05, #0
+00678     88 FB 9F FE | 	loc	pa,	#(@LR__0008-@LR__0003)
+0067c     35 00 A0 FD | 	call	#FCACHE_LOAD_
+00680                 | LR__0003
+00680     89 14 01 F6 | 	mov	local06, local05
+00684     02 14 65 F0 | 	shl	local06, #2
+00688     20 F0 04 F1 | 	add	objptr, #32
+0068c     78 16 01 FB | 	rdlong	local07, objptr
+00690     20 F0 84 F1 | 	sub	objptr, #32
+00694     8A 16 01 F1 | 	add	local07, local06
+00698                 | '     long[dl_ptr+4*i]:=$00FF0000 '' bordercolor[0]<<8
+00698     80 7F 80 FF 
+0069c     8B 00 68 FC | 	wrlong	##16711680, local07
+006a0     01 12 05 F1 | 	add	local05, #1
+006a4     30 12 5D F2 | 	cmps	local05, #48 wcz
+006a8     D4 FF 9F CD |  if_b	jmp	#LR__0003
+006ac                 | '   repeat i from 48 to 527
+006ac     30 12 05 F6 | 	mov	local05, #48
+006b0                 | LR__0004
+006b0     94 F0 04 F1 | 	add	objptr, #148
+006b4     78 18 01 FB | 	rdlong	local08, objptr
+006b8     94 F0 84 F1 | 	sub	objptr, #148
+006bc     02 18 65 F0 | 	shl	local08, #2
+006c0     89 1A 01 F6 | 	mov	local09, local05
+006c4     30 1A 85 F1 | 	sub	local09, #48
+006c8     8D 1C 01 F6 | 	mov	local10, local09
+006cc     05 1C 45 F0 | 	shr	local10, #5
+006d0     8E 18 01 FD | 	qmul	local08, local10
+006d4     18 1E 61 FD | 	getqx	local11
+006d8     78 20 01 FB | 	rdlong	local12, objptr
+006dc     8F 20 01 F1 | 	add	local12, local11
+006e0     0C 20 65 F0 | 	shl	local12, #12
+006e4     01 20 05 F1 | 	add	local12, #1
+006e8     8D 22 01 F6 | 	mov	local13, local09
+006ec     1F 22 05 F5 | 	and	local13, #31
+006f0     91 24 01 F6 | 	mov	local14, local13
+006f4     01 24 45 F0 | 	shr	local14, #1
+006f8     08 24 65 F0 | 	shl	local14, #8
+006fc     92 20 01 F1 | 	add	local12, local14
+00700     8E 26 01 F6 | 	mov	local15, local10
+00704     02 26 65 F0 | 	shl	local15, #2
+00708     93 20 01 F1 | 	add	local12, local15
+0070c     89 28 01 F6 | 	mov	local16, local05
+00710     02 28 65 F0 | 	shl	local16, #2
+00714     20 F0 04 F1 | 	add	objptr, #32
+00718     78 2A 01 FB | 	rdlong	local17, objptr
+0071c     20 F0 84 F1 | 	sub	objptr, #32
+00720     94 2A 01 F1 | 	add	local17, local16
+00724                 | ' 
+00724                 | ' '   long[dl_ptr+4*i]:=(buf_ptr+(4*cpl*(i-48)>>4))<<12+1 +((i-48)+//16)<<8 + ((i-48)>>4)<<2   
+00724                 | ' 
+00724                 | '     long[dl_ptr+4*i]:=(buf_ptr+(4*cpl*(i-48)>>5))<<12+1 +(((i-48)+//32)>>1)<<8 + ((i-48)>>5)<<2   '' double height !!
+00724     95 20 61 FC | 	wrlong	local12, local17
+00728                 | '     if (i>=176) & (i<208)
+00728     00 2C 05 F6 | 	mov	local18, #0
+0072c     B0 12 5D F2 | 	cmps	local05, #176 wcz
+00730     01 2C 65 36 |  if_ae	neg	local18, #1
+00734     00 2E 05 F6 | 	mov	local19, #0
+00738     D0 12 5D F2 | 	cmps	local05, #208 wcz
+0073c     01 2E 65 C6 |  if_b	neg	local19, #1
+00740     97 2C C9 F7 | 	test	local18, local19 wz
+00744     54 00 90 AD |  if_e	jmp	#LR__0005
+00748     94 F0 04 F1 | 	add	objptr, #148
+0074c     78 30 01 FB | 	rdlong	local20, objptr
+00750     94 F0 84 F1 | 	sub	objptr, #148
+00754     02 30 65 F0 | 	shl	local20, #2
+00758     8E 30 01 FD | 	qmul	local20, local10
+0075c     18 32 61 FD | 	getqx	local21
+00760     78 34 01 FB | 	rdlong	local22, objptr
+00764     99 34 01 F1 | 	add	local22, local21
+00768     0C 34 65 F0 | 	shl	local22, #12
+0076c     01 34 05 F1 | 	add	local22, #1
+00770     20 36 05 F6 | 	mov	local23, #32
+00774     91 36 81 F1 | 	sub	local23, local13
+00778     01 36 45 F0 | 	shr	local23, #1
+0077c     08 36 65 F0 | 	shl	local23, #8
+00780     9B 34 01 F1 | 	add	local22, local23
+00784     93 34 01 F1 | 	add	local22, local15
+00788     20 F0 04 F1 | 	add	objptr, #32
+0078c     78 38 01 FB | 	rdlong	local24, objptr
+00790     20 F0 84 F1 | 	sub	objptr, #32
+00794     94 38 01 F1 | 	add	local24, local16
+00798                 | '        long[dl_ptr+4*i]:=(buf_ptr+(4*cpl*(i-48)>>5))<<12+1 +((32-((i-48)+//32))>>1)<<8 + ((i-48)>>5)<<2   '' double height !!
+00798     9C 34 61 FC | 	wrlong	local22, local24
+0079c                 | LR__0005
+0079c                 | '     if (i>=208) & (i<224)
+0079c     00 2C 05 F6 | 	mov	local18, #0
+007a0     D0 12 5D F2 | 	cmps	local05, #208 wcz
+007a4     01 2C 65 36 |  if_ae	neg	local18, #1
+007a8     00 2E 05 F6 | 	mov	local19, #0
+007ac     E0 12 5D F2 | 	cmps	local05, #224 wcz
+007b0     01 2E 65 C6 |  if_b	neg	local19, #1
+007b4     97 2C C9 F7 | 	test	local18, local19 wz
+007b8     50 00 90 AD |  if_e	jmp	#LR__0006
+007bc     94 F0 04 F1 | 	add	objptr, #148
+007c0     78 3A 01 FB | 	rdlong	local25, objptr
+007c4     94 F0 84 F1 | 	sub	objptr, #148
+007c8     02 3A 65 F0 | 	shl	local25, #2
+007cc     8E 3A 01 FD | 	qmul	local25, local10
+007d0     18 3C 61 FD | 	getqx	local26
+007d4     78 3E 01 FB | 	rdlong	local27, objptr
+007d8     9E 3E 01 F1 | 	add	local27, local26
+007dc     0C 3E 65 F0 | 	shl	local27, #12
+007e0     01 3E 05 F1 | 	add	local27, #1
+007e4     8D 40 01 F6 | 	mov	local28, local09
+007e8     0F 40 05 F5 | 	and	local28, #15
+007ec     08 40 65 F0 | 	shl	local28, #8
+007f0     A0 3E 01 F1 | 	add	local27, local28
+007f4     93 3E 01 F1 | 	add	local27, local15
+007f8     20 F0 04 F1 | 	add	objptr, #32
+007fc     78 42 01 FB | 	rdlong	local29, objptr
+00800     20 F0 84 F1 | 	sub	objptr, #32
+00804     94 42 01 F1 | 	add	local29, local16
+00808                 | '        long[dl_ptr+4*i]:=(buf_ptr+(4*cpl*(i-48)>>5))<<12+1 +(((i-48)+//16))<<8 + ((i-48)>>5)<<2   '' double height !!
+00808     A1 3E 61 FC | 	wrlong	local27, local29
+0080c                 | LR__0006
+0080c                 | '     if (i>=224) & (i<240)
+0080c     00 2C 05 F6 | 	mov	local18, #0
+00810     E0 12 5D F2 | 	cmps	local05, #224 wcz
+00814     01 2C 65 36 |  if_ae	neg	local18, #1
+00818     00 2E 05 F6 | 	mov	local19, #0
+0081c     F0 12 5D F2 | 	cmps	local05, #240 wcz
+00820     01 2E 65 C6 |  if_b	neg	local19, #1
+00824     97 2C C9 F7 | 	test	local18, local19 wz
+00828     48 00 90 AD |  if_e	jmp	#LR__0007
+0082c     94 F0 04 F1 | 	add	objptr, #148
+00830     78 44 01 FB | 	rdlong	local30, objptr
+00834     94 F0 84 F1 | 	sub	objptr, #148
+00838     02 44 65 F0 | 	shl	local30, #2
+0083c     8E 44 01 FD | 	qmul	local30, local10
+00840     18 46 61 FD | 	getqx	local31
+00844     78 48 01 FB | 	rdlong	local32, objptr
+00848     A3 48 01 F1 | 	add	local32, local31
+0084c     0C 48 65 F0 | 	shl	local32, #12
+00850     01 48 05 F1 | 	add	local32, #1
+00854     04 1A 45 F0 | 	shr	local09, #4
+00858     02 1A 65 F0 | 	shl	local09, #2
+0085c     8D 48 01 F1 | 	add	local32, local09
+00860     20 F0 04 F1 | 	add	objptr, #32
+00864     78 4A 01 FB | 	rdlong	local33, objptr
+00868     20 F0 84 F1 | 	sub	objptr, #32
+0086c     94 4A 01 F1 | 	add	local33, local16
+00870                 | '        long[dl_ptr+4*i]:=(buf_ptr+(4*cpl*(i-48)>>5))<<12+1 +0 + ((i-48)>>4)<<2   '' double height !!
+00870     A5 48 61 FC | 	wrlong	local32, local33
+00874                 | LR__0007
+00874     01 12 05 F1 | 	add	local05, #1
+00878     01 00 00 FF 
+0087c     10 12 5D F2 | 	cmps	local05, ##528 wcz
+00880     2C FE 9F CD |  if_b	jmp	#LR__0004
+00884                 | LR__0008
+00884                 | ' 
+00884                 | ' '    long[dl_ptr+4*i]:=(buf_ptr+(4*cpl*(i-48)>>6))<<12+1 +(((i-48)+//64)>>2)<<8 + ((i-48)>>6)<<2   '' 4x height !!
+00884                 | ' '     long[dl_ptr+4*i]:=(buf_ptr+(4*cpl*(i-48)>>7))<<12+1 +(((i-48)+//128)>>3)<<8 + ((i-48)>>7)<<2   '' 8x height !!
+00884                 | ' 
+00884                 | '   repeat i from 528 to 575
+00884     01 00 00 FF 
+00888     10 12 05 F6 | 	mov	local05, ##528
+0088c     A0 F7 9F FE | 	loc	pa,	#(@LR__0010-@LR__0009)
+00890     35 00 A0 FD | 	call	#FCACHE_LOAD_
+00894                 | LR__0009
+00894     89 4C 01 F6 | 	mov	local34, local05
+00898     02 4C 65 F0 | 	shl	local34, #2
+0089c     20 F0 04 F1 | 	add	objptr, #32
+008a0     78 4E 01 FB | 	rdlong	local35, objptr
+008a4     20 F0 84 F1 | 	sub	objptr, #32
+008a8     A6 4E 01 F1 | 	add	local35, local34
+008ac                 | '     long[dl_ptr+4*i]:=$0000FF00    
+008ac     7F 00 80 FF 
+008b0     A7 00 6A FC | 	wrlong	##65280, local35
+008b4     01 12 05 F1 | 	add	local05, #1
+008b8     01 00 00 FF 
+008bc     40 12 5D F2 | 	cmps	local05, ##576 wcz
+008c0     D0 FF 9F CD |  if_b	jmp	#LR__0009
+008c4                 | LR__0010
+008c4                 | LR__0011
+008c4     44 F0 04 F1 | 	add	objptr, #68
+008c8     78 50 01 F6 | 	mov	local36, objptr
+008cc                 | ' 
+008cc                 | ' 
+008cc                 | ' vblank_ptr:=@vblank
+008cc     38 F0 84 F1 | 	sub	objptr, #56
+008d0     78 50 61 FC | 	wrlong	local36, objptr
+008d4     2C F0 04 F1 | 	add	objptr, #44
+008d8     78 52 01 F6 | 	mov	local37, objptr
+008dc                 | ' cursor_ptr:=@cursor_x
+008dc     28 F0 84 F1 | 	sub	objptr, #40
+008e0     78 52 61 FC | 	wrlong	local37, objptr
+008e4     0C 00 00 FF 
+008e8     00 F4 04 F1 | 	add	ptr__dat__, ##6144
+008ec                 | ' 
+008ec                 | ' palette_ptr:=@ataripalette
+008ec     08 F0 04 F1 | 	add	objptr, #8
+008f0     78 F4 60 FC | 	wrlong	ptr__dat__, objptr
+008f4     84 F0 04 F1 | 	add	objptr, #132
+008f8     78 54 01 F6 | 	mov	local38, objptr
+008fc                 | ' command_ptr:=@cmd1
+008fc     80 F0 84 F1 | 	sub	objptr, #128
+00900     78 54 61 FC | 	wrlong	local38, objptr
+00904     88 F0 04 F1 | 	add	objptr, #136
+00908     78 56 01 F6 | 	mov	local39, objptr
+0090c                 | ' fontnum_ptr:=@fontnum
+0090c     80 F0 84 F1 | 	sub	objptr, #128
+00910     78 56 61 FC | 	wrlong	local39, objptr
+00914                 | ' 
+00914                 | ' fontnum:=0  ' PC type font ' TODO: font# in buffer byte #1
+00914     80 F0 04 F1 | 	add	objptr, #128
+00918     78 00 68 FC | 	wrlong	#0, objptr
+0091c     1C F0 04 F1 | 	add	objptr, #28
+00920     78 02 01 F6 | 	mov	arg01, objptr
+00924     C0 F0 84 F1 | 	sub	objptr, #192
+00928     03 00 00 FF 
+0092c     B0 F4 04 F1 | 	add	ptr__dat__, ##1712
+00930     7A 04 01 F6 | 	mov	arg02, ptr__dat__
+00934     0F 00 00 FF 
+00938     B0 F4 84 F1 | 	sub	ptr__dat__, ##7856
+0093c                 | ' bytemove(@colors,@vgacolors,16)
+0093c     10 06 05 F6 | 	mov	arg03, #16
+00940     F4 09 B0 FD | 	call	#__system__bytemove
+00944                 | ' 
+00944                 | ' ' initialize a cursor
+00944                 | ' 
+00944                 | ' cursor_x:=0
+00944     38 F0 04 F1 | 	add	objptr, #56
+00948     78 00 48 FC | 	wrbyte	#0, objptr
+0094c                 | ' cursor_y:=0
+0094c     01 F0 04 F1 | 	add	objptr, #1
+00950     78 00 48 FC | 	wrbyte	#0, objptr
+00954                 | ' cursor_sh:=14
+00954     01 F0 04 F1 | 	add	objptr, #1
+00958     78 1C 48 FC | 	wrbyte	#14, objptr
+0095c                 | ' 
+0095c                 | ' cmd1:=257 ' set command idle
+0095c     62 F0 04 F1 | 	add	objptr, #98
+00960     78 02 6A FC | 	wrlong	#257, objptr
+00964     9C F0 84 F1 | 	sub	objptr, #156
+00968                 | ' 
+00968                 | ' ' start the cog
+00968                 | ' 
+00968                 | ' cog:=coginit(16,@hdmi, @buf_ptr)
+00968     0F 00 00 FF 
+0096c     C0 F4 04 F1 | 	add	ptr__dat__, ##7872
+00970     7A 04 01 F6 | 	mov	arg02, ptr__dat__
+00974     0F 00 00 FF 
+00978     C0 F4 84 F1 | 	sub	ptr__dat__, ##7872
+0097c     78 06 01 F6 | 	mov	arg03, objptr
+00980     10 02 05 F6 | 	mov	arg01, #16
+00984     28 06 61 FD | 	setq	arg03
+00988     82 02 F1 FC | 	coginit	arg01, arg02 wc
+0098c     01 02 65 C6 |  if_b	neg	arg01, #1
+00990     81 F6 00 F6 | 	mov	result1, arg01
+00994     7B 58 01 F6 | 	mov	local40, result1
+00998     2C F0 04 F1 | 	add	objptr, #44
+0099c     78 58 61 FC | 	wrlong	local40, objptr
+009a0     2C F0 84 F1 | 	sub	objptr, #44
+009a4                 | ' waitms(20)
+009a4     14 5A 05 F6 | 	mov	local41, #20
+009a8     14 5C 05 FB | 	rdlong	local42, #20
+009ac     68 F6 9F FE | 	loc	pa,	#(@LR__0013-@LR__0012)
+009b0     35 00 A0 FD | 	call	#FCACHE_LOAD_
+009b4                 | LR__0012
+009b4     01 00 00 FF 
+009b8     E8 5B 5D F2 | 	cmps	local41, ##1000 wcz
+009bc     1F 5C 61 1D |  if_a	waitx	local42
+009c0     01 00 00 1F 
+009c4     E8 5B 85 11 |  if_a	sub	local41, ##1000
+009c8     E8 FF 9F 1D |  if_a	jmp	#LR__0012
+009cc                 | LR__0013
+009cc     00 5A 5D F2 | 	cmps	local41, #0 wcz
+009d0     1C 00 90 ED |  if_be	jmp	#LR__0014
+009d4     AE 68 01 F6 | 	mov	muldiva_, local42
+009d8     01 00 00 FF 
+009dc     E8 6B 05 F6 | 	mov	muldivb_, ##1000
+009e0     6B 00 A0 FD | 	call	#divide_
+009e4     B5 5A 01 FD | 	qmul	local41, muldivb_
+009e8     18 02 61 FD | 	getqx	arg01
+009ec     1F 02 61 FD | 	waitx	arg01
+009f0                 | LR__0014
+009f0                 | ' 
+009f0                 | ' ' clear the screen and set the colors to green on black
+009f0                 | ' 
+009f0                 | ' cls(c_green,c_black)
+009f0     C7 02 05 F6 | 	mov	arg01, #199
+009f4     00 04 05 F6 | 	mov	arg02, #0
+009f8     30 01 B0 FD | 	call	#_cls
+009fc                 | ' setbordercolor(0,0,128)
+009fc     00 04 05 F6 | 	mov	arg02, #0
+00a00     0F 06 C5 F9 | 	decod	arg03, #15
+00a04                 | ' 
+00a04                 | ' color:=r<<24+g<<16+b<<8
+00a04                 | ' bordercolor:=color
+00a04     30 F0 04 F1 | 	add	objptr, #48
+00a08     40 00 80 FF 
+00a0c     78 00 68 FC | 	wrlong	##32768, objptr
+00a10                 | ' setwritecolors(c_green,c_black)
+00a10                 | ' 
+00a10                 | ' 
+00a10                 | ' write_color:=ff
+00a10     0C F0 04 F1 | 	add	objptr, #12
+00a14     78 8E 69 FC | 	wrlong	#199, objptr
+00a18                 | ' write_background:=bb
+00a18     04 F0 04 F1 | 	add	objptr, #4
+00a1c     78 00 68 FC | 	wrlong	#0, objptr
+00a20                 | ' 
+00a20                 | ' return cog
+00a20     14 F0 84 F1 | 	sub	objptr, #20
+00a24     78 F6 00 FB | 	rdlong	result1, objptr
+00a28     2C F0 84 F1 | 	sub	objptr, #44
+00a2c                 | ' cls(c_lightblue,0)
+00a2c     79 02 05 F6 | 	mov	arg01, #121
+00a30     F8 00 B0 FD | 	call	#_cls
+00a34                 | ' writeln(string("Hello, World!"))
+00a34     0A 00 00 FF 
+00a38     38 02 05 F6 | 	mov	arg01, ##@LR__0087
+00a3c     F0 03 B0 FD | 	call	#_writeln
+00a40                 | ' writeln(string("You started the driver instead of your main program!"))
+00a40     0A 00 00 FF 
+00a44     46 02 05 F6 | 	mov	arg01, ##@LR__0088
+00a48     E4 03 B0 FD | 	call	#_writeln
+00a4c                 | ' writeln(string("This is an alpha 0.13 version of displaylisted driver"))
+00a4c     0A 00 00 FF 
+00a50     7B 02 05 F6 | 	mov	arg01, ##@LR__0089
+00a54     D8 03 B0 FD | 	call	#_writeln
+00a58                 | ' writeln(inttohex(buf_ptr,8))
+00a58     78 02 01 FB | 	rdlong	arg01, objptr
+00a5c     08 04 05 F6 | 	mov	arg02, #8
+00a60                 | ' 
+00a60                 | ' j:=i
+00a60                 | ' pos:=d-1
+00a60     07 5E 05 F6 | 	mov	local43, #7
+00a64                 | ' k:=0
+00a64     48 F0 04 F1 | 	add	objptr, #72
+00a68     78 04 01 F1 | 	add	arg02, objptr
+00a6c                 | ' n_string[d]:=0
+00a6c     82 00 48 FC | 	wrbyte	#0, arg02
+00a70                 | ' repeat k from 0 to d-1
+00a70     00 60 05 F6 | 	mov	local44, #0
+00a74     48 F0 84 F1 | 	sub	objptr, #72
+00a78     A4 F5 9F FE | 	loc	pa,	#(@LR__0016-@LR__0015)
+00a7c     35 00 A0 FD | 	call	#FCACHE_LOAD_
+00a80                 | LR__0015
+00a80     B0 62 01 F6 | 	mov	local45, local44
+00a84     48 F0 04 F1 | 	add	objptr, #72
+00a88     78 62 01 F1 | 	add	local45, objptr
+00a8c                 | '   n_string[k]:=48
+00a8c     B1 60 48 FC | 	wrbyte	#48, local45
+00a90     01 60 05 F1 | 	add	local44, #1
+00a94     08 60 0D F2 | 	cmp	local44, #8 wz
+00a98     48 F0 84 F1 | 	sub	objptr, #72
+00a9c     E0 FF 9F 5D |  if_ne	jmp	#LR__0015
+00aa0                 | LR__0016
+00aa0                 | ' if (j<>0)
+00aa0     00 02 0D F2 | 	cmp	arg01, #0 wz
+00aa4     40 00 90 AD |  if_e	jmp	#LR__0019
+00aa8                 | ' 
+00aa8                 | '   repeat while (pos>-1)
+00aa8                 | LR__0017
+00aa8     FF FF 7F FF 
+00aac     FF 5F 5D F2 | 	cmps	local43, ##-1 wcz
+00ab0     34 00 90 ED |  if_be	jmp	#LR__0018
+00ab4     81 64 01 F6 | 	mov	local46, arg01
+00ab8     0F 64 05 F5 | 	and	local46, #15
+00abc                 | '     q:=j+//16
+00abc                 | '     if (q>9)
+00abc     09 64 5D F2 | 	cmps	local46, #9 wcz
+00ac0                 | '       q:=q+7
+00ac0     07 64 05 11 |  if_a	add	local46, #7
+00ac4                 | '     q:=48+q
+00ac4     30 64 05 F1 | 	add	local46, #48
+00ac8     AF 66 01 F6 | 	mov	local47, local43
+00acc     48 F0 04 F1 | 	add	objptr, #72
+00ad0     78 66 01 F1 | 	add	local47, objptr
+00ad4                 | '     n_string[pos]:=q
+00ad4     B3 64 41 FC | 	wrbyte	local46, local47
+00ad8                 | '     j:=j+/16
+00ad8     04 02 45 F0 | 	shr	arg01, #4
+00adc                 | '     pos-=1
+00adc     01 5E 85 F1 | 	sub	local43, #1
+00ae0     48 F0 84 F1 | 	sub	objptr, #72
+00ae4     C0 FF 9F FD | 	jmp	#LR__0017
+00ae8                 | LR__0018
+00ae8                 | LR__0019
+00ae8     48 F0 04 F1 | 	add	objptr, #72
+00aec     78 F6 00 F6 | 	mov	result1, objptr
+00af0     48 F0 84 F1 | 	sub	objptr, #72
+00af4                 | ' 
+00af4                 | ' q:=@n_string
+00af4                 | ' return q
+00af4     7B 02 01 F6 | 	mov	arg01, result1
+00af8     34 03 B0 FD | 	call	#_writeln
+00afc                 | ' writeln(string("This line is reversed"))
+00afc     0A 00 00 FF 
+00b00     B1 02 05 F6 | 	mov	arg01, ##@LR__0090
+00b04     28 03 B0 FD | 	call	#_writeln
+00b08                 | ' writeln(string("The text above is double height, while this line is single height"))
+00b08     0A 00 00 FF 
+00b0c     C7 02 05 F6 | 	mov	arg01, ##@LR__0091
+00b10     1C 03 B0 FD | 	call	#_writeln
+00b14                 | ' cogstop(cogid)
+00b14     01 F6 60 FD | 	cogid	result1
+00b18     03 F6 60 FD | 	cogstop	result1
+00b1c     00 F6 04 F6 | 	mov	result1, #0
+00b20     46 F0 03 F6 | 	mov	ptra, fp
+00b24     5A 00 A0 FD | 	call	#popregs_
+00b28                 | _dummy_ret
+00b28     2D 00 64 FD | 	ret
+00b2c                 | 
+00b2c                 | ' 
+00b2c                 | ' 
+00b2c                 | ' '*************************************************************************
+00b2c                 | ' '                                                                        *
+00b2c                 | ' '  Text functions                                                        *
+00b2c                 | ' '                                                                        *
+00b2c                 | ' '*************************************************************************
+00b2c                 | ' 
+00b2c                 | ' ''---------- Clear the screen, set its foreground/background color
+00b2c                 | ' 
+00b2c                 | ' pub cls(fc,bc)   :c
+00b2c                 | _cls
+00b2c     04 88 04 F6 | 	mov	COUNT_, #4
+00b30     4B 00 A0 FD | 	call	#pushregs_
+00b34     81 0A 01 F6 | 	mov	local01, arg01
+00b38                 | ' 
+00b38                 | ' if (graphmode<512)
+00b38     D0 F0 04 F1 | 	add	objptr, #208
+00b3c     78 0C 01 FB | 	rdlong	local02, objptr
+00b40     D0 F0 84 F1 | 	sub	objptr, #208
+00b44     01 00 00 FF 
+00b48     00 0C 5D F2 | 	cmps	local02, ##512 wcz
+00b4c     1C 00 90 3D |  if_ae	jmp	#LR__0020
+00b50     85 0E 01 F6 | 	mov	local03, local01
+00b54     18 0E 65 F0 | 	shl	local03, #24
+00b58     82 10 01 F6 | 	mov	local04, arg02
+00b5c     10 10 65 F0 | 	shl	local04, #16
+00b60     88 0E 01 F1 | 	add	local03, local04
+00b64     20 0E 05 F1 | 	add	local03, #32
+00b68                 | '   c:=fc<<24+bc<<16+$20
+00b68                 | ' else
+00b68     04 00 90 FD | 	jmp	#LR__0021
+00b6c                 | LR__0020
+00b6c                 | '   c:=bc
+00b6c     82 0E 01 F6 | 	mov	local03, arg02
+00b70                 | LR__0021
+00b70                 | ' longfill(buf_ptr,c,buflen)
+00b70     78 02 01 FB | 	rdlong	arg01, objptr
+00b74     34 F0 04 F1 | 	add	objptr, #52
+00b78     78 06 09 FB | 	rdlong	arg03, objptr wz
+00b7c     34 F0 84 F1 | 	sub	objptr, #52
+00b80     14 00 90 AD |  if_e	jmp	#LR__0026
+00b84     84 F4 9F FE | 	loc	pa,	#(@LR__0024-@LR__0022)
+00b88     35 00 A0 FD | 	call	#FCACHE_LOAD_
+00b8c                 | LR__0022
+00b8c     83 04 D8 FC | 	rep	@LR__0025, arg03
+00b90                 | LR__0023
+00b90     81 0E 61 FC | 	wrlong	local03, arg01
+00b94     04 02 05 F1 | 	add	arg01, #4
+00b98                 | LR__0024
+00b98                 | LR__0025
+00b98                 | LR__0026
+00b98                 | ' setwritecolors(fc,bc)
+00b98                 | ' 
+00b98                 | ' 
+00b98                 | ' write_color:=ff
+00b98     3C F0 04 F1 | 	add	objptr, #60
+00b9c     78 0A 61 FC | 	wrlong	local01, objptr
+00ba0                 | ' write_background:=bb
+00ba0     04 F0 04 F1 | 	add	objptr, #4
+00ba4     78 04 61 FC | 	wrlong	arg02, objptr
+00ba8                 | ' cursor_x:=0
+00ba8     08 F0 84 F1 | 	sub	objptr, #8
+00bac     78 00 48 FC | 	wrbyte	#0, objptr
+00bb0                 | ' cursor_y:=0
+00bb0     01 F0 04 F1 | 	add	objptr, #1
+00bb4     78 00 48 FC | 	wrbyte	#0, objptr
+00bb8     39 F0 84 F1 | 	sub	objptr, #57
+00bbc     87 F6 00 F6 | 	mov	result1, local03
+00bc0     46 F0 03 F6 | 	mov	ptra, fp
+00bc4     5A 00 A0 FD | 	call	#popregs_
+00bc8                 | _cls_ret
+00bc8     2D 00 64 FD | 	ret
+00bcc                 | 
+00bcc                 | ' 
+00bcc                 | ' ''--------- Output a string at position x,y without changing colors
+00bcc                 | ' 
+00bcc                 | ' pub outtextxy(x,y,text) | iii
+00bcc                 | _outtextxy
+00bcc     0B 88 04 F6 | 	mov	COUNT_, #11
+00bd0     4B 00 A0 FD | 	call	#pushregs_
+00bd4     81 0A 01 F6 | 	mov	local01, arg01
+00bd8                 | ' 
+00bd8                 | ' repeat iii from 0 to strsize(text)-1
+00bd8     00 0C 05 F6 | 	mov	local02, #0
+00bdc     83 02 01 F6 | 	mov	arg01, arg03
+00be0     00 0E 05 F6 | 	mov	local03, #0
+00be4     28 F4 9F FE | 	loc	pa,	#(@LR__0028-@LR__0027)
+00be8     35 00 A0 FD | 	call	#FCACHE_LOAD_
+00bec                 | LR__0027
+00bec     81 10 C9 FA | 	rdbyte	local04, arg01 wz
+00bf0     01 0E 05 51 |  if_ne	add	local03, #1
+00bf4     01 02 05 51 |  if_ne	add	arg01, #1
+00bf8     F0 FF 9F 5D |  if_ne	jmp	#LR__0027
+00bfc                 | LR__0028
+00bfc     87 F6 00 F6 | 	mov	result1, local03
+00c00     7B 12 01 F6 | 	mov	local05, result1
+00c04     01 12 85 F1 | 	sub	local05, #1
+00c08     00 12 5D F2 | 	cmps	local05, #0 wcz
+00c0c     01 14 05 16 |  if_a	mov	local06, #1
+00c10     01 14 65 E6 |  if_be	neg	local06, #1
+00c14     8A 12 01 F1 | 	add	local05, local06
+00c18     34 F4 9F FE | 	loc	pa,	#(@LR__0030-@LR__0029)
+00c1c     35 00 A0 FD | 	call	#FCACHE_LOAD_
+00c20                 | LR__0029
+00c20     94 F0 04 F1 | 	add	objptr, #148
+00c24     78 16 01 FB | 	rdlong	local07, objptr
+00c28     94 F0 84 F1 | 	sub	objptr, #148
+00c2c     82 16 01 FD | 	qmul	local07, arg02
+00c30     18 18 61 FD | 	getqx	local08
+00c34     85 18 01 F1 | 	add	local08, local01
+00c38     86 18 01 F1 | 	add	local08, local02
+00c3c     02 18 65 F0 | 	shl	local08, #2
+00c40     78 1A 01 FB | 	rdlong	local09, objptr
+00c44     8C 1A 01 F1 | 	add	local09, local08
+00c48     8D 1C 01 FB | 	rdlong	local10, local09
+00c4c     FF 1C 25 F5 | 	andn	local10, #255
+00c50     83 1E 01 F6 | 	mov	local11, arg03
+00c54     86 1E 01 F1 | 	add	local11, local02
+00c58     8F 16 C1 FA | 	rdbyte	local07, local11
+00c5c     8B 1C 41 F5 | 	or	local10, local07
+00c60                 | '   long[buf_ptr+4*(cpl*y+x+iii)]:=(long[buf_ptr+4*(cpl*y+x+iii)] & $FFFFFF00)  | byte[text+iii]
+00c60     8D 1C 61 FC | 	wrlong	local10, local09
+00c64     8A 0C 01 F1 | 	add	local02, local06
+00c68     89 0C 09 F2 | 	cmp	local02, local05 wz
+00c6c     B0 FF 9F 5D |  if_ne	jmp	#LR__0029
+00c70                 | LR__0030
+00c70     46 F0 03 F6 | 	mov	ptra, fp
+00c74     5A 00 A0 FD | 	call	#popregs_
+00c78                 | _outtextxy_ret
+00c78     2D 00 64 FD | 	ret
+00c7c                 | 
+00c7c                 | ' 
+00c7c                 | ' ''--------- Output a string at the cursor position, move the cursor
+00c7c                 | ' 
+00c7c                 | ' pub write(text) | iii,c,ncx,ncy
+00c7c                 | _write
+00c7c     11 88 04 F6 | 	mov	COUNT_, #17
+00c80     4B 00 A0 FD | 	call	#pushregs_
+00c84     81 0A 01 F6 | 	mov	local01, arg01
+00c88     3C F0 04 F1 | 	add	objptr, #60
+00c8c     78 0C 01 FB | 	rdlong	local02, objptr
+00c90     18 0C 65 F0 | 	shl	local02, #24
+00c94     04 F0 04 F1 | 	add	objptr, #4
+00c98     78 0E 01 FB | 	rdlong	local03, objptr
+00c9c     10 0E 65 F0 | 	shl	local03, #16
+00ca0     87 0C 01 F1 | 	add	local02, local03
+00ca4                 | ' 
+00ca4                 | ' c:=write_color<<24+write_background<<16
+00ca4                 | ' 'debug(uhex_long(write_color))
+00ca4                 | ' ncy:=cursor_y
+00ca4     07 F0 84 F1 | 	sub	objptr, #7
+00ca8     78 10 C1 FA | 	rdbyte	local04, objptr
+00cac                 | ' ncx:=cursor_x+strsize(text)
+00cac     01 F0 84 F1 | 	sub	objptr, #1
+00cb0     78 12 C1 FA | 	rdbyte	local05, objptr
+00cb4     38 F0 84 F1 | 	sub	objptr, #56
+00cb8     85 02 01 F6 | 	mov	arg01, local01
+00cbc     00 14 05 F6 | 	mov	local06, #0
+00cc0     4C F3 9F FE | 	loc	pa,	#(@LR__0032-@LR__0031)
+00cc4     35 00 A0 FD | 	call	#FCACHE_LOAD_
+00cc8                 | LR__0031
+00cc8     81 16 C9 FA | 	rdbyte	local07, arg01 wz
+00ccc     01 14 05 51 |  if_ne	add	local06, #1
+00cd0     01 02 05 51 |  if_ne	add	arg01, #1
+00cd4     F0 FF 9F 5D |  if_ne	jmp	#LR__0031
+00cd8                 | LR__0032
+00cd8     8A F6 00 F6 | 	mov	result1, local06
+00cdc     8A 12 01 F1 | 	add	local05, local06
+00ce0     89 18 01 F6 | 	mov	local08, local05
+00ce4     48 F3 9F FE | 	loc	pa,	#(@LR__0034-@LR__0033)
+00ce8     35 00 A0 FD | 	call	#FCACHE_LOAD_
+00cec                 | ' repeat while ncx>cpl-1
+00cec                 | LR__0033
+00cec     94 F0 04 F1 | 	add	objptr, #148
+00cf0     78 12 01 FB | 	rdlong	local05, objptr
+00cf4     94 F0 84 F1 | 	sub	objptr, #148
+00cf8     01 12 85 F1 | 	sub	local05, #1
+00cfc     89 18 59 F2 | 	cmps	local08, local05 wcz
+00d00     18 00 90 ED |  if_be	jmp	#LR__0035
+00d04                 | '   ncx-=cpl
+00d04     94 F0 04 F1 | 	add	objptr, #148
+00d08     78 1A 01 FB | 	rdlong	local09, objptr
+00d0c     94 F0 84 F1 | 	sub	objptr, #148
+00d10     8D 18 81 F1 | 	sub	local08, local09
+00d14                 | '   ncy+=1
+00d14     01 10 05 F1 | 	add	local04, #1
+00d18     D0 FF 9F FD | 	jmp	#LR__0033
+00d1c                 | LR__0034
+00d1c                 | LR__0035
+00d1c                 | ' repeat while ncy>lines-1
+00d1c                 | LR__0036
+00d1c     98 F0 04 F1 | 	add	objptr, #152
+00d20     78 12 01 FB | 	rdlong	local05, objptr
+00d24     98 F0 84 F1 | 	sub	objptr, #152
+00d28     01 12 85 F1 | 	sub	local05, #1
+00d2c     89 10 59 F2 | 	cmps	local04, local05 wcz
+00d30     20 00 90 ED |  if_be	jmp	#LR__0037
+00d34                 | '   ncy-=1
+00d34     01 10 85 F1 | 	sub	local04, #1
+00d38                 | '   scrollup()
+00d38     60 01 B0 FD | 	call	#_scrollup
+00d3c                 | '   cursor_y-=1
+00d3c     39 F0 04 F1 | 	add	objptr, #57
+00d40     78 12 C1 FA | 	rdbyte	local05, objptr
+00d44     01 12 85 F1 | 	sub	local05, #1
+00d48     78 12 41 FC | 	wrbyte	local05, objptr
+00d4c     39 F0 84 F1 | 	sub	objptr, #57
+00d50     C8 FF 9F FD | 	jmp	#LR__0036
+00d54                 | LR__0037
+00d54                 | ' 
+00d54                 | ' repeat iii from 0 to strsize(text)-1
+00d54     00 1C 05 F6 | 	mov	local10, #0
+00d58     85 02 01 F6 | 	mov	arg01, local01
+00d5c     00 14 05 F6 | 	mov	local06, #0
+00d60     AC F2 9F FE | 	loc	pa,	#(@LR__0039-@LR__0038)
+00d64     35 00 A0 FD | 	call	#FCACHE_LOAD_
+00d68                 | LR__0038
+00d68     81 16 C9 FA | 	rdbyte	local07, arg01 wz
+00d6c     01 14 05 51 |  if_ne	add	local06, #1
+00d70     01 02 05 51 |  if_ne	add	arg01, #1
+00d74     F0 FF 9F 5D |  if_ne	jmp	#LR__0038
+00d78                 | LR__0039
+00d78     8A F6 00 F6 | 	mov	result1, local06
+00d7c     7B 1E 01 F6 | 	mov	local11, result1
+00d80     01 1E 85 F1 | 	sub	local11, #1
+00d84     00 1E 5D F2 | 	cmps	local11, #0 wcz
+00d88     01 20 05 16 |  if_a	mov	local12, #1
+00d8c     01 20 65 E6 |  if_be	neg	local12, #1
+00d90     90 1E 01 F1 | 	add	local11, local12
+00d94     C0 F2 9F FE | 	loc	pa,	#(@LR__0041-@LR__0040)
+00d98     35 00 A0 FD | 	call	#FCACHE_LOAD_
+00d9c                 | LR__0040
+00d9c     94 F0 04 F1 | 	add	objptr, #148
+00da0     78 22 01 FB | 	rdlong	local13, objptr
+00da4     5B F0 84 F1 | 	sub	objptr, #91
+00da8     78 24 C1 FA | 	rdbyte	local14, objptr
+00dac     92 22 01 FD | 	qmul	local13, local14
+00db0     18 26 61 FD | 	getqx	local15
+00db4     01 F0 84 F1 | 	sub	objptr, #1
+00db8     78 22 C1 FA | 	rdbyte	local13, objptr
+00dbc     38 F0 84 F1 | 	sub	objptr, #56
+00dc0     91 26 01 F1 | 	add	local15, local13
+00dc4     8E 26 01 F1 | 	add	local15, local10
+00dc8     02 26 65 F0 | 	shl	local15, #2
+00dcc     78 28 01 FB | 	rdlong	local16, objptr
+00dd0     93 28 01 F1 | 	add	local16, local15
+00dd4     94 2A 01 FB | 	rdlong	local17, local16
+00dd8     7F 00 00 FF 
+00ddc     FF 2B 05 F5 | 	and	local17, ##65535
+00de0     86 2A 41 F5 | 	or	local17, local02
+00de4                 | ' 
+00de4                 | '   long[buf_ptr+4*(cpl*cursor_y+cursor_x+iii)]:=long[buf_ptr+4*(cpl*cursor_y+cursor_x+iii)] &$FFFF | c
+00de4     94 2A 61 FC | 	wrlong	local17, local16
+00de8     90 1C 01 F1 | 	add	local10, local12
+00dec     8F 1C 09 F2 | 	cmp	local10, local11 wz
+00df0     A8 FF 9F 5D |  if_ne	jmp	#LR__0040
+00df4                 | LR__0041
+00df4                 | ' 
+00df4                 | ' outtextxy(cursor_x,cursor_y,text)
+00df4     38 F0 04 F1 | 	add	objptr, #56
+00df8     78 02 C1 FA | 	rdbyte	arg01, objptr
+00dfc     01 F0 04 F1 | 	add	objptr, #1
+00e00     78 04 C1 FA | 	rdbyte	arg02, objptr
+00e04     39 F0 84 F1 | 	sub	objptr, #57
+00e08     85 06 01 F6 | 	mov	arg03, local01
+00e0c     BC FD BF FD | 	call	#_outtextxy
+00e10                 | ' 
+00e10                 | ' cursor_x:=ncx
+00e10     38 F0 04 F1 | 	add	objptr, #56
+00e14     78 18 41 FC | 	wrbyte	local08, objptr
+00e18                 | ' cursor_y:=ncy
+00e18     01 F0 04 F1 | 	add	objptr, #1
+00e1c     78 10 41 FC | 	wrbyte	local04, objptr
+00e20     39 F0 84 F1 | 	sub	objptr, #57
+00e24     46 F0 03 F6 | 	mov	ptra, fp
+00e28     5A 00 A0 FD | 	call	#popregs_
+00e2c                 | _write_ret
+00e2c     2D 00 64 FD | 	ret
+00e30                 | 
+00e30                 | ' 
+00e30                 | ' '--------- Output a string at the cursor position x,y, move the cursor to the next line
+00e30                 | ' 
+00e30                 | ' pub writeln(text)
+00e30                 | _writeln
+00e30     03 88 04 F6 | 	mov	COUNT_, #3
+00e34     4B 00 A0 FD | 	call	#pushregs_
+00e38                 | ' 
+00e38                 | ' write(text)
+00e38     40 FE BF FD | 	call	#_write
+00e3c                 | ' cursor_x:=0
+00e3c     38 F0 04 F1 | 	add	objptr, #56
+00e40     78 00 48 FC | 	wrbyte	#0, objptr
+00e44                 | ' cursor_y+=1
+00e44     01 F0 04 F1 | 	add	objptr, #1
+00e48     78 0A C1 FA | 	rdbyte	local01, objptr
+00e4c     01 0A 05 F1 | 	add	local01, #1
+00e50     78 0A 41 FC | 	wrbyte	local01, objptr
+00e54                 | ' if (cursor_y>lines-1)
+00e54     5F F0 04 F1 | 	add	objptr, #95
+00e58     78 0A 01 FB | 	rdlong	local01, objptr
+00e5c     01 0A 85 F1 | 	sub	local01, #1
+00e60     5F F0 84 F1 | 	sub	objptr, #95
+00e64     78 0C C1 FA | 	rdbyte	local02, objptr
+00e68     39 F0 84 F1 | 	sub	objptr, #57
+00e6c     85 0C 59 F2 | 	cmps	local02, local01 wcz
+00e70     1C 00 90 ED |  if_be	jmp	#LR__0042
+00e74                 | '   scrollup()
+00e74     24 00 B0 FD | 	call	#_scrollup
+00e78     98 F0 04 F1 | 	add	objptr, #152
+00e7c     78 0E 01 FB | 	rdlong	local03, objptr
+00e80     01 0E 85 F1 | 	sub	local03, #1
+00e84                 | '   cursor_y:=lines-1
+00e84     5F F0 84 F1 | 	sub	objptr, #95
+00e88     78 0E 41 FC | 	wrbyte	local03, objptr
+00e8c     39 F0 84 F1 | 	sub	objptr, #57
+00e90                 | LR__0042
+00e90     46 F0 03 F6 | 	mov	ptra, fp
+00e94     5A 00 A0 FD | 	call	#popregs_
+00e98                 | _writeln_ret
+00e98     2D 00 64 FD | 	ret
+00e9c                 | 
+00e9c                 | ' 
+00e9c                 | ' ''-----------  Scroll the screen one line up
+00e9c                 | ' 
+00e9c                 | ' pub scrollup() | i
+00e9c                 | _scrollup
+00e9c     0A 88 04 F6 | 	mov	COUNT_, #10
+00ea0     4B 00 A0 FD | 	call	#pushregs_
+00ea4     94 F0 04 F1 | 	add	objptr, #148
+00ea8     78 0A 01 FB | 	rdlong	local01, objptr
+00eac     94 F0 84 F1 | 	sub	objptr, #148
+00eb0     02 0A 65 F0 | 	shl	local01, #2
+00eb4     78 04 01 FB | 	rdlong	arg02, objptr
+00eb8     85 04 01 F1 | 	add	arg02, local01
+00ebc     34 F0 04 F1 | 	add	objptr, #52
+00ec0     78 06 01 FB | 	rdlong	arg03, objptr
+00ec4     60 F0 04 F1 | 	add	objptr, #96
+00ec8     78 0C 01 FB | 	rdlong	local02, objptr
+00ecc     94 F0 84 F1 | 	sub	objptr, #148
+00ed0     86 06 81 F1 | 	sub	arg03, local02
+00ed4                 | ' 
+00ed4                 | ' longmove(buf_ptr,buf_ptr+4*cpl,buflen-cpl)
+00ed4     78 02 01 FB | 	rdlong	arg01, objptr
+00ed8     EC 04 B0 FD | 	call	#__system__longmove
+00edc                 | ' repeat i from buflen-cpl to buflen-1
+00edc     34 F0 04 F1 | 	add	objptr, #52
+00ee0     78 0E 01 FB | 	rdlong	local03, objptr
+00ee4     60 F0 04 F1 | 	add	objptr, #96
+00ee8     78 0C 01 FB | 	rdlong	local02, objptr
+00eec     86 0E 81 F1 | 	sub	local03, local02
+00ef0     60 F0 84 F1 | 	sub	objptr, #96
+00ef4     78 10 01 FB | 	rdlong	local04, objptr
+00ef8     01 10 85 F1 | 	sub	local04, #1
+00efc     78 12 01 FB | 	rdlong	local05, objptr
+00f00     60 F0 04 F1 | 	add	objptr, #96
+00f04     78 14 01 FB | 	rdlong	local06, objptr
+00f08     94 F0 84 F1 | 	sub	objptr, #148
+00f0c     8A 12 81 F1 | 	sub	local05, local06
+00f10     89 10 59 F2 | 	cmps	local04, local05 wcz
+00f14     01 16 05 16 |  if_a	mov	local07, #1
+00f18     01 16 65 E6 |  if_be	neg	local07, #1
+00f1c     8B 10 01 F1 | 	add	local04, local07
+00f20     0C F1 9F FE | 	loc	pa,	#(@LR__0044-@LR__0043)
+00f24     35 00 A0 FD | 	call	#FCACHE_LOAD_
+00f28                 | LR__0043
+00f28     87 18 01 F6 | 	mov	local08, local03
+00f2c     02 18 65 F0 | 	shl	local08, #2
+00f30     78 1A 01 FB | 	rdlong	local09, objptr
+00f34     8C 1A 01 F1 | 	add	local09, local08
+00f38     8D 1C 01 FB | 	rdlong	local10, local09
+00f3c     80 FF 7F FF 
+00f40     00 1C 05 F5 | 	and	local10, ##-65536
+00f44     20 1C 45 F5 | 	or	local10, #32
+00f48                 | '   long[buf_ptr+4*i]:=(long[buf_ptr+4*i] & $FFFF0000) | 32
+00f48     8D 1C 61 FC | 	wrlong	local10, local09
+00f4c     8B 0E 01 F1 | 	add	local03, local07
+00f50     88 0E 09 F2 | 	cmp	local03, local04 wz
+00f54     D0 FF 9F 5D |  if_ne	jmp	#LR__0043
+00f58                 | LR__0044
+00f58     46 F0 03 F6 | 	mov	ptra, fp
+00f5c     5A 00 A0 FD | 	call	#popregs_
+00f60                 | _scrollup_ret
+00f60     2D 00 64 FD | 	ret
+00f64                 | 
+00f64                 | ' 
+00f64                 | ' 
+00f64                 | ' 
+00f64                 | ' '*************************************************************************
+00f64                 | ' '                                                                        *
+00f64                 | ' '  Mode setting and driver start                                                          *
+00f64                 | ' '                                                                        *
+00f64                 | ' '*************************************************************************
+00f64                 | ' 
+00f64                 | ' ''---------  Set the graphics mode
+00f64                 | ' 
+00f64                 | ' pub setmode(mode) | i
+00f64                 | _setmode
+00f64     18 88 04 F6 | 	mov	COUNT_, #24
+00f68     4B 00 A0 FD | 	call	#pushregs_
+00f6c     81 0A 01 F6 | 	mov	local01, arg01
+00f70                 | ' 
+00f70                 | ' '' mode:tn_bb_cc_vv_hh
+00f70                 | ' '' hh - h.zoom, vv-v.zoom, cc-c.depth,
+00f70                 | ' '' bb - borders/total pixels, 00-wide/1140, 01 medium/1026, 10 narrow/912, 11 no border, 1024 px PAL, 880 px NTSC
+00f70                 | ' 
+00f70                 | ' if (mode<512)  '' text modes
+00f70     01 00 00 FF 
+00f74     00 0A 5D F2 | 	cmps	local01, ##512 wcz
+00f78     24 02 90 3D |  if_ae	jmp	#LR__0056
+00f7c     A8 F0 04 F1 | 	add	objptr, #168
+00f80     78 0C 01 F6 | 	mov	local02, objptr
+00f84     0E 00 00 FF 
+00f88     40 F4 04 F1 | 	add	ptr__dat__, ##7232
+00f8c     7A 0E 01 F6 | 	mov	local03, ptr__dat__
+00f90                 | '   
+00f90                 | '   longmove(@streamer,@timingsxxt,6)
+00f90     86 02 01 F6 | 	mov	arg01, local02
+00f94     87 04 01 F6 | 	mov	arg02, local03
+00f98     06 06 05 F6 | 	mov	arg03, #6
+00f9c     A8 F0 84 F1 | 	sub	objptr, #168
+00fa0     0E 00 00 FF 
+00fa4     40 F4 84 F1 | 	sub	ptr__dat__, ##7232
+00fa8     1C 04 B0 FD | 	call	#__system__longmove
+00fac     7B 10 01 F6 | 	mov	local04, result1
+00fb0                 | '   case  mode                               
+00fb0     85 12 09 F6 | 	mov	local05, local01 wz
+00fb4     3C 00 90 AD |  if_e	jmp	#LR__0045
+00fb8     40 12 0D F2 | 	cmp	local05, #64 wz
+00fbc     60 00 90 AD |  if_e	jmp	#LR__0046
+00fc0     80 12 0D F2 | 	cmp	local05, #128 wz
+00fc4     7C 00 90 AD |  if_e	jmp	#LR__0047
+00fc8     C0 12 0D F2 | 	cmp	local05, #192 wz
+00fcc     98 00 90 AD |  if_e	jmp	#LR__0048
+00fd0     00 13 0D F2 | 	cmp	local05, #256 wz
+00fd4     B4 00 90 AD |  if_e	jmp	#LR__0049
+00fd8     40 13 0D F2 | 	cmp	local05, #320 wz
+00fdc     D0 00 90 AD |  if_e	jmp	#LR__0050
+00fe0     80 13 0D F2 | 	cmp	local05, #384 wz
+00fe4     EC 00 90 AD |  if_e	jmp	#LR__0051
+00fe8     C0 13 0D F2 | 	cmp	local05, #448 wz
+00fec     08 01 90 AD |  if_e	jmp	#LR__0052
+00ff0     34 01 90 FD | 	jmp	#LR__0053
+00ff4                 | LR__0045
+00ff4     54 F0 04 F1 | 	add	objptr, #84
+00ff8     78 02 01 F6 | 	mov	arg01, objptr
+00ffc     54 F0 84 F1 | 	sub	objptr, #84
+01000     0E 00 00 FF 
+01004     70 F4 04 F1 | 	add	ptr__dat__, ##7280
+01008     7A 04 01 F6 | 	mov	arg02, ptr__dat__
+0100c     0E 00 00 FF 
+01010     70 F4 84 F1 | 	sub	ptr__dat__, ##7280
+01014                 | '     000:  longmove(@timings,@timings000,16)   'PAL 50 Hz signaling 1140x624, active 800x480, 100x30 text, wide border, 2 colors per pixel, 00_00_00_00_00=0, 354_693_878 Hz
+01014     10 06 05 F6 | 	mov	arg03, #16
+01018     AC 03 B0 FD | 	call	#__system__longmove
+0101c     08 01 90 FD | 	jmp	#LR__0053
+01020                 | LR__0046
+01020     0E 00 00 FF 
+01024     B0 F4 04 F1 | 	add	ptr__dat__, ##7344
+01028     7A 04 01 F6 | 	mov	arg02, ptr__dat__
+0102c     0E 00 00 FF 
+01030     B0 F4 84 F1 | 	sub	ptr__dat__, ##7344
+01034                 | '     064:  longmove(@timings,@timings064,16)   'PAL 50 Hz signaling 1026x624, active 880x496, 110x31 text, medium border, 2 colors per pixel 00_01_00_00_00=64, 319_215_686 Hz
+01034     8A 02 01 F6 | 	mov	arg01, local06
+01038     10 06 05 F6 | 	mov	arg03, #16
+0103c     88 03 B0 FD | 	call	#__system__longmove
+01040     E4 00 90 FD | 	jmp	#LR__0053
+01044                 | LR__0047
+01044     0E 00 00 FF 
+01048     F0 F4 04 F1 | 	add	ptr__dat__, ##7408
+0104c     7A 04 01 F6 | 	mov	arg02, ptr__dat__
+01050     0E 00 00 FF 
+01054     F0 F4 84 F1 | 	sub	ptr__dat__, ##7408
+01058                 | '     128:  longmove(@timings,@timings128,16)   'PAL 50 Hz signaling 912x624, active 800x480, 100x30 text, medium border, 2 colors per pixel 00_10_00_00_00=64, 283750000z
+01058     8A 02 01 F6 | 	mov	arg01, local06
+0105c     10 06 05 F6 | 	mov	arg03, #16
+01060     64 03 B0 FD | 	call	#__system__longmove
+01064     C0 00 90 FD | 	jmp	#LR__0053
+01068                 | LR__0048
+01068     0E 00 00 FF 
+0106c     30 F5 04 F1 | 	add	ptr__dat__, ##7472
+01070     7A 04 01 F6 | 	mov	arg02, ptr__dat__
+01074     0E 00 00 FF 
+01078     30 F5 84 F1 | 	sub	ptr__dat__, ##7472
+0107c                 | '     192:  longmove(@timings,@timings192,16)   'PAL 50 Hz signaling 1140x624, active 1024x576, 128x36 text, borderless, 2 colors per pixel 00_11_00_00_00=6192, 354_693_878 Hz
+0107c     8A 02 01 F6 | 	mov	arg01, local06
+01080     10 06 05 F6 | 	mov	arg03, #16
+01084     40 03 B0 FD | 	call	#__system__longmove
+01088     9C 00 90 FD | 	jmp	#LR__0053
+0108c                 | LR__0049
+0108c     0E 00 00 FF 
+01090     70 F5 04 F1 | 	add	ptr__dat__, ##7536
+01094     7A 04 01 F6 | 	mov	arg02, ptr__dat__
+01098     0E 00 00 FF 
+0109c     70 F5 84 F1 | 	sub	ptr__dat__, ##7536
+010a0                 | '     256:  longmove(@timings,@timings256,16)   'NTSC 50 Hz signaling 1140x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_00_00_00_00=256, 357959184 Hz
+010a0     8A 02 01 F6 | 	mov	arg01, local06
+010a4     10 06 05 F6 | 	mov	arg03, #16
+010a8     1C 03 B0 FD | 	call	#__system__longmove
+010ac     78 00 90 FD | 	jmp	#LR__0053
+010b0                 | LR__0050
+010b0     0E 00 00 FF 
+010b4     B0 F5 04 F1 | 	add	ptr__dat__, ##7600
+010b8     7A 04 01 F6 | 	mov	arg02, ptr__dat__
+010bc     0E 00 00 FF 
+010c0     B0 F5 84 F1 | 	sub	ptr__dat__, ##7600
+010c4                 | '     320:  longmove(@timings,@timings320,16)   'NTSC 50 Hz signaling 1026x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_01_00_00_00=320, 322162162 Hz
+010c4     8A 02 01 F6 | 	mov	arg01, local06
+010c8     10 06 05 F6 | 	mov	arg03, #16
+010cc     F8 02 B0 FD | 	call	#__system__longmove
+010d0     54 00 90 FD | 	jmp	#LR__0053
+010d4                 | LR__0051
+010d4     0E 00 00 FF 
+010d8     F0 F5 04 F1 | 	add	ptr__dat__, ##7664
+010dc     7A 04 01 F6 | 	mov	arg02, ptr__dat__
+010e0     0E 00 00 FF 
+010e4     F0 F5 84 F1 | 	sub	ptr__dat__, ##7664
+010e8                 | '     384:  longmove(@timings,@timings384,16)   'NTSC 50 Hz signaling 912x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_10_00_00_00=384, 286363636 Hz
+010e8     8A 02 01 F6 | 	mov	arg01, local06
+010ec     10 06 05 F6 | 	mov	arg03, #16
+010f0     D4 02 B0 FD | 	call	#__system__longmove
+010f4     30 00 90 FD | 	jmp	#LR__0053
+010f8                 | LR__0052
+010f8     0F 00 00 FF 
+010fc     30 F4 04 F1 | 	add	ptr__dat__, ##7728
+01100     7A 16 01 F6 | 	mov	local07, ptr__dat__
+01104                 | '     448:  longmove(@timings,@timings448,16)   'NTSC 50 Hz signaling 1026x524, active 880x496, 110x31 text, borderless, 2 colors per pixel, 01_11_00_00_00=496, 322162162 Hz
+01104     8A 18 01 F6 | 	mov	local08, local06
+01108     8B 1A 01 F6 | 	mov	local09, local07
+0110c     10 1C 05 F6 | 	mov	local10, #16
+01110     8C 02 01 F6 | 	mov	arg01, local08
+01114     8D 04 01 F6 | 	mov	arg02, local09
+01118     10 06 05 F6 | 	mov	arg03, #16
+0111c     0F 00 00 FF 
+01120     30 F4 84 F1 | 	sub	ptr__dat__, ##7728
+01124     A0 02 B0 FD | 	call	#__system__longmove
+01128                 | LR__0053
+01128                 | ' 
+01128                 | '   repeat i from 0 to 5
+01128     00 1E 05 F6 | 	mov	local11, #0
+0112c     20 EF 9F FE | 	loc	pa,	#(@LR__0055-@LR__0054)
+01130     35 00 A0 FD | 	call	#FCACHE_LOAD_
+01134                 | LR__0054
+01134     8F 20 01 F6 | 	mov	local12, local11
+01138     02 20 65 F0 | 	shl	local12, #2
+0113c     54 F0 04 F1 | 	add	objptr, #84
+01140     78 20 01 F1 | 	add	local12, objptr
+01144     8F 22 01 F6 | 	mov	local13, local11
+01148     02 22 65 F0 | 	shl	local13, #2
+0114c     54 F0 04 F1 | 	add	objptr, #84
+01150     90 24 01 FB | 	rdlong	local14, local12
+01154     78 22 01 F1 | 	add	local13, objptr
+01158     91 1A 01 FB | 	rdlong	local09, local13
+0115c     8D 24 01 F1 | 	add	local14, local09
+01160     80 F0 84 F1 | 	sub	objptr, #128
+01164     78 26 01 FB | 	rdlong	local15, objptr
+01168     28 F0 84 F1 | 	sub	objptr, #40
+0116c     11 26 65 F0 | 	shl	local15, #17
+01170     93 24 01 F1 | 	add	local14, local15
+01174                 | '     timings[i]:=timings[i]+streamer[i]+hdmibase<<17
+01174     90 24 61 FC | 	wrlong	local14, local12
+01178     01 1E 05 F1 | 	add	local11, #1
+0117c     06 1E 5D F2 | 	cmps	local11, #6 wcz
+01180     B0 FF 9F CD |  if_b	jmp	#LR__0054
+01184                 | LR__0055
+01184                 | '   clkfreq:=timings[13]
+01184     88 F0 04 F1 | 	add	objptr, #136
+01188     78 18 01 FB | 	rdlong	local08, objptr
+0118c     14 18 65 FC | 	wrlong	local08, #20
+01190                 | '   hubset(timings[14])
+01190     04 F0 04 F1 | 	add	objptr, #4
+01194     78 02 01 FB | 	rdlong	arg01, objptr
+01198     8C F0 84 F1 | 	sub	objptr, #140
+0119c     00 02 61 FD | 	hubset	arg01
+011a0                 | LR__0056
+011a0                 | ' 
+011a0                 | ' if (mode==544)    '' 10 00 10 00 00 Pal 50Hz, wide borders,4bpp
+011a0     01 00 00 FF 
+011a4     20 0A 0D F2 | 	cmp	local01, ##544 wz
+011a8     D8 00 90 5D |  if_ne	jmp	#LR__0060
+011ac     A8 F0 04 F1 | 	add	objptr, #168
+011b0     78 02 01 F6 | 	mov	arg01, objptr
+011b4     A8 F0 84 F1 | 	sub	objptr, #168
+011b8     0E 00 00 FF 
+011bc     58 F4 04 F1 | 	add	ptr__dat__, ##7256
+011c0     7A 04 01 F6 | 	mov	arg02, ptr__dat__
+011c4     0E 00 00 FF 
+011c8     58 F4 84 F1 | 	sub	ptr__dat__, ##7256
+011cc                 | '   longmove(@streamer,@timingsxg4,6)
+011cc     06 06 05 F6 | 	mov	arg03, #6
+011d0     F4 01 B0 FD | 	call	#__system__longmove
+011d4     54 F0 04 F1 | 	add	objptr, #84
+011d8     78 02 01 F6 | 	mov	arg01, objptr
+011dc     54 F0 84 F1 | 	sub	objptr, #84
+011e0     0F 00 00 FF 
+011e4     70 F4 04 F1 | 	add	ptr__dat__, ##7792
+011e8     7A 04 01 F6 | 	mov	arg02, ptr__dat__
+011ec     0F 00 00 FF 
+011f0     70 F4 84 F1 | 	sub	ptr__dat__, ##7792
+011f4                 | '   longmove(@timings,@timings544,16)
+011f4     10 06 05 F6 | 	mov	arg03, #16
+011f8     CC 01 B0 FD | 	call	#__system__longmove
+011fc                 | '   repeat i from 0 to 5
+011fc     00 1E 05 F6 | 	mov	local11, #0
+01200     5C EE 9F FE | 	loc	pa,	#(@LR__0059-@LR__0057)
+01204     35 00 A0 FD | 	call	#FCACHE_LOAD_
+01208                 | LR__0057
+01208     8F 28 01 F6 | 	mov	local16, local11
+0120c     02 28 65 F0 | 	shl	local16, #2
+01210     54 F0 04 F1 | 	add	objptr, #84
+01214     78 28 01 F1 | 	add	local16, objptr
+01218     8F 2A 01 F6 | 	mov	local17, local11
+0121c     02 2A 65 F0 | 	shl	local17, #2
+01220     54 F0 04 F1 | 	add	objptr, #84
+01224     94 2C 01 FB | 	rdlong	local18, local16
+01228     78 2A 01 F1 | 	add	local17, objptr
+0122c     95 1A 01 FB | 	rdlong	local09, local17
+01230     8D 2C 01 F1 | 	add	local18, local09
+01234     80 F0 84 F1 | 	sub	objptr, #128
+01238     78 2E 01 FB | 	rdlong	local19, objptr
+0123c     28 F0 84 F1 | 	sub	objptr, #40
+01240     11 2E 65 F0 | 	shl	local19, #17
+01244     97 2C 01 F1 | 	add	local18, local19
+01248                 | '     timings[i]:=timings[i]+streamer[i]+hdmibase<<17
+01248     94 2C 61 FC | 	wrlong	local18, local16
+0124c     01 1E 05 F1 | 	add	local11, #1
+01250     06 1E 5D F2 | 	cmps	local11, #6 wcz
+01254     B0 FF 9F CD |  if_b	jmp	#LR__0057
+01258                 | '   repeat i from 0 to 15
+01258     00 1E 05 F6 | 	mov	local11, #0
+0125c                 | LR__0058
+0125c     01 1E 05 F1 | 	add	local11, #1
+01260     10 1E 5D F2 | 	cmps	local11, #16 wcz
+01264     F4 FF 9F CD |  if_b	jmp	#LR__0058
+01268                 | LR__0059
+01268                 | '   clkfreq:=timings[13]
+01268     88 F0 04 F1 | 	add	objptr, #136
+0126c     78 18 01 FB | 	rdlong	local08, objptr
+01270     14 18 65 FC | 	wrlong	local08, #20
+01274                 | '   hubset(timings[14])
+01274     04 F0 04 F1 | 	add	objptr, #4
+01278     78 02 01 FB | 	rdlong	arg01, objptr
+0127c     8C F0 84 F1 | 	sub	objptr, #140
+01280     00 02 61 FD | 	hubset	arg01
+01284                 | LR__0060
+01284                 | ' 
+01284                 | ' cpl:=timings[11]
+01284     80 F0 04 F1 | 	add	objptr, #128
+01288     78 18 01 FB | 	rdlong	local08, objptr
+0128c     14 F0 04 F1 | 	add	objptr, #20
+01290     78 18 61 FC | 	wrlong	local08, objptr
+01294     10 F0 84 F1 | 	sub	objptr, #16
+01298     78 30 01 FB | 	rdlong	local20, objptr
+0129c     04 30 45 F0 | 	shr	local20, #4
+012a0                 | ' lines:=timings[12]>>4
+012a0     14 F0 04 F1 | 	add	objptr, #20
+012a4     78 30 61 FC | 	wrlong	local20, objptr
+012a8     04 F0 84 F1 | 	sub	objptr, #4
+012ac     78 1A 01 FB | 	rdlong	local09, objptr
+012b0     04 F0 04 F1 | 	add	objptr, #4
+012b4     78 10 01 FB | 	rdlong	local04, objptr
+012b8     88 1A 01 FD | 	qmul	local09, local04
+012bc     18 32 61 FD | 	getqx	local21
+012c0                 | ' buflen:=cpl*lines
+012c0     64 F0 84 F1 | 	sub	objptr, #100
+012c4     78 32 61 FC | 	wrlong	local21, objptr
+012c8     34 F0 84 F1 | 	sub	objptr, #52
+012cc                 | ' if mode>=512
+012cc     01 00 00 FF 
+012d0     00 0A 5D F2 | 	cmps	local01, ##512 wcz
+012d4     14 00 90 CD |  if_b	jmp	#LR__0061
+012d8                 | '   buflen:=buflen*8
+012d8     34 F0 04 F1 | 	add	objptr, #52
+012dc     78 18 01 FB | 	rdlong	local08, objptr
+012e0     03 18 65 F0 | 	shl	local08, #3
+012e4     78 18 61 FC | 	wrlong	local08, objptr
+012e8     34 F0 84 F1 | 	sub	objptr, #52
+012ec                 | LR__0061
+012ec     34 F0 04 F1 | 	add	objptr, #52
+012f0     78 34 01 FB | 	rdlong	local22, objptr
+012f4     34 F0 84 F1 | 	sub	objptr, #52
+012f8     02 34 65 F0 | 	shl	local22, #2
+012fc     E0 03 00 FF 
+01300     00 36 05 F6 | 	mov	local23, ##507904
+01304     9A 36 81 F1 | 	sub	local23, local22
+01308                 | ' buf_ptr:=$7C000-4*buflen
+01308     78 36 61 FC | 	wrlong	local23, objptr
+0130c     54 F0 04 F1 | 	add	objptr, #84
+01310     78 38 01 F6 | 	mov	local24, objptr
+01314                 | ' mode_ptr:=@timings
+01314     40 F0 84 F1 | 	sub	objptr, #64
+01318     78 38 61 FC | 	wrlong	local24, objptr
+0131c                 | ' graphmode:=mode
+0131c     BC F0 04 F1 | 	add	objptr, #188
+01320     78 0A 61 FC | 	wrlong	local01, objptr
+01324     D0 F0 84 F1 | 	sub	objptr, #208
+01328     46 F0 03 F6 | 	mov	ptra, fp
+0132c     5A 00 A0 FD | 	call	#popregs_
+01330                 | _setmode_ret
+01330     2D 00 64 FD | 	ret
+01334                 | hubexit
+01334     23 00 80 FD | 	jmp	#cogexit
+01338                 | 
+01338                 | __system__bytemove
+01338     81 F8 00 F6 | 	mov	_var01, arg01
+0133c     82 02 59 F2 | 	cmps	arg01, arg02 wcz
+01340     50 00 90 3D |  if_ae	jmp	#LR__0069
+01344     D8 EC 9F FE | 	loc	pa,	#(@LR__0063-@LR__0062)
+01348     35 00 A0 FD | 	call	#FCACHE_LOAD_
+0134c                 | LR__0062
+0134c     03 06 5D F2 | 	cmps	arg03, #3 wcz
+01350     18 00 90 ED |  if_be	jmp	#LR__0064
+01354     82 FA 00 FB | 	rdlong	_var02, arg02
+01358     81 FA 60 FC | 	wrlong	_var02, arg01
+0135c     04 02 05 F1 | 	add	arg01, #4
+01360     04 04 05 F1 | 	add	arg02, #4
+01364     04 06 85 F1 | 	sub	arg03, #4
+01368     E0 FF 9F FD | 	jmp	#LR__0062
+0136c                 | LR__0063
+0136c                 | LR__0064
+0136c     83 FC 08 F6 | 	mov	_var03, arg03 wz
+01370     4C 00 90 AD |  if_e	jmp	#LR__0075
+01374     9C EC 9F FE | 	loc	pa,	#(@LR__0067-@LR__0065)
+01378     35 00 A0 FD | 	call	#FCACHE_LOAD_
+0137c                 | LR__0065
+0137c     7E 08 D8 FC | 	rep	@LR__0068, _var03
+01380                 | LR__0066
+01380     82 FA C0 FA | 	rdbyte	_var02, arg02
+01384     81 FA 40 FC | 	wrbyte	_var02, arg01
+01388     01 02 05 F1 | 	add	arg01, #1
+0138c     01 04 05 F1 | 	add	arg02, #1
+01390                 | LR__0067
+01390                 | LR__0068
+01390     2C 00 90 FD | 	jmp	#LR__0075
+01394                 | LR__0069
+01394     83 02 01 F1 | 	add	arg01, arg03
+01398     83 04 01 F1 | 	add	arg02, arg03
+0139c     83 FE 08 F6 | 	mov	_var04, arg03 wz
+013a0     1C 00 90 AD |  if_e	jmp	#LR__0074
+013a4     6C EC 9F FE | 	loc	pa,	#(@LR__0072-@LR__0070)
+013a8     35 00 A0 FD | 	call	#FCACHE_LOAD_
+013ac                 | LR__0070
+013ac     7F 08 D8 FC | 	rep	@LR__0073, _var04
+013b0                 | LR__0071
+013b0     01 02 85 F1 | 	sub	arg01, #1
+013b4     01 04 85 F1 | 	sub	arg02, #1
+013b8     82 FA C0 FA | 	rdbyte	_var02, arg02
+013bc     81 FA 40 FC | 	wrbyte	_var02, arg01
+013c0                 | LR__0072
+013c0                 | LR__0073
+013c0                 | LR__0074
+013c0                 | LR__0075
+013c0     7C F6 00 F6 | 	mov	result1, _var01
+013c4                 | __system__bytemove_ret
+013c4     2D 00 64 FD | 	ret
+013c8                 | 
+013c8                 | __system__longmove
+013c8     81 F8 00 F6 | 	mov	_var01, arg01
+013cc     82 02 59 F2 | 	cmps	arg01, arg02 wcz
+013d0     28 00 90 3D |  if_ae	jmp	#LR__0080
+013d4     83 FA 08 F6 | 	mov	_var02, arg03 wz
+013d8     54 00 90 AD |  if_e	jmp	#LR__0086
+013dc     34 EC 9F FE | 	loc	pa,	#(@LR__0078-@LR__0076)
+013e0     35 00 A0 FD | 	call	#FCACHE_LOAD_
+013e4                 | LR__0076
+013e4     7D 08 D8 FC | 	rep	@LR__0079, _var02
+013e8                 | LR__0077
+013e8     82 FC 00 FB | 	rdlong	_var03, arg02
+013ec     81 FC 60 FC | 	wrlong	_var03, arg01
+013f0     04 02 05 F1 | 	add	arg01, #4
+013f4     04 04 05 F1 | 	add	arg02, #4
+013f8                 | LR__0078
+013f8                 | LR__0079
+013f8     34 00 90 FD | 	jmp	#LR__0086
+013fc                 | LR__0080
+013fc     83 FE 00 F6 | 	mov	_var04, arg03
+01400     02 FE 64 F0 | 	shl	_var04, #2
+01404     7F 02 01 F1 | 	add	arg01, _var04
+01408     7F 04 01 F1 | 	add	arg02, _var04
+0140c     83 00 09 F6 | 	mov	_var05, arg03 wz
+01410     1C 00 90 AD |  if_e	jmp	#LR__0085
+01414     FC EB 9F FE | 	loc	pa,	#(@LR__0083-@LR__0081)
+01418     35 00 A0 FD | 	call	#FCACHE_LOAD_
+0141c                 | LR__0081
+0141c     80 08 D8 FC | 	rep	@LR__0084, _var05
+01420                 | LR__0082
+01420     04 02 85 F1 | 	sub	arg01, #4
+01424     04 04 85 F1 | 	sub	arg02, #4
+01428     82 FC 00 FB | 	rdlong	_var03, arg02
+0142c     81 FC 60 FC | 	wrlong	_var03, arg01
+01430                 | LR__0083
+01430                 | LR__0084
+01430                 | LR__0085
+01430                 | LR__0086
+01430     7C F6 00 F6 | 	mov	result1, _var01
+01434                 | __system__longmove_ret
+01434     2D 00 64 FD | 	ret
+01438                 | 
+01438                 | LR__0087
+01438     48 65 6C 6C 
+0143c     6F 2C 20 57 
+01440     6F 72 6C 64 
+01444     21          | 	byte	"Hello, World!"
+01445     00          | 	byte	0
+01446                 | LR__0088
+01446     59 6F 75 20 
+0144a     73 74 61 72 
+0144e     74 65 64 20 
+01452     74 68 65 20 
+01456     64 72 69 76 
+0145a     65 72 20 69 
+0145e     6E 73 74 65 
+01462     61 64 20 6F 
+01466     66 20 79 6F 
+0146a     75 72 20 6D 
+0146e     61 69 6E 20 
+01472     70 72 6F 67 
+01476     72 61 6D 21 | 	byte	"You started the driver instead of your main program!"
+0147a     00          | 	byte	0
+0147b                 | LR__0089
+0147b     54 68 69 73 
+0147f     20 69 73 20 
+01483     61 6E 20 61 
+01487     6C 70 68 61 
+0148b     20 30 2E 31 
+0148f     33 20 76 65 
+01493     72 73 69 6F 
+01497     6E 20 6F 66 
+0149b     20 64 69 73 
+0149f     70 6C 61 79 
+014a3     6C 69 73 74 
+014a7     65 64 20 64 
+014ab     72 69 76 65 
+014af     72          | 	byte	"This is an alpha 0.13 version of displaylisted driver"
+014b0     00          | 	byte	0
+014b1                 | LR__0090
+014b1     54 68 69 73 
+014b5     20 6C 69 6E 
+014b9     65 20 69 73 
+014bd     20 72 65 76 
+014c1     65 72 73 65 
+014c5     64          | 	byte	"This line is reversed"
+014c6     00          | 	byte	0
+014c7                 | LR__0091
+014c7     54 68 65 20 
+014cb     74 65 78 74 
+014cf     20 61 62 6F 
+014d3     76 65 20 69 
+014d7     73 20 64 6F 
+014db     75 62 6C 65 
+014df     20 68 65 69 
+014e3     67 68 74 2C 
+014e7     20 77 68 69 
+014eb     6C 65 20 74 
+014ef     68 69 73 20 
+014f3     6C 69 6E 65 
+014f7     20 69 73 20 
+014fb     73 69 6E 67 
+014ff     6C 65 20 68 
+01503     65 69 67 68 
+01507     74          | 	byte	"The text above is double height, while this line is single height"
+01508     00          | 	byte	0
+01509     00 00 00    | 	alignl
+0150c                 | _dat_
+0150c     00 00 00 00 
+01510     00 00 00 00 
+01514     00 00 00 00 
+01518     00 00 00 00 
+0151c     00 00 00    | vga_font       file "vgafont.def"
+0151f     7E 81 A5 81 
+01523     81 BD 99 81 
+01527     81 7E 00 00 
+0152b     00 00 00 00 | 	byte	$7e, $81, $a5, $81, $81, $bd, $99, $81, $81, $7e, $00, $00, $00, $00, $00, $00
+0152f     7E FF DB FF 
+01533     FF C3 E7 FF 
+01537     FF 7E 00 00 
+0153b     00 00 00 00 | 	byte	$7e, $ff, $db, $ff, $ff, $c3, $e7, $ff, $ff, $7e, $00, $00, $00, $00, $00, $00
+0153f     00 36 7F 7F 
+01543     7F 7F 3E 1C 
+01547     08 00 00 00 
+0154b     00 00 00 00 | 	byte	$00, $36, $7f, $7f, $7f, $7f, $3e, $1c, $08, $00, $00, $00, $00, $00, $00, $00
+0154f     00 08 1C 3E 
+01553     7F 3E 1C 08 
+01557     00 00 00 00 
+0155b     00 00 00 00 | 	byte	$00, $08, $1c, $3e, $7f, $3e, $1c, $08, $00, $00, $00, $00, $00, $00, $00, $00
+0155f     18 3C 3C E7 
+01563     E7 E7 18 18 
+01567     3C 00 00 00 
+0156b     00 00 00 00 | 	byte	$18, $3c, $3c, $e7, $e7, $e7, $18, $18, $3c, $00, $00, $00, $00, $00, $00, $00
+0156f     18 3C 7E FF 
+01573     FF 7E 18 18 
+01577     3C 00 00 00 
+0157b     00 00 00 00 | 	byte	$18, $3c, $7e, $ff, $ff, $7e, $18, $18, $3c, $00, $00, $00, $00, $00, $00, $00
+0157f     00 00 00 18 
+01583     3C 3C 18 00 
+01587     00 00 00 00 
+0158b     00 FF FF FF | 	byte	$00, $00, $00, $18, $3c, $3c, $18, $00, $00, $00, $00, $00, $00, $ff, $ff, $ff
+0158f     FF FF FF E7 
+01593     C3 C3 E7 FF 
+01597     FF FF FF FF 
+0159b     FF 00 00 00 | 	byte	$ff, $ff, $ff, $e7, $c3, $c3, $e7, $ff, $ff, $ff, $ff, $ff, $ff, $00, $00, $00
+0159f     00 00 3C 66 
+015a3     42 42 66 3C 
+015a7     00 00 00 00 
+015ab     00 FF FF FF | 	byte	$00, $00, $3c, $66, $42, $42, $66, $3c, $00, $00, $00, $00, $00, $ff, $ff, $ff
+015af     FF FF C3 99 
+015b3     BD BD 99 C3 
+015b7     FF FF FF FF 
+015bb     FF 00 00 00 | 	byte	$ff, $ff, $c3, $99, $bd, $bd, $99, $c3, $ff, $ff, $ff, $ff, $ff, $00, $00, $00
+015bf     78 70 58 4C 
+015c3     1E 33 33 33 
+015c7     33 1E 00 00 
+015cb     00 00 00 00 | 	byte	$78, $70, $58, $4c, $1e, $33, $33, $33, $33, $1e, $00, $00, $00, $00, $00, $00
+015cf     3C 66 66 66 
+015d3     66 3C 18 7E 
+015d7     18 18 00 00 
+015db     00 00 00 00 | 	byte	$3c, $66, $66, $66, $66, $3c, $18, $7e, $18, $18, $00, $00, $00, $00, $00, $00
+015df     FC CC FC 0C 
+015e3     0C 0C 0C 0E 
+015e7     0F 07 00 00 
+015eb     00 00 00 00 | 	byte	$fc, $cc, $fc, $0c, $0c, $0c, $0c, $0e, $0f, $07, $00, $00, $00, $00, $00, $00
+015ef     FE C6 FE C6 
+015f3     C6 C6 C6 E6 
+015f7     E7 67 03 00 
+015fb     00 00 00 00 | 	byte	$fe, $c6, $fe, $c6, $c6, $c6, $c6, $e6, $e7, $67, $03, $00, $00, $00, $00, $00
+015ff     18 18 DB 3C 
+01603     E7 3C DB 18 
+01607     18 00 00 00 
+0160b     00 00 00 01 | 	byte	$18, $18, $db, $3c, $e7, $3c, $db, $18, $18, $00, $00, $00, $00, $00, $00, $01
+0160f     03 07 0F 1F 
+01613     7F 1F 0F 07 
+01617     03 01 00 00 
+0161b     00 00 00 40 | 	byte	$03, $07, $0f, $1f, $7f, $1f, $0f, $07, $03, $01, $00, $00, $00, $00, $00, $40
+0161f     60 70 78 7C 
+01623     7F 7C 78 70 
+01627     60 40 00 00 
+0162b     00 00 00 00 | 	byte	$60, $70, $78, $7c, $7f, $7c, $78, $70, $60, $40, $00, $00, $00, $00, $00, $00
+0162f     18 3C 7E 18 
+01633     18 18 7E 3C 
+01637     18 00 00 00 
+0163b     00 00 00 00 | 	byte	$18, $3c, $7e, $18, $18, $18, $7e, $3c, $18, $00, $00, $00, $00, $00, $00, $00
+0163f     66 66 66 66 
+01643     66 66 66    | 	byte	$66[7]
+01646     00 66 66 00 
+0164a     00 00 00 00 
+0164e     00 FE DB DB 
+01652     DB DE D8 D8 | 	byte	$00, $66, $66, $00, $00, $00, $00, $00, $00, $fe, $db, $db, $db, $de, $d8, $d8
+01656     D8 D8 D8 00 
+0165a     00 00 00 3E 
+0165e     63 06 1C 36 
+01662     63 63 36 1C | 	byte	$d8, $d8, $d8, $00, $00, $00, $00, $3e, $63, $06, $1c, $36, $63, $63, $36, $1c
+01666     30 63 3E 00 
+0166a     00 00 00 00 
+0166e     00 00 00 00 
+01672     00 00 00 7F | 	byte	$30, $63, $3e, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $7f
+01676     7F 7F 7F 00 
+0167a     00 00 00 00 
+0167e     00 18 3C 7E 
+01682     18 18 18 7E | 	byte	$7f, $7f, $7f, $00, $00, $00, $00, $00, $00, $18, $3c, $7e, $18, $18, $18, $7e
+01686     3C 18 7E 00 
+0168a     00 00 00 00 
+0168e     00 18 3C 7E 
+01692     18 18 18 18 | 	byte	$3c, $18, $7e, $00, $00, $00, $00, $00, $00, $18, $3c, $7e, $18, $18, $18, $18
+01696     18 18 18 00 
+0169a     00 00 00 00 
+0169e     00 18 18 18 
+016a2     18 18 18 18 | 	byte	$18, $18, $18, $00, $00, $00, $00, $00, $00, $18, $18, $18, $18, $18, $18, $18
+016a6     7E 3C 18 00 
+016aa     00 00 00 00 
+016ae     00 00 00 18 
+016b2     30 7F 30 18 | 	byte	$7e, $3c, $18, $00, $00, $00, $00, $00, $00, $00, $00, $18, $30, $7f, $30, $18
+016b6     00 00 00 00 
+016ba     00 00 00 00 
+016be     00 00 00    | 	byte	$00[11]
+016c1     0C 06 7F 06 
+016c5     0C 00 00 00 
+016c9     00 00 00 00 
+016cd     00 00 00 00 | 	byte	$0c, $06, $7f, $06, $0c, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+016d1     00 03 03 03 
+016d5     7F 00 00 00 
+016d9     00 00 00 00 
+016dd     00 00 00 00 | 	byte	$00, $03, $03, $03, $7f, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+016e1     14 36 7F 36 
+016e5     14 00 00 00 
+016e9     00 00 00 00 
+016ed     00 00 00 08 | 	byte	$14, $36, $7f, $36, $14, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $08
+016f1     1C 1C 3E 3E 
+016f5     7F 7F 00 00 
+016f9     00 00 00 00 
+016fd     00 00 00 7F | 	byte	$1c, $1c, $3e, $3e, $7f, $7f, $00, $00, $00, $00, $00, $00, $00, $00, $00, $7f
+01701     7F 3E 3E 1C 
+01705     1C 08 00 00 
+01709     00 00 00 00 
+0170d     00 00 00 00 | 	byte	$7f, $3e, $3e, $1c, $1c, $08, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+01711     00 00 00 00 
+01715     00 00 00 00 
+01719     00 00 00 00 
+0171d     00 00       | 	byte	$00[14]
+0171f     18 3C 3C 3C 
+01723     18 18 18 00 
+01727     18 18 00 00 
+0172b     00 00 66 66 | 	byte	$18, $3c, $3c, $3c, $18, $18, $18, $00, $18, $18, $00, $00, $00, $00, $66, $66
+0172f     66 24 00 00 
+01733     00 00 00 00 
+01737     00 00 00 00 
+0173b     00 00 00 00 | 	byte	$66, $24, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+0173f     00 36 36 7F 
+01743     36 36 36 7F 
+01747     36 36 00 00 
+0174b     00 00 18 18 | 	byte	$00, $36, $36, $7f, $36, $36, $36, $7f, $36, $36, $00, $00, $00, $00, $18, $18
+0174f     3E 63 43 03 
+01753     3E 60 60 61 
+01757     63 3E 18 18 
+0175b     00 00 00 00 | 	byte	$3e, $63, $43, $03, $3e, $60, $60, $61, $63, $3e, $18, $18, $00, $00, $00, $00
+0175f     00 00 43 63 
+01763     30 18 0C 06 
+01767     63 61 00 00 
+0176b     00 00 00 00 | 	byte	$00, $00, $43, $63, $30, $18, $0c, $06, $63, $61, $00, $00, $00, $00, $00, $00
+0176f     1C 36 36 1C 
+01773     6E 3B 33 33 
+01777     33 6E 00 00 
+0177b     00 00 00 00 | 	byte	$1c, $36, $36, $1c, $6e, $3b, $33, $33, $33, $6e, $00, $00, $00, $00, $00, $00
+0177f     0C 0C 0C 06 
+01783     00 00 00 00 
+01787     00 00 00 00 
+0178b     00 00 00 00 | 	byte	$0c, $0c, $0c, $06, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+0178f     30 18 0C 0C 
+01793     0C 0C 0C 0C 
+01797     18 30 00 00 
+0179b     00 00 00 00 | 	byte	$30, $18, $0c, $0c, $0c, $0c, $0c, $0c, $18, $30, $00, $00, $00, $00, $00, $00
+0179f     0C 18 30 30 
+017a3     30 30 30 30 
+017a7     18 0C 00 00 
+017ab     00 00 00 00 | 	byte	$0c, $18, $30, $30, $30, $30, $30, $30, $18, $0c, $00, $00, $00, $00, $00, $00
+017af     00 00 00 66 
+017b3     3C FF 3C 66 
+017b7     00 00 00 00 
+017bb     00 00 00 00 | 	byte	$00, $00, $00, $66, $3c, $ff, $3c, $66, $00, $00, $00, $00, $00, $00, $00, $00
+017bf     00 00 00 18 
+017c3     18 7E 18 18 
+017c7     00 00 00 00 
+017cb     00 00 00 00 | 	byte	$00, $00, $00, $18, $18, $7e, $18, $18, $00, $00, $00, $00, $00, $00, $00, $00
+017cf     00 00 00 00 
+017d3     00 00 00 00 | 	byte	$00[8]
+017d7     18 18 18 0C 
+017db     00 00 00 00 
+017df     00 00 00 00 
+017e3     00 7F 00 00 | 	byte	$18, $18, $18, $0c, $00, $00, $00, $00, $00, $00, $00, $00, $00, $7f, $00, $00
+017e7     00 00 00 00 
+017eb     00 00 00 00 
+017ef     00 00 00 00 
+017f3     00 00 00 00 | 	byte	$00[16]
+017f7     18 18 00 00 
+017fb     00 00 00 00 
+017ff     00 00 40 60 
+01803     30 18 0C 06 | 	byte	$18, $18, $00, $00, $00, $00, $00, $00, $00, $00, $40, $60, $30, $18, $0c, $06
+01807     03 01 00 00 
+0180b     00 00 00 00 
+0180f     1C 36 63 63 
+01813     6B 6B 63 63 | 	byte	$03, $01, $00, $00, $00, $00, $00, $00, $1c, $36, $63, $63, $6b, $6b, $63, $63
+01817     36 1C 00 00 
+0181b     00 00 00 00 
+0181f     18 1C 1E 18 
+01823     18 18 18 18 | 	byte	$36, $1c, $00, $00, $00, $00, $00, $00, $18, $1c, $1e, $18, $18, $18, $18, $18
+01827     18 7E 00 00 
+0182b     00 00 00 00 
+0182f     3E 63 60 30 
+01833     18 0C 06 03 | 	byte	$18, $7e, $00, $00, $00, $00, $00, $00, $3e, $63, $60, $30, $18, $0c, $06, $03
+01837     63 7F 00 00 
+0183b     00 00 00 00 
+0183f     3E 63 60 60 
+01843     3C 60 60 60 | 	byte	$63, $7f, $00, $00, $00, $00, $00, $00, $3e, $63, $60, $60, $3c, $60, $60, $60
+01847     63 3E 00 00 
+0184b     00 00 00 00 
+0184f     30 38 3C 36 
+01853     33 7F 30 30 | 	byte	$63, $3e, $00, $00, $00, $00, $00, $00, $30, $38, $3c, $36, $33, $7f, $30, $30
+01857     30 78 00 00 
+0185b     00 00 00 00 
+0185f     7F 03 03 03 
+01863     3F 60 60 60 | 	byte	$30, $78, $00, $00, $00, $00, $00, $00, $7f, $03, $03, $03, $3f, $60, $60, $60
+01867     63 3E 00 00 
+0186b     00 00 00 00 
+0186f     1C 06 03 03 
+01873     3F 63 63 63 | 	byte	$63, $3e, $00, $00, $00, $00, $00, $00, $1c, $06, $03, $03, $3f, $63, $63, $63
+01877     63 3E 00 00 
+0187b     00 00 00 00 
+0187f     7F 63 60 60 
+01883     30 18 0C 0C | 	byte	$63, $3e, $00, $00, $00, $00, $00, $00, $7f, $63, $60, $60, $30, $18, $0c, $0c
+01887     0C 0C 00 00 
+0188b     00 00 00 00 
+0188f     3E 63 63 63 
+01893     3E 63 63 63 | 	byte	$0c, $0c, $00, $00, $00, $00, $00, $00, $3e, $63, $63, $63, $3e, $63, $63, $63
+01897     63 3E 00 00 
+0189b     00 00 00 00 
+0189f     3E 63 63 63 
+018a3     7E 60 60 60 | 	byte	$63, $3e, $00, $00, $00, $00, $00, $00, $3e, $63, $63, $63, $7e, $60, $60, $60
+018a7     30 1E 00 00 
+018ab     00 00 00 00 
+018af     00 00 00 18 
+018b3     18 00 00 00 | 	byte	$30, $1e, $00, $00, $00, $00, $00, $00, $00, $00, $00, $18, $18, $00, $00, $00
+018b7     18 18 00 00 
+018bb     00 00 00 00 
+018bf     00 00 00 18 
+018c3     18 00 00 00 | 	byte	$18, $18, $00, $00, $00, $00, $00, $00, $00, $00, $00, $18, $18, $00, $00, $00
+018c7     18 18 0C 00 
+018cb     00 00 00 00 
+018cf     00 60 30 18 
+018d3     0C 06 0C 18 | 	byte	$18, $18, $0c, $00, $00, $00, $00, $00, $00, $60, $30, $18, $0c, $06, $0c, $18
+018d7     30 60 00 00 
+018db     00 00 00 00 
+018df     00 00 00 7E 
+018e3     00 00 7E 00 | 	byte	$30, $60, $00, $00, $00, $00, $00, $00, $00, $00, $00, $7e, $00, $00, $7e, $00
+018e7     00 00 00 00 
+018eb     00 00 00 00 
+018ef     00          | 	byte	$00[9]
+018f0     06 0C 18 30 
+018f4     60 30 18 0C 
+018f8     06 00 00 00 
+018fc     00 00 00 3E | 	byte	$06, $0c, $18, $30, $60, $30, $18, $0c, $06, $00, $00, $00, $00, $00, $00, $3e
+01900     63 63 30 18 
+01904     18 18 00 18 
+01908     18 00 00 00 
+0190c     00 00 00 00 | 	byte	$63, $63, $30, $18, $18, $18, $00, $18, $18, $00, $00, $00, $00, $00, $00, $00
+01910     3E 63 63 7B 
+01914     7B 7B 3B 03 
+01918     3E 00 00 00 
+0191c     00 00 00 08 | 	byte	$3e, $63, $63, $7b, $7b, $7b, $3b, $03, $3e, $00, $00, $00, $00, $00, $00, $08
+01920     1C 36 63 63 
+01924     7F 63 63 63 
+01928     63 00 00 00 
+0192c     00 00 00 3F | 	byte	$1c, $36, $63, $63, $7f, $63, $63, $63, $63, $00, $00, $00, $00, $00, $00, $3f
+01930     66 66 66 3E 
+01934     66 66 66 66 
+01938     3F 00 00 00 
+0193c     00 00 00 3C | 	byte	$66, $66, $66, $3e, $66, $66, $66, $66, $3f, $00, $00, $00, $00, $00, $00, $3c
+01940     66 43 03 03 
+01944     03 03 43 66 
+01948     3C 00 00 00 
+0194c     00 00 00 1F | 	byte	$66, $43, $03, $03, $03, $03, $43, $66, $3c, $00, $00, $00, $00, $00, $00, $1f
+01950     36 66 66 66 
+01954     66 66 66 36 
+01958     1F 00 00 00 
+0195c     00 00 00 7F | 	byte	$36, $66, $66, $66, $66, $66, $66, $36, $1f, $00, $00, $00, $00, $00, $00, $7f
+01960     66 46 16 1E 
+01964     16 06 46 66 
+01968     7F 00 00 00 
+0196c     00 00 00 7F | 	byte	$66, $46, $16, $1e, $16, $06, $46, $66, $7f, $00, $00, $00, $00, $00, $00, $7f
+01970     66 46 16 1E 
+01974     16 06 06 06 
+01978     0F 00 00 00 
+0197c     00 00 00 3C | 	byte	$66, $46, $16, $1e, $16, $06, $06, $06, $0f, $00, $00, $00, $00, $00, $00, $3c
+01980     66 43 03 03 
+01984     7B 63 63 66 
+01988     5C 00 00 00 
+0198c     00 00 00 63 | 	byte	$66, $43, $03, $03, $7b, $63, $63, $66, $5c, $00, $00, $00, $00, $00, $00, $63
+01990     63 63 63 7F 
+01994     63 63 63 63 
+01998     63 00 00 00 
+0199c     00 00 00 3C | 	byte	$63, $63, $63, $7f, $63, $63, $63, $63, $63, $00, $00, $00, $00, $00, $00, $3c
+019a0     18 18 18 18 
+019a4     18 18 18 18 | 	byte	$18[8]
+019a8     3C 00 00 00 
+019ac     00 00 00 78 
+019b0     30 30 30 30 
+019b4     30 33 33 33 | 	byte	$3c, $00, $00, $00, $00, $00, $00, $78, $30, $30, $30, $30, $30, $33, $33, $33
+019b8     1E 00 00 00 
+019bc     00 00 00 67 
+019c0     66 66 36 1E 
+019c4     1E 36 66 66 | 	byte	$1e, $00, $00, $00, $00, $00, $00, $67, $66, $66, $36, $1e, $1e, $36, $66, $66
+019c8     67 00 00 00 
+019cc     00 00 00 0F 
+019d0     06 06 06 06 
+019d4     06 06 46 66 | 	byte	$67, $00, $00, $00, $00, $00, $00, $0f, $06, $06, $06, $06, $06, $06, $46, $66
+019d8     7F 00 00 00 
+019dc     00 00 00 63 
+019e0     77 7F 7F 6B 
+019e4     63 63 63 63 | 	byte	$7f, $00, $00, $00, $00, $00, $00, $63, $77, $7f, $7f, $6b, $63, $63, $63, $63
+019e8     63 00 00 00 
+019ec     00 00 00 63 
+019f0     67 6F 7F 7B 
+019f4     73 63 63 63 | 	byte	$63, $00, $00, $00, $00, $00, $00, $63, $67, $6f, $7f, $7b, $73, $63, $63, $63
+019f8     63 00 00 00 
+019fc     00 00 00 3E 
+01a00     63 63 63 63 
+01a04     63 63 63 63 | 	byte	$63, $00, $00, $00, $00, $00, $00, $3e, $63, $63, $63, $63, $63, $63, $63, $63
+01a08     3E 00 00 00 
+01a0c     00 00 00 3F 
+01a10     66 66 66 3E 
+01a14     06 06 06 06 | 	byte	$3e, $00, $00, $00, $00, $00, $00, $3f, $66, $66, $66, $3e, $06, $06, $06, $06
+01a18     0F 00 00 00 
+01a1c     00 00 00 3E 
+01a20     63 63 63 63 
+01a24     63 63 6B 7B | 	byte	$0f, $00, $00, $00, $00, $00, $00, $3e, $63, $63, $63, $63, $63, $63, $6b, $7b
+01a28     3E 30 70 00 
+01a2c     00 00 00 3F 
+01a30     66 66 66 3E 
+01a34     36 66 66 66 | 	byte	$3e, $30, $70, $00, $00, $00, $00, $3f, $66, $66, $66, $3e, $36, $66, $66, $66
+01a38     67 00 00 00 
+01a3c     00 00 00 3E 
+01a40     63 63 06 1C 
+01a44     30 60 63 63 | 	byte	$67, $00, $00, $00, $00, $00, $00, $3e, $63, $63, $06, $1c, $30, $60, $63, $63
+01a48     3E 00 00 00 
+01a4c     00 00 00 7E 
+01a50     7E 5A 18 18 
+01a54     18 18 18 18 | 	byte	$3e, $00, $00, $00, $00, $00, $00, $7e, $7e, $5a, $18, $18, $18, $18, $18, $18
+01a58     3C 00 00 00 
+01a5c     00 00 00 63 
+01a60     63 63 63 63 
+01a64     63 63 63 63 | 	byte	$3c, $00, $00, $00, $00, $00, $00, $63, $63, $63, $63, $63, $63, $63, $63, $63
+01a68     3E 00 00 00 
+01a6c     00 00 00 63 
+01a70     63 63 63 63 
+01a74     63 63 36 1C | 	byte	$3e, $00, $00, $00, $00, $00, $00, $63, $63, $63, $63, $63, $63, $63, $36, $1c
+01a78     08 00 00 00 
+01a7c     00 00 00 63 
+01a80     63 63 63 6B 
+01a84     6B 6B 7F 77 | 	byte	$08, $00, $00, $00, $00, $00, $00, $63, $63, $63, $63, $6b, $6b, $6b, $7f, $77
+01a88     36 00 00 00 
+01a8c     00 00 00 63 
+01a90     63 36 3E 1C 
+01a94     1C 3E 36 63 | 	byte	$36, $00, $00, $00, $00, $00, $00, $63, $63, $36, $3e, $1c, $1c, $3e, $36, $63
+01a98     63 00 00 00 
+01a9c     00 00 00 66 
+01aa0     66 66 66 3C 
+01aa4     18 18 18 18 | 	byte	$63, $00, $00, $00, $00, $00, $00, $66, $66, $66, $66, $3c, $18, $18, $18, $18
+01aa8     3C 00 00 00 
+01aac     00 00 00 7F 
+01ab0     63 61 30 18 
+01ab4     0C 06 43 63 | 	byte	$3c, $00, $00, $00, $00, $00, $00, $7f, $63, $61, $30, $18, $0c, $06, $43, $63
+01ab8     7F 00 00 00 
+01abc     00 00 00 3C 
+01ac0     0C 0C 0C 0C 
+01ac4     0C 0C 0C 0C | 	byte	$7f, $00, $00, $00, $00, $00, $00, $3c, $0c, $0c, $0c, $0c, $0c, $0c, $0c, $0c
+01ac8     3C 00 00 00 
+01acc     00 00 00 00 
+01ad0     01 03 07 0E 
+01ad4     1C 38 70 60 | 	byte	$3c, $00, $00, $00, $00, $00, $00, $00, $01, $03, $07, $0e, $1c, $38, $70, $60
+01ad8     40 00 00 00 
+01adc     00 00 00 3C 
+01ae0     30 30 30 30 
+01ae4     30 30 30 30 | 	byte	$40, $00, $00, $00, $00, $00, $00, $3c, $30, $30, $30, $30, $30, $30, $30, $30
+01ae8     3C 00 00 00 
+01aec     1C 36 00 00 
+01af0     00 00 00 00 
+01af4     00 00 00 00 | 	byte	$3c, $00, $00, $00, $1c, $36, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+01af8     00 00 00 00 
+01afc     00 00 00 00 
+01b00     00 00 00 00 
+01b04     00 00 00 00 
+01b08     00          | 	byte	$00[17]
+01b09     FF 00 00 0C 
+01b0d     18 00 00 00 
+01b11     00 00 00 00 
+01b15     00 00 00 00 | 	byte	$ff, $00, $00, $0c, $18, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+01b19     00 00 00 00 
+01b1d     00 00 00 00 
+01b21     00          | 	byte	$00[9]
+01b22     1E 30 3E 33 
+01b26     33 33 6E 00 
+01b2a     00 00 00 00 
+01b2e     00 07 06 06 | 	byte	$1e, $30, $3e, $33, $33, $33, $6e, $00, $00, $00, $00, $00, $00, $07, $06, $06
+01b32     1E 36 66 66 
+01b36     66 66 3E 00 
+01b3a     00 00 00 00 
+01b3e     00 00 00 00 | 	byte	$1e, $36, $66, $66, $66, $66, $3e, $00, $00, $00, $00, $00, $00, $00, $00, $00
+01b42     3E 63 03 03 
+01b46     03 63 3E 00 
+01b4a     00 00 00 00 
+01b4e     00 38 30 30 | 	byte	$3e, $63, $03, $03, $03, $63, $3e, $00, $00, $00, $00, $00, $00, $38, $30, $30
+01b52     3C 36 33 33 
+01b56     33 33 6E 00 
+01b5a     00 00 00 00 
+01b5e     00 00 00 00 | 	byte	$3c, $36, $33, $33, $33, $33, $6e, $00, $00, $00, $00, $00, $00, $00, $00, $00
+01b62     3E 63 7F 03 
+01b66     03 63 3E 00 
+01b6a     00 00 00 00 
+01b6e     00 38 6C 4C | 	byte	$3e, $63, $7f, $03, $03, $63, $3e, $00, $00, $00, $00, $00, $00, $38, $6c, $4c
+01b72     0C 1E 0C 0C 
+01b76     0C 0C 1E 00 
+01b7a     00 00 00 00 
+01b7e     00 00 00 00 | 	byte	$0c, $1e, $0c, $0c, $0c, $0c, $1e, $00, $00, $00, $00, $00, $00, $00, $00, $00
+01b82     6E 33 33 33 
+01b86     33 33 3E 30 
+01b8a     33 1E 00 00 
+01b8e     00 07 06 06 | 	byte	$6e, $33, $33, $33, $33, $33, $3e, $30, $33, $1e, $00, $00, $00, $07, $06, $06
+01b92     36 6E 66 66 
+01b96     66 66 67 00 
+01b9a     00 00 00 00 
+01b9e     00 18 18 00 | 	byte	$36, $6e, $66, $66, $66, $66, $67, $00, $00, $00, $00, $00, $00, $18, $18, $00
+01ba2     1C 18 18 18 
+01ba6     18 18 3C 00 
+01baa     00 00 00 00 
+01bae     00 60 60 00 | 	byte	$1c, $18, $18, $18, $18, $18, $3c, $00, $00, $00, $00, $00, $00, $60, $60, $00
+01bb2     70 60 60 60 
+01bb6     60 60 60 66 
+01bba     66 3C 00 00 
+01bbe     00 07 06 06 | 	byte	$70, $60, $60, $60, $60, $60, $60, $66, $66, $3c, $00, $00, $00, $07, $06, $06
+01bc2     66 36 1E 1E 
+01bc6     36 66 67 00 
+01bca     00 00 00 00 
+01bce     00 1C 18 18 | 	byte	$66, $36, $1e, $1e, $36, $66, $67, $00, $00, $00, $00, $00, $00, $1c, $18, $18
+01bd2     18 18 18 18 
+01bd6     18 18       | 	byte	$18[6]
+01bd8     3C 00 00 00 
+01bdc     00 00 00 00 
+01be0     00 00 37 7F 
+01be4     6B 6B 6B 6B | 	byte	$3c, $00, $00, $00, $00, $00, $00, $00, $00, $00, $37, $7f, $6b, $6b, $6b, $6b
+01be8     63 00 00 00 
+01bec     00 00 00 00 
+01bf0     00 00 3B 66 
+01bf4     66 66 66 66 | 	byte	$63, $00, $00, $00, $00, $00, $00, $00, $00, $00, $3b, $66, $66, $66, $66, $66
+01bf8     66 00 00 00 
+01bfc     00 00 00 00 
+01c00     00 00 3E 63 
+01c04     63 63 63 63 | 	byte	$66, $00, $00, $00, $00, $00, $00, $00, $00, $00, $3e, $63, $63, $63, $63, $63
+01c08     3E 00 00 00 
+01c0c     00 00 00 00 
+01c10     00 00 3B 66 
+01c14     66 66 66 66 | 	byte	$3e, $00, $00, $00, $00, $00, $00, $00, $00, $00, $3b, $66, $66, $66, $66, $66
+01c18     3E 06 06 0F 
+01c1c     00 00 00 00 
+01c20     00 00 6E 33 
+01c24     33 33 33 33 | 	byte	$3e, $06, $06, $0f, $00, $00, $00, $00, $00, $00, $6e, $33, $33, $33, $33, $33
+01c28     3E 30 30 78 
+01c2c     00 00 00 00 
+01c30     00 00 3B 6E 
+01c34     66 06 06 06 | 	byte	$3e, $30, $30, $78, $00, $00, $00, $00, $00, $00, $3b, $6e, $66, $06, $06, $06
+01c38     0F 00 00 00 
+01c3c     00 00 00 00 
+01c40     00 00 3E 63 
+01c44     06 1C 30 63 | 	byte	$0f, $00, $00, $00, $00, $00, $00, $00, $00, $00, $3e, $63, $06, $1c, $30, $63
+01c48     3E 00 00 00 
+01c4c     00 00 00 08 
+01c50     0C 0C 3F 0C 
+01c54     0C 0C 0C 6C | 	byte	$3e, $00, $00, $00, $00, $00, $00, $08, $0c, $0c, $3f, $0c, $0c, $0c, $0c, $6c
+01c58     38 00 00 00 
+01c5c     00 00 00 00 
+01c60     00 00 33 33 
+01c64     33 33 33 33 | 	byte	$38, $00, $00, $00, $00, $00, $00, $00, $00, $00, $33, $33, $33, $33, $33, $33
+01c68     6E 00 00 00 
+01c6c     00 00 00 00 
+01c70     00 00 63 63 
+01c74     63 63 63 36 | 	byte	$6e, $00, $00, $00, $00, $00, $00, $00, $00, $00, $63, $63, $63, $63, $63, $36
+01c78     1C 00 00 00 
+01c7c     00 00 00 00 
+01c80     00 00 63 63 
+01c84     6B 6B 6B 7F | 	byte	$1c, $00, $00, $00, $00, $00, $00, $00, $00, $00, $63, $63, $6b, $6b, $6b, $7f
+01c88     36 00 00 00 
+01c8c     00 00 00 00 
+01c90     00 00 63 36 
+01c94     1C 1C 1C 36 | 	byte	$36, $00, $00, $00, $00, $00, $00, $00, $00, $00, $63, $36, $1c, $1c, $1c, $36
+01c98     63 00 00 00 
+01c9c     00 00 00 00 
+01ca0     00 00 63 63 
+01ca4     63 63 63 63 | 	byte	$63, $00, $00, $00, $00, $00, $00, $00, $00, $00, $63, $63, $63, $63, $63, $63
+01ca8     7E 60 30 1F 
+01cac     00 00 00 00 
+01cb0     00 00 7F 33 
+01cb4     18 0C 06 63 | 	byte	$7e, $60, $30, $1f, $00, $00, $00, $00, $00, $00, $7f, $33, $18, $0c, $06, $63
+01cb8     7F 00 00 00 
+01cbc     00 00 00 70 
+01cc0     18 18 18 0E 
+01cc4     18 18 18 18 | 	byte	$7f, $00, $00, $00, $00, $00, $00, $70, $18, $18, $18, $0e, $18, $18, $18, $18
+01cc8     70 00 00 00 
+01ccc     00 00 00 18 
+01cd0     18 18 18 18 
+01cd4     18 18 18 18 | 	byte	$70, $00, $00, $00, $00, $00, $00, $18, $18, $18, $18, $18, $18, $18, $18, $18
+01cd8     18 00 00 00 
+01cdc     00 00 00 0E 
+01ce0     18 18 18 70 
+01ce4     18 18 18 18 | 	byte	$18, $00, $00, $00, $00, $00, $00, $0e, $18, $18, $18, $70, $18, $18, $18, $18
+01ce8     0E 00 00 00 
+01cec     6E 3B 00 00 
+01cf0     00 00 00 00 
+01cf4     00 00 00 00 | 	byte	$0e, $00, $00, $00, $6e, $3b, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+01cf8     00 00 00 00 
+01cfc     00 00 00 00 
+01d00     00 00       | 	byte	$00[10]
+01d02     08 1C 36 63 
+01d06     63 63 7F 00 
+01d0a     00 00 00 00 
+01d0e     00 3C 66 43 | 	byte	$08, $1c, $36, $63, $63, $63, $7f, $00, $00, $00, $00, $00, $00, $3c, $66, $43
+01d12     03 03 03 03 
+01d16     43 66 3C 18 
+01d1a     30 1E 00 00 
+01d1e     00 00 33 00 | 	byte	$03, $03, $03, $03, $43, $66, $3c, $18, $30, $1e, $00, $00, $00, $00, $33, $00
+01d22     33 33 33 33 
+01d26     33 33       | 	byte	$33[6]
+01d28     6E 00 00 00 
+01d2c     00 00 60 30 
+01d30     18 00 3E 63 
+01d34     7F 03 03 63 | 	byte	$6e, $00, $00, $00, $00, $00, $60, $30, $18, $00, $3e, $63, $7f, $03, $03, $63
+01d38     3E 00 00 00 
+01d3c     00 00 08 1C 
+01d40     36 00 1E 30 
+01d44     3E 33 33 33 | 	byte	$3e, $00, $00, $00, $00, $00, $08, $1c, $36, $00, $1e, $30, $3e, $33, $33, $33
+01d48     6E 00 00 00 
+01d4c     00 00 00 00 
+01d50     33 00 1E 30 
+01d54     3E 33 33 33 | 	byte	$6e, $00, $00, $00, $00, $00, $00, $00, $33, $00, $1e, $30, $3e, $33, $33, $33
+01d58     6E 00 00 00 
+01d5c     00 00 1C 36 
+01d60     1C 00 33 33 
+01d64     33 33 33 33 | 	byte	$6e, $00, $00, $00, $00, $00, $1c, $36, $1c, $00, $33, $33, $33, $33, $33, $33
+01d68     6E 00 00 00 
+01d6c     00 00 60 30 
+01d70     18 00 3E 63 
+01d74     03 03 03 63 | 	byte	$6e, $00, $00, $00, $00, $00, $60, $30, $18, $00, $3e, $63, $03, $03, $03, $63
+01d78     3E 00 00 00 
+01d7c     00 00 00 00 
+01d80     00 00 3E 63 
+01d84     03 03 03 63 | 	byte	$3e, $00, $00, $00, $00, $00, $00, $00, $00, $00, $3e, $63, $03, $03, $03, $63
+01d88     3E 18 30 1E 
+01d8c     00 00 00 1C 
+01d90     58 78 38 18 
+01d94     1C 1E 1A 18 | 	byte	$3e, $18, $30, $1e, $00, $00, $00, $1c, $58, $78, $38, $18, $1c, $1e, $1a, $18
+01d98     3C 00 00 00 
+01d9c     00 00 00 00 
+01da0     63 00 3E 63 
+01da4     7F 03 03 63 | 	byte	$3c, $00, $00, $00, $00, $00, $00, $00, $63, $00, $3e, $63, $7f, $03, $03, $63
+01da8     3E 00 00 00 
+01dac     66 33 00 3E 
+01db0     63 63 63 63 
+01db4     63 63 63 63 | 	byte	$3e, $00, $00, $00, $66, $33, $00, $3e, $63, $63, $63, $63, $63, $63, $63, $63
+01db8     3E 00 00 00 
+01dbc     00 00 CC 66 
+01dc0     33 00 3E 63 
+01dc4     63 63 63 63 | 	byte	$3e, $00, $00, $00, $00, $00, $cc, $66, $33, $00, $3e, $63, $63, $63, $63, $63
+01dc8     3E 00 00 00 
+01dcc     00 00 18 3C 
+01dd0     66 00 1C 18 
+01dd4     18 18 18 18 | 	byte	$3e, $00, $00, $00, $00, $00, $18, $3c, $66, $00, $1c, $18, $18, $18, $18, $18
+01dd8     3C 00 00 00 
+01ddc     30 18 00 7F 
+01de0     63 61 30 18 
+01de4     0C 06 43 63 | 	byte	$3c, $00, $00, $00, $30, $18, $00, $7f, $63, $61, $30, $18, $0c, $06, $43, $63
+01de8     7F 00 00 00 
+01dec     00 63 00 08 
+01df0     1C 36 63 63 
+01df4     7F 63 63 63 | 	byte	$7f, $00, $00, $00, $00, $63, $00, $08, $1c, $36, $63, $63, $7f, $63, $63, $63
+01df8     63 00 00 00 
+01dfc     30 18 00 3C 
+01e00     66 43 03 03 
+01e04     03 03 43 66 | 	byte	$63, $00, $00, $00, $30, $18, $00, $3c, $66, $43, $03, $03, $03, $03, $43, $66
+01e08     3C 00 00 00 
+01e0c     30 18 00 7F 
+01e10     66 46 16 1E 
+01e14     16 06 46 66 | 	byte	$3c, $00, $00, $00, $30, $18, $00, $7f, $66, $46, $16, $1e, $16, $06, $46, $66
+01e18     7F 00 00 00 
+01e1c     0C 06 00 0F 
+01e20     06 06 06 06 
+01e24     06 06 46 66 | 	byte	$7f, $00, $00, $00, $0c, $06, $00, $0f, $06, $06, $06, $06, $06, $06, $46, $66
+01e28     7F 00 00 00 
+01e2c     30 18 00 1C 
+01e30     18 18 18 18 
+01e34     18 18 18 18 | 	byte	$7f, $00, $00, $00, $30, $18, $00, $1c, $18, $18, $18, $18, $18, $18, $18, $18
+01e38     3C 00 00 00 
+01e3c     00 00 08 1C 
+01e40     36 00 3E 63 
+01e44     63 63 63 63 | 	byte	$3c, $00, $00, $00, $00, $00, $08, $1c, $36, $00, $3e, $63, $63, $63, $63, $63
+01e48     3E 00 00 00 
+01e4c     00 00 00 00 
+01e50     63 00 3E 63 
+01e54     63 63 63 63 | 	byte	$3e, $00, $00, $00, $00, $00, $00, $00, $63, $00, $3e, $63, $63, $63, $63, $63
+01e58     3E 00 00 00 
+01e5c     00 00 00 6F 
+01e60     46 26 06 06 
+01e64     06 06 46 66 | 	byte	$3e, $00, $00, $00, $00, $00, $00, $6f, $46, $26, $06, $06, $06, $06, $46, $66
+01e68     7F 00 00 00 
+01e6c     00 00 00 6E 
+01e70     4C 2C 0C 0C 
+01e74     0C 0C 0C 0C | 	byte	$7f, $00, $00, $00, $00, $00, $00, $6e, $4c, $2c, $0c, $0c, $0c, $0c, $0c, $0c
+01e78     1E 00 00 00 
+01e7c     30 18 00 3E 
+01e80     63 63 06 1C 
+01e84     30 60 63 63 | 	byte	$1e, $00, $00, $00, $30, $18, $00, $3e, $63, $63, $06, $1c, $30, $60, $63, $63
+01e88     3E 00 00 00 
+01e8c     00 00 60 30 
+01e90     18 00 3E 63 
+01e94     06 1C 30 63 | 	byte	$3e, $00, $00, $00, $00, $00, $60, $30, $18, $00, $3e, $63, $06, $1c, $30, $63
+01e98     3E 00 00 00 
+01e9c     00 63 00 3E 
+01ea0     63 63 63 63 
+01ea4     63 63 63 63 | 	byte	$3e, $00, $00, $00, $00, $63, $00, $3e, $63, $63, $63, $63, $63, $63, $63, $63
+01ea8     3E 00 00 00 
+01eac     00 63 00 63 
+01eb0     63 63 63 63 
+01eb4     63 63 63 63 | 	byte	$3e, $00, $00, $00, $00, $63, $00, $63, $63, $63, $63, $63, $63, $63, $63, $63
+01eb8     3E 00 00 00 
+01ebc     6C 38 00 7E 
+01ec0     7E 5A 18 18 
+01ec4     18 18 18 18 | 	byte	$3e, $00, $00, $00, $6c, $38, $00, $7e, $7e, $5a, $18, $18, $18, $18, $18, $18
+01ec8     3C 00 00 00 
+01ecc     00 00 60 48 
+01ed0     2C 0C 3F 0C 
+01ed4     0C 0C 0C 6C | 	byte	$3c, $00, $00, $00, $00, $00, $60, $48, $2c, $0c, $3f, $0c, $0c, $0c, $0c, $6c
+01ed8     38 00 00 00 
+01edc     00 00 00 0F 
+01ee0     26 36 1E 0E 
+01ee4     07 07 46 66 | 	byte	$38, $00, $00, $00, $00, $00, $00, $0f, $26, $36, $1e, $0e, $07, $07, $46, $66
+01ee8     7F 00 00 00 
+01eec     00 00 00 00 
+01ef0     00 63 36 1C 
+01ef4     1C 36 63 00 | 	byte	$7f, $00, $00, $00, $00, $00, $00, $00, $00, $63, $36, $1c, $1c, $36, $63, $00
+01ef8     00 00 00 00 
+01efc     00 00       | 	byte	$00[6]
+01efe     36 1C 08 00 
+01f02     3E 63 03 03 
+01f06     03 63 3E 00 
+01f0a     00 00 00 00 | 	byte	$36, $1c, $08, $00, $3e, $63, $03, $03, $03, $63, $3e, $00, $00, $00, $00, $00
+01f0e     30 18 0C 00 
+01f12     1E 30 3E 33 
+01f16     33 33 6E 00 
+01f1a     00 00 00 00 | 	byte	$30, $18, $0c, $00, $1e, $30, $3e, $33, $33, $33, $6e, $00, $00, $00, $00, $00
+01f1e     60 30 18 00 
+01f22     1C 18 18 18 
+01f26     18 18 3C 00 
+01f2a     00 00 00 00 | 	byte	$60, $30, $18, $00, $1c, $18, $18, $18, $18, $18, $3c, $00, $00, $00, $00, $00
+01f2e     60 30 18 00 
+01f32     3E 63 63 63 
+01f36     63 63 3E 00 
+01f3a     00 00 00 00 | 	byte	$60, $30, $18, $00, $3e, $63, $63, $63, $63, $63, $3e, $00, $00, $00, $00, $00
+01f3e     30 18 0C 00 
+01f42     33 33 33 33 
+01f46     33 33 6E 00 
+01f4a     00 00 00 00 | 	byte	$30, $18, $0c, $00, $33, $33, $33, $33, $33, $33, $6e, $00, $00, $00, $00, $00
+01f4e     00 08 1C 36 
+01f52     63 63 7F 63 
+01f56     63 63 63 18 
+01f5a     0C 78 00 00 | 	byte	$00, $08, $1c, $36, $63, $63, $7f, $63, $63, $63, $63, $18, $0c, $78, $00, $00
+01f5e     00 00 00 00 
+01f62     1E 30 3E 33 
+01f66     33 33 6E 18 
+01f6a     0C 78 36 1C | 	byte	$00, $00, $00, $00, $1e, $30, $3e, $33, $33, $33, $6e, $18, $0c, $78, $36, $1c
+01f6e     00 7F 63 61 
+01f72     30 18 0C 06 
+01f76     43 63 7F 00 
+01f7a     00 00 00 00 | 	byte	$00, $7f, $63, $61, $30, $18, $0c, $06, $43, $63, $7f, $00, $00, $00, $00, $00
+01f7e     36 1C 08 00 
+01f82     7F 33 18 0C 
+01f86     06 63 7F 00 
+01f8a     00 00 00 00 | 	byte	$36, $1c, $08, $00, $7f, $33, $18, $0c, $06, $63, $7f, $00, $00, $00, $00, $00
+01f8e     00 7F 66 46 
+01f92     16 1E 16 06 
+01f96     46 66 7F 18 
+01f9a     0C 78 00 00 | 	byte	$00, $7f, $66, $46, $16, $1e, $16, $06, $46, $66, $7f, $18, $0c, $78, $00, $00
+01f9e     00 00 00 00 
+01fa2     3E 63 7F 03 
+01fa6     03 63 3E 18 
+01faa     0C 78 00 00 | 	byte	$00, $00, $00, $00, $3e, $63, $7f, $03, $03, $63, $3e, $18, $0c, $78, $00, $00
+01fae     00 3C 66 03 
+01fb2     1F 03 0F 03 
+01fb6     03 66 3C 00 
+01fba     00 00 00 00 | 	byte	$00, $3c, $66, $03, $1f, $03, $0f, $03, $03, $66, $3c, $00, $00, $00, $00, $00
+01fbe     60 30 18 00 
+01fc2     7F 33 18 0C 
+01fc6     06 63 7F 00 
+01fca     00 00 6C 38 | 	byte	$60, $30, $18, $00, $7f, $33, $18, $0c, $06, $63, $7f, $00, $00, $00, $6c, $38
+01fce     00 3C 66 43 
+01fd2     03 03 03 03 
+01fd6     43 66 3C 00 
+01fda     00 00 00 00 | 	byte	$00, $3c, $66, $43, $03, $03, $03, $03, $43, $66, $3c, $00, $00, $00, $00, $00
+01fde     00 00 00 00 
+01fe2     3E 63 06 1C 
+01fe6     30 63 3E 18 
+01fea     30 1E 00 00 | 	byte	$00, $00, $00, $00, $3e, $63, $06, $1c, $30, $63, $3e, $18, $30, $1e, $00, $00
+01fee     00 00 00 00 
+01ff2     00 00       | 	byte	$00[6]
+01ff4     6C 36 1B 36 
+01ff8     6C 00 00 00 
+01ffc     00 00 00 00 
+02000     00 00 00 00 | 	byte	$6c, $36, $1b, $36, $6c, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+02004     1B 36 6C 36 
+02008     1B 00 00 00 
+0200c     88 22 88 22 
+02010     88 22 88 22 | 	byte	$1b, $36, $6c, $36, $1b, $00, $00, $00, $88, $22, $88, $22, $88, $22, $88, $22
+02014     88 22 88 22 
+02018     88 22 88 22 
+0201c     AA 55 AA 55 
+02020     AA 55 AA 55 | 	byte	$88, $22, $88, $22, $88, $22, $88, $22, $aa, $55, $aa, $55, $aa, $55, $aa, $55
+02024     AA 55 AA 55 
+02028     AA 55 AA 55 
+0202c     BB EE BB EE 
+02030     BB EE BB EE | 	byte	$aa, $55, $aa, $55, $aa, $55, $aa, $55, $bb, $ee, $bb, $ee, $bb, $ee, $bb, $ee
+02034     BB EE BB EE 
+02038     BB EE BB EE 
+0203c     18 18 18 18 
+02040     18 18 18 18 | 	byte	$bb, $ee, $bb, $ee, $bb, $ee, $bb, $ee, $18, $18, $18, $18, $18, $18, $18, $18
+02044     18 18 18 18 
+02048     18 18 18 18 
+0204c     18 18 18 18 
+02050     18 18 18    | 	byte	$18[15]
+02053     1F 18 18 18 
+02057     18 18 18 18 
+0205b     18 30 18 00 
+0205f     08 1C 36 63 | 	byte	$1f, $18, $18, $18, $18, $18, $18, $18, $18, $30, $18, $00, $08, $1c, $36, $63
+02063     63 7F 63 63 
+02067     63 63 00 00 
+0206b     00 1C 36 00 
+0206f     08 1C 36 63 | 	byte	$63, $7f, $63, $63, $63, $63, $00, $00, $00, $1c, $36, $00, $08, $1c, $36, $63
+02073     63 7F 63 63 
+02077     63 63 00 00 
+0207b     00 36 1C 00 
+0207f     7F 66 46 16 | 	byte	$63, $7f, $63, $63, $63, $63, $00, $00, $00, $36, $1c, $00, $7f, $66, $46, $16
+02083     1E 16 06 46 
+02087     66 7F 00 00 
+0208b     00 00 00 00 
+0208f     3E 63 63 06 | 	byte	$1e, $16, $06, $46, $66, $7f, $00, $00, $00, $00, $00, $00, $3e, $63, $63, $06
+02093     1C 30 60 63 
+02097     63 3E 18 30 
+0209b     1E 6C 6C 6C 
+0209f     6C 6C 6F 60 | 	byte	$1c, $30, $60, $63, $63, $3e, $18, $30, $1e, $6c, $6c, $6c, $6c, $6c, $6f, $60
+020a3     6F 6C 6C 6C 
+020a7     6C 6C 6C 6C 
+020ab     6C 6C 6C 6C 
+020af     6C 6C 6C 6C | 	byte	$6f, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c
+020b3     6C 6C 6C 6C 
+020b7     6C 6C 6C 6C 
+020bb     6C          | 	byte	$6c[9]
+020bc     00 00 00 00 
+020c0     00          | 	byte	$00[5]
+020c1     7F 60 6F 6C 
+020c5     6C 6C 6C 6C 
+020c9     6C 6C 6C 6C 
+020cd     6C 6C 6C 6C | 	byte	$7f, $60, $6f, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c
+020d1     6F 60 7F 00 
+020d5     00 00 00 00 
+020d9     00 00 00 18 
+020dd     18 00 7F 63 | 	byte	$6f, $60, $7f, $00, $00, $00, $00, $00, $00, $00, $00, $18, $18, $00, $7f, $63
+020e1     61 30 18 0C 
+020e5     06 43 63 7F 
+020e9     00 00 00 00 
+020ed     00 00 18 18 | 	byte	$61, $30, $18, $0c, $06, $43, $63, $7f, $00, $00, $00, $00, $00, $00, $18, $18
+020f1     00 7F 33 18 
+020f5     0C 06 63 7F 
+020f9     00 00 00 00 
+020fd     00 00 00 00 | 	byte	$00, $7f, $33, $18, $0c, $06, $63, $7f, $00, $00, $00, $00, $00, $00, $00, $00
+02101     00 00 1F 18 
+02105     18 18 18 18 
+02109     18 18 18 18 
+0210d     18 18 18 18 | 	byte	$00, $00, $1f, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18
+02111     18 18 F8 00 
+02115     00 00 00 00 
+02119     00 00 00 18 
+0211d     18 18 18 18 | 	byte	$18, $18, $f8, $00, $00, $00, $00, $00, $00, $00, $00, $18, $18, $18, $18, $18
+02121     18 18 FF 00 
+02125     00 00 00 00 
+02129     00 00 00 00 
+0212d     00 00 00 00 | 	byte	$18, $18, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+02131     00 00 FF 18 
+02135     18 18 18 18 
+02139     18 18 18 18 
+0213d     18 18 18 18 | 	byte	$00, $00, $ff, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18
+02141     18 18 F8 18 
+02145     18 18 18 18 
+02149     18 18 18 00 
+0214d     00 00 00 00 | 	byte	$18, $18, $f8, $18, $18, $18, $18, $18, $18, $18, $18, $00, $00, $00, $00, $00
+02151     00 00 FF 00 
+02155     00 00 00 00 
+02159     00 00 00 18 
+0215d     18 18 18 18 | 	byte	$00, $00, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $18, $18, $18, $18, $18
+02161     18 18 FF 18 
+02165     18 18 18 18 
+02169     18 18 18 63 
+0216d     3E 00 08 1C | 	byte	$18, $18, $ff, $18, $18, $18, $18, $18, $18, $18, $18, $63, $3e, $00, $08, $1c
+02171     36 63 63 7F 
+02175     63 63 63 63 
+02179     00 00 00 00 
+0217d     00 00 63 3E | 	byte	$36, $63, $63, $7f, $63, $63, $63, $63, $00, $00, $00, $00, $00, $00, $63, $3e
+02181     00 1E 30 3E 
+02185     33 33 33 6E 
+02189     00 00 00 6C 
+0218d     6C 6C 6C 6C | 	byte	$00, $1e, $30, $3e, $33, $33, $33, $6e, $00, $00, $00, $6c, $6c, $6c, $6c, $6c
+02191     EC 0C FC 00 
+02195     00 00 00 00 
+02199     00 00 00 00 
+0219d     00 00 00 00 | 	byte	$ec, $0c, $fc, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+021a1     FC 0C EC 6C 
+021a5     6C 6C 6C 6C 
+021a9     6C 6C 6C 6C 
+021ad     6C 6C 6C 6C | 	byte	$fc, $0c, $ec, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c
+021b1     EF 00 FF 00 
+021b5     00 00 00 00 
+021b9     00 00 00 00 
+021bd     00 00 00 00 | 	byte	$ef, $00, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+021c1     FF 00 EF 6C 
+021c5     6C 6C 6C 6C 
+021c9     6C 6C 6C 6C 
+021cd     6C 6C 6C 6C | 	byte	$ff, $00, $ef, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c
+021d1     EC 0C EC 6C 
+021d5     6C 6C 6C 6C 
+021d9     6C 6C 6C 00 
+021dd     00 00 00 00 | 	byte	$ec, $0c, $ec, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $00, $00, $00, $00, $00
+021e1     FF 00 FF 00 
+021e5     00 00 00 00 
+021e9     00 00 00 6C 
+021ed     6C 6C 6C 6C | 	byte	$ff, $00, $ff, $00, $00, $00, $00, $00, $00, $00, $00, $6c, $6c, $6c, $6c, $6c
+021f1     EF 00 EF 6C 
+021f5     6C 6C 6C 6C 
+021f9     6C 6C 6C 00 
+021fd     00 00 00 00 | 	byte	$ef, $00, $ef, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $6c, $00, $00, $00, $00, $00
+02201     63 3E 63 63 
+02205     63 63 3E 63 
+02209     00 00 00 00 
+0220d     00 00 30 7E | 	byte	$63, $3e, $63, $63, $63, $63, $3e, $63, $00, $00, $00, $00, $00, $00, $30, $7e
+02211     30 3C 36 33 
+02215     33 33 33 6E 
+02219     00 00 00 00 
+0221d     00 00 1F 36 | 	byte	$30, $3c, $36, $33, $33, $33, $33, $6e, $00, $00, $00, $00, $00, $00, $1f, $36
+02221     66 66 6F 66 
+02225     66 66 36 1F 
+02229     00 00 00 36 
+0222d     1C 00 1F 36 | 	byte	$66, $66, $6f, $66, $66, $66, $36, $1f, $00, $00, $00, $36, $1c, $00, $1f, $36
+02231     66 66 66 66 
+02235     66 66       | 	byte	$66[6]
+02237     36 1F 00 00 
+0223b     00 00 63 00 
+0223f     7F 66 46 16 
+02243     1E 16 06 46 | 	byte	$36, $1f, $00, $00, $00, $00, $63, $00, $7f, $66, $46, $16, $1e, $16, $06, $46
+02247     66 7F 00 00 
+0224b     00 6C 38 00 
+0224f     38 30 30 3C 
+02253     36 33 33 33 | 	byte	$66, $7f, $00, $00, $00, $6c, $38, $00, $38, $30, $30, $3c, $36, $33, $33, $33
+02257     33 6E 00 00 
+0225b     00 36 1C 00 
+0225f     63 67 6F 7F 
+02263     7B 73 63 63 | 	byte	$33, $6e, $00, $00, $00, $36, $1c, $00, $63, $67, $6f, $7f, $7b, $73, $63, $63
+02267     63 63 00 00 
+0226b     00 30 18 00 
+0226f     3C 18 18 18 
+02273     18 18 18 18 | 	byte	$63, $63, $00, $00, $00, $30, $18, $00, $3c, $18, $18, $18, $18, $18, $18, $18
+02277     18 3C 00 00 
+0227b     00 3C 66 00 
+0227f     3C 18 18 18 
+02283     18 18 18 18 | 	byte	$18, $3c, $00, $00, $00, $3c, $66, $00, $3c, $18, $18, $18, $18, $18, $18, $18
+02287     18 3C 00 00 
+0228b     00 00 00 36 
+0228f     1C 08 00 3E 
+02293     63 7F 03 03 | 	byte	$18, $3c, $00, $00, $00, $00, $00, $36, $1c, $08, $00, $3e, $63, $7f, $03, $03
+02297     63 3E 00 00 
+0229b     00 18 18 18 
+0229f     18 18 18 18 
+022a3     1F 00 00 00 | 	byte	$63, $3e, $00, $00, $00, $18, $18, $18, $18, $18, $18, $18, $1f, $00, $00, $00
+022a7     00 00 00 00 
+022ab     00 00 00 00 
+022af     00 00 00 00 | 	byte	$00[12]
+022b3     F8 18 18 18 
+022b7     18 18 18 18 
+022bb     18 FF FF FF 
+022bf     FF FF FF FF | 	byte	$f8, $18, $18, $18, $18, $18, $18, $18, $18, $ff, $ff, $ff, $ff, $ff, $ff, $ff
+022c3     FF FF FF FF 
+022c7     FF FF FF FF 
+022cb     FF          | 	byte	$ff[9]
+022cc     00 00 00 00 
+022d0     00 00 00    | 	byte	$00[7]
+022d3     FF FF FF FF 
+022d7     FF FF FF FF 
+022db     FF          | 	byte	$ff[9]
+022dc     00 00 00 7E 
+022e0     7E 5A 18 18 
+022e4     18 18 18 18 
+022e8     3C 18 30 1E | 	byte	$00, $00, $00, $7e, $7e, $5a, $18, $18, $18, $18, $18, $18, $3c, $18, $30, $1e
+022ec     1C 36 1C 63 
+022f0     63 63 63 63 
+022f4     63 63 63 63 
+022f8     3E 00 00 00 | 	byte	$1c, $36, $1c, $63, $63, $63, $63, $63, $63, $63, $63, $63, $3e, $00, $00, $00
+022fc     FF FF FF FF 
+02300     FF FF FF    | 	byte	$ff[7]
+02303     00 00 00 00 
+02307     00 00 00 00 
+0230b     00          | 	byte	$00[9]
+0230c     30 18 00 3E 
+02310     63 63 63 63 
+02314     63 63 63 63 
+02318     3E 00 00 00 | 	byte	$30, $18, $00, $3e, $63, $63, $63, $63, $63, $63, $63, $63, $3e, $00, $00, $00
+0231c     00 00 00 1E 
+02320     33 33 33 1B 
+02324     33 63 63 63 
+02328     33 00 00 00 | 	byte	$00, $00, $00, $1e, $33, $33, $33, $1b, $33, $63, $63, $63, $33, $00, $00, $00
+0232c     1C 36 00 3E 
+02330     63 63 63 63 
+02334     63 63 63 63 
+02338     3E 00 00 00 | 	byte	$1c, $36, $00, $3e, $63, $63, $63, $63, $63, $63, $63, $63, $3e, $00, $00, $00
+0233c     30 18 00 63 
+02340     67 6F 7F 7B 
+02344     73 63 63 63 
+02348     63 00 00 00 | 	byte	$30, $18, $00, $63, $67, $6f, $7f, $7b, $73, $63, $63, $63, $63, $00, $00, $00
+0234c     00 00 60 30 
+02350     18 00 3B 66 
+02354     66 66 66 66 
+02358     66 00 00 00 | 	byte	$00, $00, $60, $30, $18, $00, $3b, $66, $66, $66, $66, $66, $66, $00, $00, $00
+0235c     00 00 36 1C 
+02360     08 00 3B 66 
+02364     66 66 66 66 
+02368     66 00 00 00 | 	byte	$00, $00, $36, $1c, $08, $00, $3b, $66, $66, $66, $66, $66, $66, $00, $00, $00
+0236c     36 1C 00 3E 
+02370     63 63 06 1C 
+02374     30 60 63 63 
+02378     3E 00 00 00 | 	byte	$36, $1c, $00, $3e, $63, $63, $06, $1c, $30, $60, $63, $63, $3e, $00, $00, $00
+0237c     00 00 36 1C 
+02380     08 00 3E 63 
+02384     06 1C 30 63 
+02388     3E 00 00 00 | 	byte	$00, $00, $36, $1c, $08, $00, $3e, $63, $06, $1c, $30, $63, $3e, $00, $00, $00
+0238c     30 18 00 3F 
+02390     66 66 66 3E 
+02394     36 66 66 66 
+02398     6F 00 00 00 | 	byte	$30, $18, $00, $3f, $66, $66, $66, $3e, $36, $66, $66, $66, $6f, $00, $00, $00
+0239c     30 18 00 63 
+023a0     63 63 63 63 
+023a4     63 63 63 63 
+023a8     3E 00 00 00 | 	byte	$30, $18, $00, $63, $63, $63, $63, $63, $63, $63, $63, $63, $3e, $00, $00, $00
+023ac     00 00 60 30 
+023b0     18 00 3B 6E 
+023b4     66 06 06 06 
+023b8     0F 00 00 00 | 	byte	$00, $00, $60, $30, $18, $00, $3b, $6e, $66, $06, $06, $06, $0f, $00, $00, $00
+023bc     66 33 00 63 
+023c0     63 63 63 63 
+023c4     63 63 63 63 
+023c8     3E 00 00 00 | 	byte	$66, $33, $00, $63, $63, $63, $63, $63, $63, $63, $63, $63, $3e, $00, $00, $00
+023cc     00 00 60 30 
+023d0     18 00 63 63 
+023d4     63 63 63 63 
+023d8     7E 60 30 1F | 	byte	$00, $00, $60, $30, $18, $00, $63, $63, $63, $63, $63, $63, $7e, $60, $30, $1f
+023dc     30 18 00 66 
+023e0     66 66 66 3C 
+023e4     18 18 18 18 
+023e8     3C 00 00 00 | 	byte	$30, $18, $00, $66, $66, $66, $66, $3c, $18, $18, $18, $18, $3c, $00, $00, $00
+023ec     00 00 00 08 
+023f0     0C 0C 3F 0C 
+023f4     0C 0C 0C 6C 
+023f8     38 18 30 1E | 	byte	$00, $00, $00, $08, $0c, $0c, $3f, $0c, $0c, $0c, $0c, $6c, $38, $18, $30, $1e
+023fc     30 18 00 00 
+02400     00 00 00 00 
+02404     00 00 00 00 
+02408     00 00 00 00 | 	byte	$30, $18, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+0240c     00 00 00 00 
+02410     00 00 00 00 | 	byte	$00[8]
+02414     7F 00 00 00 
+02418     00 00 00 00 
+0241c     66 33 00 00 
+02420     00 00 00 00 | 	byte	$7f, $00, $00, $00, $00, $00, $00, $00, $66, $33, $00, $00, $00, $00, $00, $00
+02424     00 00 00 00 
+02428     00 00 00 00 
+0242c     00 00 00 00 
+02430     00 00 00 00 
+02434     00 00 00 00 
+02438     00          | 	byte	$00[21]
+02439     0C 06 3C 36 
+0243d     1C 00 00 00 
+02441     00 00 00 00 
+02445     00 00 00 00 | 	byte	$0c, $06, $3c, $36, $1c, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+02449     00 00 00 63 
+0244d     3E 00 00 00 
+02451     00 00 00 00 
+02455     00 00 00 00 | 	byte	$00, $00, $00, $63, $3e, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+02459     00 00 00 00 
+0245d     3E 63 06 1C 
+02461     36 63 63 36 
+02465     1C 30 63 3E | 	byte	$00, $00, $00, $00, $3e, $63, $06, $1c, $36, $63, $63, $36, $1c, $30, $63, $3e
+02469     00 00 00 00 
+0246d     00 00 00 00 | 	byte	$00[8]
+02471     18 00 7E 00 
+02475     18 00 00 00 
+02479     00 00 00 00 
+0247d     00 00 00 00 | 	byte	$18, $00, $7e, $00, $18, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+02481     00 00 00 00 
+02485     00 00 00 00 | 	byte	$00[8]
+02489     18 30 1E 00 
+0248d     00 00 1C 36 
+02491     36 1C 00 00 
+02495     00 00 00 00 | 	byte	$18, $30, $1e, $00, $00, $00, $1c, $36, $36, $1c, $00, $00, $00, $00, $00, $00
+02499     00 00 00 00 
+0249d     63 00 00 00 
+024a1     00 00 00 00 
+024a5     00 00 00 00 | 	byte	$00, $00, $00, $00, $63, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+024a9     00 00 00 18 
+024ad     18 00 00 00 
+024b1     00 00 00 00 
+024b5     00 00 00 00 | 	byte	$00, $00, $00, $18, $18, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+024b9     00 00 00 00 
+024bd     00          | 	byte	$00[5]
+024be     CC 66 33 00 
+024c2     33 33 33 33 
+024c6     33 33 6E 00 
+024ca     00 00 36 1C | 	byte	$cc, $66, $33, $00, $33, $33, $33, $33, $33, $33, $6e, $00, $00, $00, $36, $1c
+024ce     00 3F 66 66 
+024d2     66 3E 36 66 
+024d6     66 66 6F 00 
+024da     00 00 00 00 | 	byte	$00, $3f, $66, $66, $66, $3e, $36, $66, $66, $66, $6f, $00, $00, $00, $00, $00
+024de     36 1C 08 00 
+024e2     3B 6E 66 06 
+024e6     06 06 0F 00 
+024ea     00 00 00 00 | 	byte	$36, $1c, $08, $00, $3b, $6e, $66, $06, $06, $06, $0f, $00, $00, $00, $00, $00
+024ee     00 00 00 7E 
+024f2     7E 7E 7E 7E 
+024f6     7E 7E 00 00 
+024fa     00 00 00 00 | 	byte	$00, $00, $00, $7e, $7e, $7e, $7e, $7e, $7e, $7e, $00, $00, $00, $00, $00, $00
+024fe     00 00 00 00 
+02502     00 00 00 00 
+02506     00 00 00 00 
+0250a     00 00       | 	byte	$00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+0250c     00 00 00 00 
+      ...             
+0253c     00 00 00 00 
+02540     00 00 00    | st_font        file "st4font.def"
+02543     FF FF 00 00 
+02547     00 00 00 00 
+0254b     00 18 18 18 
+0254f     18 18 18 18 | 	byte	$ff, $ff, $00, $00, $00, $00, $00, $00, $00, $18, $18, $18, $18, $18, $18, $18
+02553     18 18 18 18 
+02557     18 18 18 18 
+0255b     18          | 	byte	$18[9]
+0255c     00 00 00 00 
+02560     00 00 00    | 	byte	$00[7]
+02563     FF FF 18 18 
+02567     18 18 18 18 
+0256b     18 18 18 18 
+0256f     18 18 18 18 | 	byte	$ff, $ff, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18
+02573     FF FF 00 00 
+02577     00 00 00 00 
+0257b     00 18 18 18 
+0257f     18 18 18 18 | 	byte	$ff, $ff, $00, $00, $00, $00, $00, $00, $00, $18, $18, $18, $18, $18, $18, $18
+02583     1F 1F 18 18 
+02587     18 18 18 18 
+0258b     18 18 18 18 
+0258f     18 18 18 18 | 	byte	$1f, $1f, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18
+02593     F8 F8 18 18 
+02597     18 18 18 18 
+0259b     18 00 00 00 
+0259f     00 00 00 00 | 	byte	$f8, $f8, $18, $18, $18, $18, $18, $18, $18, $00, $00, $00, $00, $00, $00, $00
+025a3     1F 1F 18 18 
+025a7     18 18 18 18 
+025ab     18 00 00 00 
+025af     00 00 00 00 | 	byte	$1f, $1f, $18, $18, $18, $18, $18, $18, $18, $00, $00, $00, $00, $00, $00, $00
+025b3     F8 F8 18 18 
+025b7     18 18 18 18 
+025bb     18 18 18 18 
+025bf     18 18 18 18 | 	byte	$f8, $f8, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18
+025c3     1F 1F 00 00 
+025c7     00 00 00 00 
+025cb     00 18 18 18 
+025cf     18 18 18 18 | 	byte	$1f, $1f, $00, $00, $00, $00, $00, $00, $00, $18, $18, $18, $18, $18, $18, $18
+025d3     F8 F8 00 00 
+025d7     00 00 00 00 
+025db     00 18 18 18 
+025df     18 18 18 18 | 	byte	$f8, $f8, $00, $00, $00, $00, $00, $00, $00, $18, $18, $18, $18, $18, $18, $18
+025e3     FF FF 18 18 
+025e7     18 18 18 18 
+025eb     18 00 00 18 
+025ef     3C 7E 66 66 | 	byte	$ff, $ff, $18, $18, $18, $18, $18, $18, $18, $00, $00, $18, $3c, $7e, $66, $66
+025f3     66 7E 7E 66 
+025f7     66 66 66 30 
+025fb     18 00 00 7E 
+025ff     7E 06 06 3E | 	byte	$66, $7e, $7e, $66, $66, $66, $66, $30, $18, $00, $00, $7e, $7e, $06, $06, $3e
+02603     3E 06 06 06 
+02607     06 7E 7E 18 
+0260b     0C 30 18 3C 
+0260f     7E 66 66 06 | 	byte	$3e, $06, $06, $06, $06, $7e, $7e, $18, $0c, $30, $18, $3c, $7e, $66, $66, $06
+02613     06 06 06 66 
+02617     66 7E 3C 00 
+0261b     00 30 18 66 
+0261f     66 66 6E 6E | 	byte	$06, $06, $06, $66, $66, $7e, $3c, $00, $00, $30, $18, $66, $66, $66, $6e, $6e
+02623     7E 7E 76 76 
+02627     66 66 66 00 
+0262b     00 30 18 7C 
+0262f     7E 06 06 0E | 	byte	$7e, $7e, $76, $76, $66, $66, $66, $00, $00, $30, $18, $7c, $7e, $06, $06, $0e
+02633     1C 38 70 60 
+02637     60 7E 3E 00 
+0263b     00 30 18 7E 
+0263f     7E 30 30 18 | 	byte	$1c, $38, $70, $60, $60, $7e, $3e, $00, $00, $30, $18, $7e, $7e, $30, $30, $18
+02643     18 0C 0C 06 
+02647     06 7E 7E 00 
+0264b     00 18 18 00 
+0264f     7E 7E 30 30 | 	byte	$18, $0c, $0c, $06, $06, $7e, $7e, $00, $00, $18, $18, $00, $7e, $7e, $30, $30
+02653     18 18 0C 0C 
+02657     06 7E 7E 00 
+0265b     00 30 18 3C 
+0265f     7E 66 66 66 | 	byte	$18, $18, $0c, $0c, $06, $7e, $7e, $00, $00, $30, $18, $3c, $7e, $66, $66, $66
+02663     66 66 66 66 
+02667     66          | 	byte	$66[5]
+02668     7E 3C 00 00 
+0266c     00 00 06 06 
+02670     06 06 16 1E 
+02674     0E 06 06 06 | 	byte	$7e, $3c, $00, $00, $00, $00, $06, $06, $06, $06, $16, $1e, $0e, $06, $06, $06
+02678     7E 7E 00 00 
+0267c     00 00 00 00 
+02680     00 3C 7C 60 
+02684     7C 7E 66 66 | 	byte	$7e, $7e, $00, $00, $00, $00, $00, $00, $00, $3c, $7c, $60, $7c, $7e, $66, $66
+02688     7E 7C 30 18 
+0268c     00 00 00 00 
+02690     00 3C 7E 66 
+02694     66 7E 06 06 | 	byte	$7e, $7c, $30, $18, $00, $00, $00, $00, $00, $3c, $7e, $66, $66, $7e, $06, $06
+02698     7E 7C 18 0C 
+0269c     00 00 30 18 
+026a0     00 3C 3E 06 
+026a4     06 06 06 06 | 	byte	$7e, $7c, $18, $0c, $00, $00, $30, $18, $00, $3c, $3e, $06, $06, $06, $06, $06
+026a8     7E 7C 00 00 
+026ac     00 00 30 18 
+026b0     00 3E 7E 66 
+026b4     66 66 66 66 | 	byte	$7e, $7c, $00, $00, $00, $00, $30, $18, $00, $3e, $7e, $66, $66, $66, $66, $66
+026b8     66 66 00 00 
+026bc     00 00 30 18 
+026c0     00 7C 7E 06 
+026c4     0E 3C 70 60 | 	byte	$66, $66, $00, $00, $00, $00, $30, $18, $00, $7c, $7e, $06, $0e, $3c, $70, $60
+026c8     7E 3E 00 00 
+026cc     00 00 30 18 
+026d0     00 7E 7E 30 
+026d4     18 18 0C 0C | 	byte	$7e, $3e, $00, $00, $00, $00, $30, $18, $00, $7e, $7e, $30, $18, $18, $0c, $0c
+026d8     7E 7E 00 00 
+026dc     00 00 18 18 
+026e0     00 7E 7E 30 
+026e4     18 18 0C 0C | 	byte	$7e, $7e, $00, $00, $00, $00, $18, $18, $00, $7e, $7e, $30, $18, $18, $0c, $0c
+026e8     7E 7E 00 00 
+026ec     00 00 30 18 
+026f0     00 3C 7E 66 
+026f4     66 66 66 66 | 	byte	$7e, $7e, $00, $00, $00, $00, $30, $18, $00, $3c, $7e, $66, $66, $66, $66, $66
+026f8     7E 3C 00 00 
+026fc     00 00 1C 1C 
+02700     18 18 38 3C 
+02704     1C 18 18 18 | 	byte	$7e, $3c, $00, $00, $00, $00, $1c, $1c, $18, $18, $38, $3c, $1c, $18, $18, $18
+02708     3C 3C 00 00 
+0270c     00 00 00 00 
+02710     00 00 00 00 
+02714     00 00 00 00 | 	byte	$3c, $3c, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+02718     00 00 00 00 
+0271c     00 00       | 	byte	$00[6]
+0271e     18 18 18 18 
+02722     18 18 18 18 | 	byte	$18[8]
+02726     00 00 18 18 
+0272a     00 00 00 00 
+0272e     66 66 66 66 
+02732     00 00 00 00 | 	byte	$00, $00, $18, $18, $00, $00, $00, $00, $66, $66, $66, $66, $00, $00, $00, $00
+02736     00 00 00 00 
+0273a     00 00 00 00 
+0273e     00          | 	byte	$00[9]
+0273f     66 66 FF FF 
+02743     66 66 FF FF 
+02747     66 66 00 00 
+0274b     00 00 18 18 | 	byte	$66, $66, $ff, $ff, $66, $66, $ff, $ff, $66, $66, $00, $00, $00, $00, $18, $18
+0274f     7C 7E 06 06 
+02753     3E 7C 60 60 
+02757     7E 3E 18 18 
+0275b     00 00 00 66 | 	byte	$7c, $7e, $06, $06, $3e, $7c, $60, $60, $7e, $3e, $18, $18, $00, $00, $00, $66
+0275f     66 30 30 18 
+02763     18 0C 0C 66 
+02767     66 00 00 00 
+0276b     00 00 3C 7E | 	byte	$66, $30, $30, $18, $18, $0c, $0c, $66, $66, $00, $00, $00, $00, $00, $3c, $7e
+0276f     66 66 3C 1C 
+02773     1C FC FE 66 
+02777     66 FE FC 00 
+0277b     00 00 00 18 | 	byte	$66, $66, $3c, $1c, $1c, $fc, $fe, $66, $66, $fe, $fc, $00, $00, $00, $00, $18
+0277f     18 18 18 18 
+02783     00 00 00 00 
+02787     00 00 00 00 
+0278b     00 00 00 30 | 	byte	$18, $18, $18, $18, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $30
+0278f     18 1C 0C 0C 
+02793     0C 0C 0C 0C 
+02797     1C 18 30 00 
+0279b     00 00 00 0C | 	byte	$18, $1c, $0c, $0c, $0c, $0c, $0c, $0c, $1c, $18, $30, $00, $00, $00, $00, $0c
+0279f     18 38 30 30 
+027a3     30 30 30 30 
+027a7     38 18 0C 00 
+027ab     00 00 00 00 | 	byte	$18, $38, $30, $30, $30, $30, $30, $30, $38, $18, $0c, $00, $00, $00, $00, $00
+027af     66 66 3C 3C 
+027b3     FF FF 3C 3C 
+027b7     66 66 00 00 
+027bb     00 00 00 00 | 	byte	$66, $66, $3c, $3c, $ff, $ff, $3c, $3c, $66, $66, $00, $00, $00, $00, $00, $00
+027bf     00 18 18 18 
+027c3     7E 7E 18 18 
+027c7     18 00 00 00 
+027cb     00 00 00 00 | 	byte	$00, $18, $18, $18, $7e, $7e, $18, $18, $18, $00, $00, $00, $00, $00, $00, $00
+027cf     00 00 00 00 
+027d3     00 00       | 	byte	$00[6]
+027d5     18 18 18 18 
+027d9     18          | 	byte	$18[5]
+027da     0C 04 00 00 
+027de     00 00 00 00 
+027e2     7E 7E 00 00 
+027e6     00 00 00 00 | 	byte	$0c, $04, $00, $00, $00, $00, $00, $00, $7e, $7e, $00, $00, $00, $00, $00, $00
+027ea     00 00 00 00 
+027ee     00 00 00 00 
+027f2     00 00 00 00 
+027f6     00          | 	byte	$00[13]
+027f7     18 18 18 00 
+027fb     00 00 00 60 
+027ff     60 60 30 30 
+02803     18 18 0C 0C | 	byte	$18, $18, $18, $00, $00, $00, $00, $60, $60, $60, $30, $30, $18, $18, $0c, $0c
+02807     06 06 06 00 
+0280b     00 00 00 3C 
+0280f     7E 66 66 66 
+02813     76 6E 66 66 | 	byte	$06, $06, $06, $00, $00, $00, $00, $3c, $7e, $66, $66, $66, $76, $6e, $66, $66
+02817     66 7E 3C 00 
+0281b     00 00 00 18 
+0281f     18 1C 1C 18 
+02823     18 18 18 18 | 	byte	$66, $7e, $3c, $00, $00, $00, $00, $18, $18, $1c, $1c, $18, $18, $18, $18, $18
+02827     18 7E 7E 00 
+0282b     00 00 00 3C 
+0282f     7E 66 66 30 
+02833     30 18 18 0C | 	byte	$18, $7e, $7e, $00, $00, $00, $00, $3c, $7e, $66, $66, $30, $30, $18, $18, $0c
+02837     0C 7E 7E 00 
+0283b     00 00 00 7E 
+0283f     7E 30 30 18 
+02843     18 30 30 66 | 	byte	$0c, $7e, $7e, $00, $00, $00, $00, $7e, $7e, $30, $30, $18, $18, $30, $30, $66
+02847     66 7E 3C 00 
+0284b     00 00 00 30 
+0284f     30 38 38 3C 
+02853     3C 36 36 7E | 	byte	$66, $7e, $3c, $00, $00, $00, $00, $30, $30, $38, $38, $3c, $3c, $36, $36, $7e
+02857     7E 30 30 00 
+0285b     00 00 00 7E 
+0285f     7E 06 06 3E 
+02863     7E 60 60 60 | 	byte	$7e, $30, $30, $00, $00, $00, $00, $7e, $7e, $06, $06, $3e, $7e, $60, $60, $60
+02867     66 7E 3C 00 
+0286b     00 00 00 38 
+0286f     3C 0E 06 06 
+02873     3E 7E 66 66 | 	byte	$66, $7e, $3c, $00, $00, $00, $00, $38, $3c, $0e, $06, $06, $3e, $7e, $66, $66
+02877     66 7E 3C 00 
+0287b     00 00 00 7E 
+0287f     7E 60 60 30 
+02883     30 18 18 0C | 	byte	$66, $7e, $3c, $00, $00, $00, $00, $7e, $7e, $60, $60, $30, $30, $18, $18, $0c
+02887     0C 0C 0C 00 
+0288b     00 00 00 3C 
+0288f     7E 66 66 3C 
+02893     3C 66 66 66 | 	byte	$0c, $0c, $0c, $00, $00, $00, $00, $3c, $7e, $66, $66, $3c, $3c, $66, $66, $66
+02897     66 7E 3C 00 
+0289b     00 00 00 3C 
+0289f     7E 66 66 7E 
+028a3     7C 60 60 60 | 	byte	$66, $7e, $3c, $00, $00, $00, $00, $3c, $7e, $66, $66, $7e, $7c, $60, $60, $60
+028a7     70 3C 1C 00 
+028ab     00 00 00 00 
+028af     00 00 18 18 
+028b3     18 00 00 00 | 	byte	$70, $3c, $1c, $00, $00, $00, $00, $00, $00, $00, $18, $18, $18, $00, $00, $00
+028b7     18 18 18 00 
+028bb     00 00 00 00 
+028bf     00 00 18 18 
+028c3     18 00 00 18 | 	byte	$18, $18, $18, $00, $00, $00, $00, $00, $00, $00, $18, $18, $18, $00, $00, $18
+028c7     18 18 18 0C 
+028cb     04 00 00 00 
+028cf     70 38 1C 0E 
+028d3     07 0E 1C 38 | 	byte	$18, $18, $18, $0c, $04, $00, $00, $00, $70, $38, $1c, $0e, $07, $0e, $1c, $38
+028d7     70 00 00 00 
+028db     00 00 00 00 
+028df     00 00 7E 7E 
+028e3     00 00 7E 7E | 	byte	$70, $00, $00, $00, $00, $00, $00, $00, $00, $00, $7e, $7e, $00, $00, $7e, $7e
+028e7     00 00 00 00 
+028eb     00 00 00 00 | 	byte	$00[8]
+028ef     0E 1C 38 70 
+028f3     E0 70 38 1C 
+028f7     0E 00 00 00 
+028fb     00 00 00 3C | 	byte	$0e, $1c, $38, $70, $e0, $70, $38, $1c, $0e, $00, $00, $00, $00, $00, $00, $3c
+028ff     7E 66 66 30 
+02903     30 18 18 18 
+02907     00 18 18 00 
+0290b     00 00 00 3C | 	byte	$7e, $66, $66, $30, $30, $18, $18, $18, $00, $18, $18, $00, $00, $00, $00, $3c
+0290f     7E 66 66 66 
+02913     66 36 06 66 
+02917     66 7E 3C 00 
+0291b     00 00 00 18 | 	byte	$7e, $66, $66, $66, $66, $36, $06, $66, $66, $7e, $3c, $00, $00, $00, $00, $18
+0291f     3C 7E 66 66 
+02923     66 7E 7E 66 
+02927     66 66 66 00 
+0292b     00 00 00 3E | 	byte	$3c, $7e, $66, $66, $66, $7e, $7e, $66, $66, $66, $66, $00, $00, $00, $00, $3e
+0292f     7E 66 66 7E 
+02933     3E 66 66 66 
+02937     66 7E 3E 00 
+0293b     00 00 00 3C | 	byte	$7e, $66, $66, $7e, $3e, $66, $66, $66, $66, $7e, $3e, $00, $00, $00, $00, $3c
+0293f     7E 66 66 06 
+02943     06 06 06 66 
+02947     66 7E 3C 00 
+0294b     00 00 00 3E | 	byte	$7e, $66, $66, $06, $06, $06, $06, $66, $66, $7e, $3c, $00, $00, $00, $00, $3e
+0294f     7E 66 66 66 
+02953     66 66 66 66 
+02957     66 7E 3E 00 
+0295b     00 00 00 7E | 	byte	$7e, $66, $66, $66, $66, $66, $66, $66, $66, $7e, $3e, $00, $00, $00, $00, $7e
+0295f     7E 06 06 3E 
+02963     3E 06 06 06 
+02967     06 7E 7E 00 
+0296b     00 00 00 7E | 	byte	$7e, $06, $06, $3e, $3e, $06, $06, $06, $06, $7e, $7e, $00, $00, $00, $00, $7e
+0296f     7E 06 06 3E 
+02973     3E 06 06 06 
+02977     06 06 06 00 
+0297b     00 00 00 7C | 	byte	$7e, $06, $06, $3e, $3e, $06, $06, $06, $06, $06, $06, $00, $00, $00, $00, $7c
+0297f     7E 06 06 76 
+02983     76 66 66 66 
+02987     66 7E 3C 00 
+0298b     00 00 00 66 | 	byte	$7e, $06, $06, $76, $76, $66, $66, $66, $66, $7e, $3c, $00, $00, $00, $00, $66
+0298f     66 66 66 7E 
+02993     7E 66 66 66 
+02997     66 66 66 00 
+0299b     00 00 00 7E | 	byte	$66, $66, $66, $7e, $7e, $66, $66, $66, $66, $66, $66, $00, $00, $00, $00, $7e
+0299f     7E 18 18 18 
+029a3     18 18 18 18 
+029a7     18 7E 7E 00 
+029ab     00 00 00 60 | 	byte	$7e, $18, $18, $18, $18, $18, $18, $18, $18, $7e, $7e, $00, $00, $00, $00, $60
+029af     60 60 60 60 
+029b3     60 60 60    | 	byte	$60[7]
+029b6     66 66 7E 3C 
+029ba     00 00 00 00 
+029be     66 66 36 36 
+029c2     1E 1E 36 36 | 	byte	$66, $66, $7e, $3c, $00, $00, $00, $00, $66, $66, $36, $36, $1e, $1e, $36, $36
+029c6     66 66 C6 C6 
+029ca     00 00 00 00 
+029ce     06 06 06 06 
+029d2     06 06 06 06 | 	byte	$66, $66, $c6, $c6, $00, $00, $00, $00, $06, $06, $06, $06, $06, $06, $06, $06
+029d6     06 06 7E 7E 
+029da     00 00 00 00 
+029de     C6 C6 EE EE 
+029e2     FE D6 D6 C6 | 	byte	$06, $06, $7e, $7e, $00, $00, $00, $00, $c6, $c6, $ee, $ee, $fe, $d6, $d6, $c6
+029e6     C6 C6 C6 C6 
+029ea     00 00 00 00 
+029ee     66 66 66 6E 
+029f2     6E 7E 7E 76 | 	byte	$c6, $c6, $c6, $c6, $00, $00, $00, $00, $66, $66, $66, $6e, $6e, $7e, $7e, $76
+029f6     76 66 66 66 
+029fa     00 00 00 00 
+029fe     3C 7E 66 66 
+02a02     66 66 66 66 | 	byte	$76, $66, $66, $66, $00, $00, $00, $00, $3c, $7e, $66, $66, $66, $66, $66, $66
+02a06     66 66 7E 3C 
+02a0a     00 00 00 00 
+02a0e     3E 7E 66 66 
+02a12     66 66 7E 3E | 	byte	$66, $66, $7e, $3c, $00, $00, $00, $00, $3e, $7e, $66, $66, $66, $66, $7e, $3e
+02a16     06 06 06 06 
+02a1a     00 00 00 00 
+02a1e     3C 7E 66 66 
+02a22     66 66 66 66 | 	byte	$06, $06, $06, $06, $00, $00, $00, $00, $3c, $7e, $66, $66, $66, $66, $66, $66
+02a26     66 56 3E 6C 
+02a2a     00 00 00 00 
+02a2e     3E 7E 66 66 
+02a32     66 7E 3E 36 | 	byte	$66, $56, $3e, $6c, $00, $00, $00, $00, $3e, $7e, $66, $66, $66, $7e, $3e, $36
+02a36     66 66 C6 C6 
+02a3a     00 00 00 00 
+02a3e     7C 7E 06 06 
+02a42     0E 1C 38 70 | 	byte	$66, $66, $c6, $c6, $00, $00, $00, $00, $7c, $7e, $06, $06, $0e, $1c, $38, $70
+02a46     60 60 7E 3E 
+02a4a     00 00 00 00 
+02a4e     7E 7E 18 18 
+02a52     18 18 18 18 | 	byte	$60, $60, $7e, $3e, $00, $00, $00, $00, $7e, $7e, $18, $18, $18, $18, $18, $18
+02a56     18 18 18 18 
+02a5a     00 00 00 00 
+02a5e     66 66 66 66 
+02a62     66 66 66 66 | 	byte	$18, $18, $18, $18, $00, $00, $00, $00, $66, $66, $66, $66, $66, $66, $66, $66
+02a66     66 66 7E 3C 
+02a6a     00 00 00 00 
+02a6e     66 66 66 66 
+02a72     66 66 66 66 | 	byte	$66, $66, $7e, $3c, $00, $00, $00, $00, $66, $66, $66, $66, $66, $66, $66, $66
+02a76     3C 3C 18 18 
+02a7a     00 00 00 00 
+02a7e     C6 C6 C6 C6 
+02a82     C6 D6 D6 FE | 	byte	$3c, $3c, $18, $18, $00, $00, $00, $00, $c6, $c6, $c6, $c6, $c6, $d6, $d6, $fe
+02a86     FE EE C6 82 
+02a8a     00 00 00 00 
+02a8e     66 66 66 3C 
+02a92     3C 18 18 3C | 	byte	$fe, $ee, $c6, $82, $00, $00, $00, $00, $66, $66, $66, $3c, $3c, $18, $18, $3c
+02a96     3C 66 66 66 
+02a9a     00 00 00 00 
+02a9e     66 66 66 66 
+02aa2     66 3C 3C 18 | 	byte	$3c, $66, $66, $66, $00, $00, $00, $00, $66, $66, $66, $66, $66, $3c, $3c, $18
+02aa6     18 18 18 18 
+02aaa     00 00 00 00 
+02aae     7E 7E 30 30 
+02ab2     18 18 0C 0C | 	byte	$18, $18, $18, $18, $00, $00, $00, $00, $7e, $7e, $30, $30, $18, $18, $0c, $0c
+02ab6     06 06 7E 7E 
+02aba     00 00 00 00 
+02abe     3C 3C 0C 0C 
+02ac2     0C 0C 0C 0C | 	byte	$06, $06, $7e, $7e, $00, $00, $00, $00, $3c, $3c, $0c, $0c, $0c, $0c, $0c, $0c
+02ac6     0C 0C 3C 3C 
+02aca     00 00 00 00 
+02ace     06 06 0C 0C 
+02ad2     18 18 30 30 | 	byte	$0c, $0c, $3c, $3c, $00, $00, $00, $00, $06, $06, $0c, $0c, $18, $18, $30, $30
+02ad6     60 60 C0 C0 
+02ada     00 00 00 00 
+02ade     3C 3C 30 30 
+02ae2     30 30 30 30 | 	byte	$60, $60, $c0, $c0, $00, $00, $00, $00, $3c, $3c, $30, $30, $30, $30, $30, $30
+02ae6     30 30 3C 3C 
+02aea     00 00 00 00 
+02aee     18 18 3C 3C 
+02af2     66 66 00 00 | 	byte	$30, $30, $3c, $3c, $00, $00, $00, $00, $18, $18, $3c, $3c, $66, $66, $00, $00
+02af6     00 00 00 00 
+02afa     00 00 00 00 
+02afe     00 00 00 00 
+02b02     00 00 00 00 
+02b06     00 00       | 	byte	$00[18]
+02b08     FE FE 00 00 
+02b0c     00 00 0C 0C 
+02b10     18 18 00 00 
+02b14     00 00 00 00 | 	byte	$fe, $fe, $00, $00, $00, $00, $0c, $0c, $18, $18, $00, $00, $00, $00, $00, $00
+02b18     00 00 00 00 
+02b1c     00 00 00 00 
+02b20     00          | 	byte	$00[9]
+02b21     3C 7C 60 7C 
+02b25     7E 66 66 7E 
+02b29     7C 00 00 00 
+02b2d     00 06 06 06 | 	byte	$3c, $7c, $60, $7c, $7e, $66, $66, $7e, $7c, $00, $00, $00, $00, $06, $06, $06
+02b31     3E 7E 66 66 
+02b35     66 66 66 7E 
+02b39     3E 00 00 00 
+02b3d     00 00 00 00 | 	byte	$3e, $7e, $66, $66, $66, $66, $66, $7e, $3e, $00, $00, $00, $00, $00, $00, $00
+02b41     3C 3E 06 06 
+02b45     06 06 06 7E 
+02b49     7C 00 00 00 
+02b4d     00 60 60 60 | 	byte	$3c, $3e, $06, $06, $06, $06, $06, $7e, $7c, $00, $00, $00, $00, $60, $60, $60
+02b51     7C 7E 66 66 
+02b55     66 66 66 7E 
+02b59     7C 00 00 00 
+02b5d     00 00 00 00 | 	byte	$7c, $7e, $66, $66, $66, $66, $66, $7e, $7c, $00, $00, $00, $00, $00, $00, $00
+02b61     3C 7E 66 66 
+02b65     7E 06 06 7E 
+02b69     7C 00 00 00 
+02b6d     00 70 78 18 | 	byte	$3c, $7e, $66, $66, $7e, $06, $06, $7e, $7c, $00, $00, $00, $00, $70, $78, $18
+02b71     18 7E 7E 18 
+02b75     18 18 18 18 
+02b79     18 00 00 00 
+02b7d     00 00 00 00 | 	byte	$18, $7e, $7e, $18, $18, $18, $18, $18, $18, $00, $00, $00, $00, $00, $00, $00
+02b81     7C 7E 66 66 
+02b85     66 66 7E 7C 
+02b89     60 7E 3E 00 
+02b8d     00 06 06 06 | 	byte	$7c, $7e, $66, $66, $66, $66, $7e, $7c, $60, $7e, $3e, $00, $00, $06, $06, $06
+02b91     3E 7E 66 66 
+02b95     66 66 66 66 
+02b99     66 00 00 00 
+02b9d     00 18 18 00 | 	byte	$3e, $7e, $66, $66, $66, $66, $66, $66, $66, $00, $00, $00, $00, $18, $18, $00
+02ba1     1C 1C 18 18 
+02ba5     18 18 18 3C 
+02ba9     3C 00 00 00 
+02bad     00 30 30 00 | 	byte	$1c, $1c, $18, $18, $18, $18, $18, $3c, $3c, $00, $00, $00, $00, $30, $30, $00
+02bb1     30 30 30 30 
+02bb5     30 30 30 30 
+02bb9     30          | 	byte	$30[9]
+02bba     3E 1E 00 00 
+02bbe     06 06 06 36 
+02bc2     36 1E 1E 1E 
+02bc6     36 36 66 66 | 	byte	$3e, $1e, $00, $00, $06, $06, $06, $36, $36, $1e, $1e, $1e, $36, $36, $66, $66
+02bca     00 00 00 00 
+02bce     1C 1C 18 18 
+02bd2     18 18 18 18 
+02bd6     18 18 3C 3C | 	byte	$00, $00, $00, $00, $1c, $1c, $18, $18, $18, $18, $18, $18, $18, $18, $3c, $3c
+02bda     00 00 00 00 
+02bde     00 00 00    | 	byte	$00[7]
+02be1     6C FE FE D6 
+02be5     D6 C6 C6 C6 
+02be9     C6 00 00 00 
+02bed     00 00 00 00 | 	byte	$6c, $fe, $fe, $d6, $d6, $c6, $c6, $c6, $c6, $00, $00, $00, $00, $00, $00, $00
+02bf1     3E 7E 66 66 
+02bf5     66 66 66 66 
+02bf9     66 00 00 00 
+02bfd     00 00 00 00 | 	byte	$3e, $7e, $66, $66, $66, $66, $66, $66, $66, $00, $00, $00, $00, $00, $00, $00
+02c01     3C 7E 66 66 
+02c05     66 66 66 7E 
+02c09     3C 00 00 00 
+02c0d     00 00 00 00 | 	byte	$3c, $7e, $66, $66, $66, $66, $66, $7e, $3c, $00, $00, $00, $00, $00, $00, $00
+02c11     3E 7E 66 66 
+02c15     66 66 66 7E 
+02c19     3E 06 06 00 
+02c1d     00 00 00 00 | 	byte	$3e, $7e, $66, $66, $66, $66, $66, $7e, $3e, $06, $06, $00, $00, $00, $00, $00
+02c21     7C 7E 66 66 
+02c25     66 66 66 7E 
+02c29     7C 60 60 00 
+02c2d     00 00 00 00 | 	byte	$7c, $7e, $66, $66, $66, $66, $66, $7e, $7c, $60, $60, $00, $00, $00, $00, $00
+02c31     3E 7E 66 06 
+02c35     06 06 06 06 
+02c39     06 00 00 00 
+02c3d     00 00 00 00 | 	byte	$3e, $7e, $66, $06, $06, $06, $06, $06, $06, $00, $00, $00, $00, $00, $00, $00
+02c41     7C 7E 06 0E 
+02c45     3C 70 60 7E 
+02c49     3E 00 00 00 
+02c4d     00 00 18 18 | 	byte	$7c, $7e, $06, $0e, $3c, $70, $60, $7e, $3e, $00, $00, $00, $00, $00, $18, $18
+02c51     7E 7E 18 18 
+02c55     18 18 18 78 
+02c59     70 00 00 00 
+02c5d     00 00 00 00 | 	byte	$7e, $7e, $18, $18, $18, $18, $18, $78, $70, $00, $00, $00, $00, $00, $00, $00
+02c61     66 66 66 66 
+02c65     66 66 66    | 	byte	$66[7]
+02c68     7E 7C 00 00 
+02c6c     00 00 00 00 
+02c70     00 66 66 66 
+02c74     66 66 3C 3C | 	byte	$7e, $7c, $00, $00, $00, $00, $00, $00, $00, $66, $66, $66, $66, $66, $3c, $3c
+02c78     18 18 00 00 
+02c7c     00 00 00 00 
+02c80     00 C6 C6 D6 
+02c84     D6 FE FE EE | 	byte	$18, $18, $00, $00, $00, $00, $00, $00, $00, $c6, $c6, $d6, $d6, $fe, $fe, $ee
+02c88     C6 82 00 00 
+02c8c     00 00 00 00 
+02c90     00 66 66 3C 
+02c94     3C 18 3C 3C | 	byte	$c6, $82, $00, $00, $00, $00, $00, $00, $00, $66, $66, $3c, $3c, $18, $3c, $3c
+02c98     66 66 00 00 
+02c9c     00 00 00 00 
+02ca0     00 66 66 66 
+02ca4     66 66 66 7E | 	byte	$66, $66, $00, $00, $00, $00, $00, $00, $00, $66, $66, $66, $66, $66, $66, $7e
+02ca8     7C 60 7E 3E 
+02cac     00 00 00 00 
+02cb0     00 7E 7E 30 
+02cb4     18 18 0C 0C | 	byte	$7c, $60, $7e, $3e, $00, $00, $00, $00, $00, $7e, $7e, $30, $18, $18, $0c, $0c
+02cb8     7E 7E 00 00 
+02cbc     00 00 30 18 
+02cc0     18 18 18 0C 
+02cc4     0C 18 18 18 | 	byte	$7e, $7e, $00, $00, $00, $00, $30, $18, $18, $18, $18, $0c, $0c, $18, $18, $18
+02cc8     18 30 00 00 
+02ccc     00 00 18 18 
+02cd0     18 18 18 18 
+02cd4     18 18 18 18 | 	byte	$18, $30, $00, $00, $00, $00, $18, $18, $18, $18, $18, $18, $18, $18, $18, $18
+02cd8     18 18 00 00 
+02cdc     00 00 0C 18 
+02ce0     18 18 18 30 
+02ce4     30 18 18 18 | 	byte	$18, $18, $00, $00, $00, $00, $0c, $18, $18, $18, $18, $30, $30, $18, $18, $18
+02ce8     18 0C 00 00 
+02cec     00 00 6C 7E 
+02cf0     36 00 00 00 
+02cf4     00 00 00 00 | 	byte	$18, $0c, $00, $00, $00, $00, $6c, $7e, $36, $00, $00, $00, $00, $00, $00, $00
+02cf8     00 00 00 00 
+02cfc     00 00 00 00 
+02d00     00          | 	byte	$00[9]
+02d01     18 18 18 18 
+02d05     18 18 00 00 
+02d09     00 00 00    | 	byte	$18, $18, $18, $18, $18, $18, $00, $00, $00, $00, $00
+02d0c     00 00 00 00 
+02d10     00          | ataripalette   file "ataripalettep2.def"
+02d11     11 11 11 00 
+02d15     22 22 22 00 
+02d19     33 33 33 00 
+02d1d     44 44 44 00 | 	byte	$11, $11, $11, $00, $22, $22, $22, $00, $33, $33, $33, $00, $44, $44, $44, $00
+02d21     55 55 55 00 
+02d25     66 66 66 00 
+02d29     77 77 77 00 
+02d2d     88 88 88 00 | 	byte	$55, $55, $55, $00, $66, $66, $66, $00, $77, $77, $77, $00, $88, $88, $88, $00
+02d31     99 99 99 00 
+02d35     AA AA AA 00 
+02d39     BB BB BB 00 
+02d3d     CC CC CC 00 | 	byte	$99, $99, $99, $00, $aa, $aa, $aa, $00, $bb, $bb, $bb, $00, $cc, $cc, $cc, $00
+02d41     DD DD DD 00 
+02d45     EE EE EE 00 
+02d49     FF FF FF 00 
+02d4d     00 0A 20 00 | 	byte	$dd, $dd, $dd, $00, $ee, $ee, $ee, $00, $ff, $ff, $ff, $00, $00, $0a, $20, $00
+02d51     00 14 40 00 
+02d55     00 1E 60 00 
+02d59     00 28 80 00 
+02d5d     00 32 9F 00 | 	byte	$00, $14, $40, $00, $00, $1e, $60, $00, $00, $28, $80, $00, $00, $32, $9f, $00
+02d61     00 3C BF 00 
+02d65     00 46 DF 00 
+02d69     00 50 FF 00 
+02d6d     1C 63 FF 00 | 	byte	$00, $3c, $bf, $00, $00, $46, $df, $00, $00, $50, $ff, $00, $1c, $63, $ff, $00
+02d71     39 77 FF 00 
+02d75     55 8A FF 00 
+02d79     71 9E FF 00 
+02d7d     8E B1 FF 00 | 	byte	$39, $77, $ff, $00, $55, $8a, $ff, $00, $71, $9e, $ff, $00, $8e, $b1, $ff, $00
+02d81     AA C5 FF 00 
+02d85     C6 D8 FF 00 
+02d89     E3 EC FF 00 
+02d8d     00 00 20 00 | 	byte	$aa, $c5, $ff, $00, $c6, $d8, $ff, $00, $e3, $ec, $ff, $00, $00, $00, $20, $00
+02d91     00 00 40 00 
+02d95     00 00 60 00 
+02d99     00 00 80 00 
+02d9d     00 00 9F 00 | 	byte	$00, $00, $40, $00, $00, $00, $60, $00, $00, $00, $80, $00, $00, $00, $9f, $00
+02da1     00 00 BF 00 
+02da5     00 00 DF 00 
+02da9     00 00 FF 00 
+02dad     1C 1C FF 00 | 	byte	$00, $00, $bf, $00, $00, $00, $df, $00, $00, $00, $ff, $00, $1c, $1c, $ff, $00
+02db1     39 39 FF 00 
+02db5     55 55 FF 00 
+02db9     71 71 FF 00 
+02dbd     8E 8E FF 00 | 	byte	$39, $39, $ff, $00, $55, $55, $ff, $00, $71, $71, $ff, $00, $8e, $8e, $ff, $00
+02dc1     AA AA FF 00 
+02dc5     C6 C6 FF 00 
+02dc9     E3 E3 FF 00 
+02dcd     10 00 20 00 | 	byte	$aa, $aa, $ff, $00, $c6, $c6, $ff, $00, $e3, $e3, $ff, $00, $10, $00, $20, $00
+02dd1     20 00 40 00 
+02dd5     30 00 60 00 
+02dd9     40 00 80 00 
+02ddd     50 00 9F 00 | 	byte	$20, $00, $40, $00, $30, $00, $60, $00, $40, $00, $80, $00, $50, $00, $9f, $00
+02de1     60 00 BF 00 
+02de5     70 00 DF 00 
+02de9     80 00 FF 00 
+02ded     8E 1C FF 00 | 	byte	$60, $00, $bf, $00, $70, $00, $df, $00, $80, $00, $ff, $00, $8e, $1c, $ff, $00
+02df1     9C 39 FF 00 
+02df5     AA 55 FF 00 
+02df9     B8 71 FF 00 
+02dfd     C7 8E FF 00 | 	byte	$9c, $39, $ff, $00, $aa, $55, $ff, $00, $b8, $71, $ff, $00, $c7, $8e, $ff, $00
+02e01     D5 AA FF 00 
+02e05     E3 C6 FF 00 
+02e09     F1 E3 FF 00 
+02e0d     20 00 20 00 | 	byte	$d5, $aa, $ff, $00, $e3, $c6, $ff, $00, $f1, $e3, $ff, $00, $20, $00, $20, $00
+02e11     40 00 40 00 
+02e15     60 00 60 00 
+02e19     80 00 80 00 
+02e1d     9F 00 9F 00 | 	byte	$40, $00, $40, $00, $60, $00, $60, $00, $80, $00, $80, $00, $9f, $00, $9f, $00
+02e21     BF 00 BF 00 
+02e25     DF 00 DF 00 
+02e29     FF 00 FF 00 
+02e2d     FF 1C FF 00 | 	byte	$bf, $00, $bf, $00, $df, $00, $df, $00, $ff, $00, $ff, $00, $ff, $1c, $ff, $00
+02e31     FF 39 FF 00 
+02e35     FF 55 FF 00 
+02e39     FF 71 FF 00 
+02e3d     FF 8E FF 00 | 	byte	$ff, $39, $ff, $00, $ff, $55, $ff, $00, $ff, $71, $ff, $00, $ff, $8e, $ff, $00
+02e41     FF AA FF 00 
+02e45     FF C6 FF 00 
+02e49     FF E3 FF 00 
+02e4d     20 00 10 00 | 	byte	$ff, $aa, $ff, $00, $ff, $c6, $ff, $00, $ff, $e3, $ff, $00, $20, $00, $10, $00
+02e51     40 00 20 00 
+02e55     60 00 30 00 
+02e59     80 00 40 00 
+02e5d     9F 00 50 00 | 	byte	$40, $00, $20, $00, $60, $00, $30, $00, $80, $00, $40, $00, $9f, $00, $50, $00
+02e61     BF 00 60 00 
+02e65     DF 00 70 00 
+02e69     FF 00 80 00 
+02e6d     FF 1C 8E 00 | 	byte	$bf, $00, $60, $00, $df, $00, $70, $00, $ff, $00, $80, $00, $ff, $1c, $8e, $00
+02e71     FF 39 9C 00 
+02e75     FF 55 AA 00 
+02e79     FF 71 B8 00 
+02e7d     FF 8E C7 00 | 	byte	$ff, $39, $9c, $00, $ff, $55, $aa, $00, $ff, $71, $b8, $00, $ff, $8e, $c7, $00
+02e81     FF AA D5 00 
+02e85     FF C6 E3 00 
+02e89     FF E3 F1 00 
+02e8d     20 00 00 00 | 	byte	$ff, $aa, $d5, $00, $ff, $c6, $e3, $00, $ff, $e3, $f1, $00, $20, $00, $00, $00
+02e91     40 00 00 00 
+02e95     60 00 00 00 
+02e99     80 00 00 00 
+02e9d     9F 00 00 00 | 	byte	$40, $00, $00, $00, $60, $00, $00, $00, $80, $00, $00, $00, $9f, $00, $00, $00
+02ea1     BF 00 00 00 
+02ea5     DF 00 00 00 
+02ea9     FF 00 00 00 
+02ead     FF 1C 1C 00 | 	byte	$bf, $00, $00, $00, $df, $00, $00, $00, $ff, $00, $00, $00, $ff, $1c, $1c, $00
+02eb1     FF 39 39 00 
+02eb5     FF 55 55 00 
+02eb9     FF 71 71 00 
+02ebd     FF 8E 8E 00 | 	byte	$ff, $39, $39, $00, $ff, $55, $55, $00, $ff, $71, $71, $00, $ff, $8e, $8e, $00
+02ec1     FF AA AA 00 
+02ec5     FF C6 C6 00 
+02ec9     FF E3 E3 00 
+02ecd     20 08 00 00 | 	byte	$ff, $aa, $aa, $00, $ff, $c6, $c6, $00, $ff, $e3, $e3, $00, $20, $08, $00, $00
+02ed1     40 10 00 00 
+02ed5     60 18 00 00 
+02ed9     80 20 00 00 
+02edd     9F 28 00 00 | 	byte	$40, $10, $00, $00, $60, $18, $00, $00, $80, $20, $00, $00, $9f, $28, $00, $00
+02ee1     BF 30 00 00 
+02ee5     DF 38 00 00 
+02ee9     FF 40 00 00 
+02eed     FF 55 1C 00 | 	byte	$bf, $30, $00, $00, $df, $38, $00, $00, $ff, $40, $00, $00, $ff, $55, $1c, $00
+02ef1     FF 6A 39 00 
+02ef5     FF 80 55 00 
+02ef9     FF 95 71 00 
+02efd     FF AA 8E 00 | 	byte	$ff, $6a, $39, $00, $ff, $80, $55, $00, $ff, $95, $71, $00, $ff, $aa, $8e, $00
+02f01     FF BF AA 00 
+02f05     FF D5 C6 00 
+02f09     FF EA E3 00 
+02f0d     20 10 00 00 | 	byte	$ff, $bf, $aa, $00, $ff, $d5, $c6, $00, $ff, $ea, $e3, $00, $20, $10, $00, $00
+02f11     40 20 00 00 
+02f15     60 30 00 00 
+02f19     80 40 00 00 
+02f1d     9F 50 00 00 | 	byte	$40, $20, $00, $00, $60, $30, $00, $00, $80, $40, $00, $00, $9f, $50, $00, $00
+02f21     BF 60 00 00 
+02f25     DF 70 00 00 
+02f29     FF 80 00 00 
+02f2d     FF 8E 1C 00 | 	byte	$bf, $60, $00, $00, $df, $70, $00, $00, $ff, $80, $00, $00, $ff, $8e, $1c, $00
+02f31     FF 9C 39 00 
+02f35     FF AA 55 00 
+02f39     FF B8 71 00 
+02f3d     FF C7 8E 00 | 	byte	$ff, $9c, $39, $00, $ff, $aa, $55, $00, $ff, $b8, $71, $00, $ff, $c7, $8e, $00
+02f41     FF D5 AA 00 
+02f45     FF E3 C6 00 
+02f49     FF F1 E3 00 
+02f4d     20 18 00 00 | 	byte	$ff, $d5, $aa, $00, $ff, $e3, $c6, $00, $ff, $f1, $e3, $00, $20, $18, $00, $00
+02f51     40 30 00 00 
+02f55     60 48 00 00 
+02f59     80 60 00 00 
+02f5d     9F 78 00 00 | 	byte	$40, $30, $00, $00, $60, $48, $00, $00, $80, $60, $00, $00, $9f, $78, $00, $00
+02f61     BF 90 00 00 
+02f65     DF A8 00 00 
+02f69     FF C0 00 00 
+02f6d     FF C7 1C 00 | 	byte	$bf, $90, $00, $00, $df, $a8, $00, $00, $ff, $c0, $00, $00, $ff, $c7, $1c, $00
+02f71     FF CE 39 00 
+02f75     FF D5 55 00 
+02f79     FF DC 71 00 
+02f7d     FF E3 8E 00 | 	byte	$ff, $ce, $39, $00, $ff, $d5, $55, $00, $ff, $dc, $71, $00, $ff, $e3, $8e, $00
+02f81     FF EA AA 00 
+02f85     FF F1 C6 00 
+02f89     FF F8 E3 00 
+02f8d     18 20 00 00 | 	byte	$ff, $ea, $aa, $00, $ff, $f1, $c6, $00, $ff, $f8, $e3, $00, $18, $20, $00, $00
+02f91     30 40 00 00 
+02f95     48 60 00 00 
+02f99     60 80 00 00 
+02f9d     78 9F 00 00 | 	byte	$30, $40, $00, $00, $48, $60, $00, $00, $60, $80, $00, $00, $78, $9f, $00, $00
+02fa1     90 BF 00 00 
+02fa5     A8 DF 00 00 
+02fa9     C0 FF 00 00 
+02fad     C7 FF 1C 00 | 	byte	$90, $bf, $00, $00, $a8, $df, $00, $00, $c0, $ff, $00, $00, $c7, $ff, $1c, $00
+02fb1     CE FF 39 00 
+02fb5     D5 FF 55 00 
+02fb9     DC FF 71 00 
+02fbd     E3 FF 8E 00 | 	byte	$ce, $ff, $39, $00, $d5, $ff, $55, $00, $dc, $ff, $71, $00, $e3, $ff, $8e, $00
+02fc1     EA FF AA 00 
+02fc5     F1 FF C6 00 
+02fc9     F8 FF E3 00 
+02fcd     00 20 00 00 | 	byte	$ea, $ff, $aa, $00, $f1, $ff, $c6, $00, $f8, $ff, $e3, $00, $00, $20, $00, $00
+02fd1     00 40 00 00 
+02fd5     00 60 00 00 
+02fd9     00 80 00 00 
+02fdd     00 9F 00 00 | 	byte	$00, $40, $00, $00, $00, $60, $00, $00, $00, $80, $00, $00, $00, $9f, $00, $00
+02fe1     00 BF 00 00 
+02fe5     00 DF 00 00 
+02fe9     00 FF 00 00 
+02fed     1C FF 1C 00 | 	byte	$00, $bf, $00, $00, $00, $df, $00, $00, $00, $ff, $00, $00, $1c, $ff, $1c, $00
+02ff1     39 FF 39 00 
+02ff5     55 FF 55 00 
+02ff9     71 FF 71 00 
+02ffd     8E FF 8E 00 | 	byte	$39, $ff, $39, $00, $55, $ff, $55, $00, $71, $ff, $71, $00, $8e, $ff, $8e, $00
+03001     AA FF AA 00 
+03005     C6 FF C6 00 
+03009     E3 FF E3 00 
+0300d     00 20 0A 00 | 	byte	$aa, $ff, $aa, $00, $c6, $ff, $c6, $00, $e3, $ff, $e3, $00, $00, $20, $0a, $00
+03011     00 40 14 00 
+03015     00 60 1E 00 
+03019     00 80 28 00 
+0301d     00 9F 32 00 | 	byte	$00, $40, $14, $00, $00, $60, $1e, $00, $00, $80, $28, $00, $00, $9f, $32, $00
+03021     00 BF 3C 00 
+03025     00 DF 46 00 
+03029     00 FF 50 00 
+0302d     1C FF 63 00 | 	byte	$00, $bf, $3c, $00, $00, $df, $46, $00, $00, $ff, $50, $00, $1c, $ff, $63, $00
+03031     39 FF 77 00 
+03035     55 FF 8A 00 
+03039     71 FF 9E 00 
+0303d     8E FF B1 00 | 	byte	$39, $ff, $77, $00, $55, $ff, $8a, $00, $71, $ff, $9e, $00, $8e, $ff, $b1, $00
+03041     AA FF C5 00 
+03045     C6 FF D8 00 
+03049     E3 FF EC 00 
+0304d     00 20 14 00 | 	byte	$aa, $ff, $c5, $00, $c6, $ff, $d8, $00, $e3, $ff, $ec, $00, $00, $20, $14, $00
+03051     00 40 28 00 
+03055     00 60 3C 00 
+03059     00 80 50 00 
+0305d     00 9F 64 00 | 	byte	$00, $40, $28, $00, $00, $60, $3c, $00, $00, $80, $50, $00, $00, $9f, $64, $00
+03061     00 BF 78 00 
+03065     00 DF 8C 00 
+03069     00 FF A0 00 
+0306d     1C FF AB 00 | 	byte	$00, $bf, $78, $00, $00, $df, $8c, $00, $00, $ff, $a0, $00, $1c, $ff, $ab, $00
+03071     39 FF B5 00 
+03075     55 FF C0 00 
+03079     71 FF CA 00 
+0307d     8E FF D5 00 | 	byte	$39, $ff, $b5, $00, $55, $ff, $c0, $00, $71, $ff, $ca, $00, $8e, $ff, $d5, $00
+03081     AA FF DF 00 
+03085     C6 FF EA 00 
+03089     E3 FF F4 00 
+0308d     00 20 20 00 | 	byte	$aa, $ff, $df, $00, $c6, $ff, $ea, $00, $e3, $ff, $f4, $00, $00, $20, $20, $00
+03091     00 40 40 00 
+03095     00 60 60 00 
+03099     00 80 80 00 
+0309d     00 9F 9F 00 | 	byte	$00, $40, $40, $00, $00, $60, $60, $00, $00, $80, $80, $00, $00, $9f, $9f, $00
+030a1     00 BF BF 00 
+030a5     00 DF DF 00 
+030a9     00 FF FF 00 
+030ad     1C FF FF 00 | 	byte	$00, $bf, $bf, $00, $00, $df, $df, $00, $00, $ff, $ff, $00, $1c, $ff, $ff, $00
+030b1     39 FF FF 00 
+030b5     55 FF FF 00 
+030b9     71 FF FF 00 
+030bd     8E FF FF 00 | 	byte	$39, $ff, $ff, $00, $55, $ff, $ff, $00, $71, $ff, $ff, $00, $8e, $ff, $ff, $00
+030c1     AA FF FF 00 
+030c5     C6 FF FF 00 
+030c9     E3 FF FF 00 
+030cd     00 14 20 00 | 	byte	$aa, $ff, $ff, $00, $c6, $ff, $ff, $00, $e3, $ff, $ff, $00, $00, $14, $20, $00
+030d1     00 28 40 00 
+030d5     00 3C 60 00 
+030d9     00 50 80 00 
+030dd     00 64 9F 00 | 	byte	$00, $28, $40, $00, $00, $3c, $60, $00, $00, $50, $80, $00, $00, $64, $9f, $00
+030e1     00 78 BF 00 
+030e5     00 8C DF 00 
+030e9     00 A0 FF 00 
+030ed     1C AB FF 00 | 	byte	$00, $78, $bf, $00, $00, $8c, $df, $00, $00, $a0, $ff, $00, $1c, $ab, $ff, $00
+030f1     39 B5 FF 00 
+030f5     55 C0 FF 00 
+030f9     71 CA FF 00 
+030fd     8E D5 FF 00 | 	byte	$39, $b5, $ff, $00, $55, $c0, $ff, $00, $71, $ca, $ff, $00, $8e, $d5, $ff, $00
+03101     AA DF FF 00 
+03105     C6 EA FF 00 
+03109     E3 F4 FF    | 	byte	$aa, $df, $ff, $00, $c6, $ea, $ff, $00, $e3, $f4, $ff
+0310c     00 00 00 00 
+03110     00          | vga16		   long  $00000000,$00008000,$00800000,$00808000,$80000000,$80008000,$80400000,$AAAAAA00,$55555500,$0000FF00,$00FF0000,$00FFFF00,$FF000000,$FF00FF00,$FFFF0000,$FFFFFF00
+03111     80 00 00 00 
+03115     00 80 00 00 
+03119     80 80 00 00 
+0311d     00 00 80 00 | 	byte	$80, $00, $00, $00, $00, $80, $00, $00, $80, $80, $00, $00, $00, $00, $80, $00
+03121     80 00 80 00 
+03125     00 40 80 00 
+03129     AA AA AA 00 
+0312d     55 55 55 00 | 	byte	$80, $00, $80, $00, $00, $40, $80, $00, $aa, $aa, $aa, $00, $55, $55, $55, $00
+03131     FF 00 00 00 
+03135     00 FF 00 00 
+03139     FF FF 00 00 
+0313d     00 00 FF 00 | 	byte	$ff, $00, $00, $00, $00, $ff, $00, $00, $ff, $ff, $00, $00, $00, $00, $ff, $00
+03141     FF 00 FF 00 
+03145     00 FF FF 00 
+03149     FF FF FF    | 	byte	$ff, $00, $ff, $00, $00, $ff, $ff, $00, $ff, $ff, $ff
+0314c                 | 
+0314c                 | '**********************************************************************************
+0314c                 | '
+0314c                 | '        Timings and colors definitions
+0314c                 | '
+0314c                 | '**********************************************************************************
+0314c                 | 
+0314c     00 00 81 70 
+03150     00 00 81 70 
+03154     00 00 81 70 
+03158     00 00 81 70 | timingsxxt      long $70810000, $70810000, $70810000, $70810000, $70810000, $20880000 'streamer sets for text mode, to add to timings[0..5]
+0315c     00 00 81 70 
+03160     00 00 88 20 | 	byte	$00, $00, $81, $70, $00, $00, $88, $20
+03164     00 00 81 70 
+03168     00 00 81 70 
+0316c     00 00 81 70 
+03170     00 00 81 70 | timingsxg4      long $70810000, $70810000, $70810000, $70810000, $70810000, $208f0000 'streamer sets for 4bpp mode, to add to timings[0..5]
+03174     00 00 81 70 
+03178     00 00 8F 20 | 	byte	$00, $00, $81, $70, $00, $00, $8f, $20
+0317c                 | 
+0317c                 | '                     bf.hs, hs,  bf.vis  visible, lr bord, pixel, ud bord,  up p., vsync, down p., mode, cpl, scanlines,  clock,                  hubset                  total vis lines
+0317c     10 00 00 00 
+03180     50 00 00 00 
+03184     14 00 00 00 
+03188     00 04 00 00 | timings000      long   16,   80,    20,    1024,    112,     8,     48,      16,      16,    16,      0,  100,   480,     354693878,   %1_110000__11_0110_1100__1111_1011,   576
+0318c     70 00 00 00 
+03190     08 00 00 00 
+03194     30 00 00 00 
+03198     10 00 00 00 | 	byte	$70, $00, $00, $00, $08, $00, $00, $00, $30, $00, $00, $00, $10, $00, $00, $00
+0319c     10 00 00 00 
+031a0     10 00 00 00 
+031a4     00 00 00 00 
+031a8     64 00 00 00 | 	byte	$10, $00, $00, $00, $10, $00, $00, $00, $00, $00, $00, $00, $64, $00, $00, $00
+031ac     E0 01 00 00 
+031b0     F6 32 24 15 
+031b4     FB 6C C3 01 
+031b8     40 02 00 00 | 	byte	$e0, $01, $00, $00, $f6, $32, $24, $15, $fb, $6c, $c3, $01, $40, $02, $00, $00
+031bc     12 00 00 00 
+031c0     40 00 00 00 
+031c4     10 00 00 00 
+031c8     A0 03 00 00 | timings064      long   18,   64,    16,     928,     24,     8,     24,      24,      32,    24,     64,  110,   496,     319215686,   %1_110010__11_0010_1101__1111_1011,   576
+031cc     18 00 00 00 
+031d0     08 00 00 00 
+031d4     18 00 00 00 
+031d8     18 00 00 00 | 	byte	$18, $00, $00, $00, $08, $00, $00, $00, $18, $00, $00, $00, $18, $00, $00, $00
+031dc     20 00 00 00 
+031e0     18 00 00 00 
+031e4     40 00 00 00 
+031e8     6E 00 00 00 | 	byte	$20, $00, $00, $00, $18, $00, $00, $00, $40, $00, $00, $00, $6e, $00, $00, $00
+031ec     F0 01 00 00 
+031f0     46 D8 06 13 
+031f4     FB 2D CB 01 
+031f8     40 02 00 00 | 	byte	$f0, $01, $00, $00, $46, $d8, $06, $13, $fb, $2d, $cb, $01, $40, $02, $00, $00
+031fc     10 00 00 00 
+03200     40 00 00 00 
+03204     10 00 00 00 
+03208     30 03 00 00 | timings128      long   16,   64,    16,     816,      8,     8,     8,       32,      64,    32,    128,  100,   480,     283750000,   %1_111111__11_1000_1011__1111_1011,   576
+0320c     08 00 00 00 
+03210     08 00 00 00 
+03214     08 00 00 00 
+03218     20 00 00 00 | 	byte	$08, $00, $00, $00, $08, $00, $00, $00, $08, $00, $00, $00, $20, $00, $00, $00
+0321c     40 00 00 00 
+03220     20 00 00 00 
+03224     80 00 00 00 
+03228     64 00 00 00 | 	byte	$40, $00, $00, $00, $20, $00, $00, $00, $80, $00, $00, $00, $64, $00, $00, $00
+0322c     E0 01 00 00 
+03230     70 AE E9 10 
+03234     FB 8B FF 01 
+03238     40 02 00 00 | 	byte	$e0, $01, $00, $00, $70, $ae, $e9, $10, $fb, $8b, $ff, $01, $40, $02, $00, $00
+0323c     10 00 00 00 
+03240     50 00 00 00 
+03244     14 00 00 00 
+03248     00 04 00 00 | timings192      long   16,   80,    20,    1024,      0,     8,     0,       16,      16,    16,    192,  128,   576,     354693878,   %1_110000__11_0110_1100__1111_1011,   576
+0324c     00 00 00 00 
+03250     08 00 00 00 
+03254     00 00 00 00 
+03258     10 00 00 00 | 	byte	$00, $00, $00, $00, $08, $00, $00, $00, $00, $00, $00, $00, $10, $00, $00, $00
+0325c     10 00 00 00 
+03260     10 00 00 00 
+03264     C0 00 00 00 
+03268     80 00 00 00 | 	byte	$10, $00, $00, $00, $10, $00, $00, $00, $c0, $00, $00, $00, $80, $00, $00, $00
+0326c     40 02 00 00 
+03270     F6 32 24 15 
+03274     FB 6C C3 01 
+03278     40 02 00 00 | 	byte	$40, $02, $00, $00, $f6, $32, $24, $15, $fb, $6c, $c3, $01, $40, $02, $00, $00
+0327c     50 00 00 00 
+03280     A0 00 00 00 
+03284     54 00 00 00 
+03288     30 03 00 00 | timings256      long   80,  160,    84,     816,      8,     8,     8,        8,      12,     8,    256,  100,   480,     357959184,   %1_110000__11_0110_0100__1111_1011,   496
+0328c     08 00 00 00 
+03290     08 00 00 00 
+03294     08 00 00 00 
+03298     08 00 00 00 | 	byte	$08, $00, $00, $00, $08, $00, $00, $00, $08, $00, $00, $00, $08, $00, $00, $00
+0329c     0C 00 00 00 
+032a0     08 00 00 00 
+032a4     00 01 00 00 
+032a8     64 00 00 00 | 	byte	$0c, $00, $00, $00, $08, $00, $00, $00, $00, $01, $00, $00, $64, $00, $00, $00
+032ac     E0 01 00 00 
+032b0     10 06 56 15 
+032b4     FB 64 C3 01 
+032b8     F0 01 00 00 | 	byte	$e0, $01, $00, $00, $10, $06, $56, $15, $fb, $64, $c3, $01, $f0, $01, $00, $00
+032bc     50 00 00 00 
+032c0     32 00 00 00 
+032c4     50 00 00 00 
+032c8     30 03 00 00 | timings320      long   80,   50,    80,     816,      8,     8,     8,        8,      12,     8,    320,  100,   480,     322162162,   %1_100100__10_0101_0011__1111_1011,   496
+032cc     08 00 00 00 
+032d0     08 00 00 00 
+032d4     08 00 00 00 
+032d8     08 00 00 00 | 	byte	$08, $00, $00, $00, $08, $00, $00, $00, $08, $00, $00, $00, $08, $00, $00, $00
+032dc     0C 00 00 00 
+032e0     08 00 00 00 
+032e4     40 01 00 00 
+032e8     64 00 00 00 | 	byte	$0c, $00, $00, $00, $08, $00, $00, $00, $40, $01, $00, $00, $64, $00, $00, $00
+032ec     E0 01 00 00 
+032f0     F2 CD 33 13 
+032f4     FB 53 92 01 
+032f8     F0 01 00 00 | 	byte	$e0, $01, $00, $00, $f2, $cd, $33, $13, $fb, $53, $92, $01, $f0, $01, $00, $00
+032fc     18 00 00 00 
+03300     30 00 00 00 
+03304     18 00 00 00 
+03308     30 03 00 00 | timings384      long   24,   48,    24,     816,      8,     8,     8,        8,      12,     8,    384,  100,   480,     286363636,   %1_010101__01_0011_1010__1111_1011,   496
+0330c     08 00 00 00 
+03310     08 00 00 00 
+03314     08 00 00 00 
+03318     08 00 00 00 | 	byte	$08, $00, $00, $00, $08, $00, $00, $00, $08, $00, $00, $00, $08, $00, $00, $00
+0331c     0C 00 00 00 
+03320     08 00 00 00 
+03324     80 01 00 00 
+03328     64 00 00 00 | 	byte	$0c, $00, $00, $00, $08, $00, $00, $00, $80, $01, $00, $00, $64, $00, $00, $00
+0332c     E0 01 00 00 
+03330     F4 8F 11 11 
+03334     FB 3A 55 01 
+03338     F0 01 00 00 | 	byte	$e0, $01, $00, $00, $f4, $8f, $11, $11, $fb, $3a, $55, $01, $f0, $01, $00, $00
+0333c     28 00 00 00 
+03340     40 00 00 00 
+03344     2A 00 00 00 
+03348     70 03 00 00 | timings448      long   40,   64,    42,     880,      0,     8,     0,        8,      12,     8,    448,  110,   480,     322162162,   %1_100100__10_0101_0011__1111_1011,   496
+0334c     00 00 00 00 
+03350     08 00 00 00 
+03354     00 00 00 00 
+03358     08 00 00 00 | 	byte	$00, $00, $00, $00, $08, $00, $00, $00, $00, $00, $00, $00, $08, $00, $00, $00
+0335c     0C 00 00 00 
+03360     08 00 00 00 
+03364     C0 01 00 00 
+03368     6E 00 00 00 | 	byte	$0c, $00, $00, $00, $08, $00, $00, $00, $c0, $01, $00, $00, $6e, $00, $00, $00
+0336c     E0 01 00 00 
+03370     F2 CD 33 13 
+03374     FB 53 92 01 
+03378     F0 01 00 00 | 	byte	$e0, $01, $00, $00, $f2, $cd, $33, $13, $fb, $53, $92, $01, $f0, $01, $00, $00
+0337c                 | 
+0337c     10 00 00 00 
+03380     50 00 00 00 
+03384     14 00 00 00 
+03388     00 04 00 00 | timings544      long   16,   80,    20,    1024,    112,     8,     48,      16,      16,    16,    544,  100,   480,     354693878,   %1_110000__11_0110_1100__1111_1011,   576
+0338c     70 00 00 00 
+03390     08 00 00 00 
+03394     30 00 00 00 
+03398     10 00 00 00 | 	byte	$70, $00, $00, $00, $08, $00, $00, $00, $30, $00, $00, $00, $10, $00, $00, $00
+0339c     10 00 00 00 
+033a0     10 00 00 00 
+033a4     20 02 00 00 
+033a8     64 00 00 00 | 	byte	$10, $00, $00, $00, $10, $00, $00, $00, $20, $02, $00, $00, $64, $00, $00, $00
+033ac     E0 01 00 00 
+033b0     F6 32 24 15 
+033b4     FB 6C C3 01 
+033b8     40 02 00 00 | 	byte	$e0, $01, $00, $00, $f6, $32, $24, $15, $fb, $6c, $c3, $01, $40, $02, $00, $00
+033bc                 | 
+033bc                 | 
+033bc     00 75 C7 97 
+033c0     27 47 F6 0A 
+033c4     05 79 CB 9B 
+033c8     2B 4B EA 0F | vgacolors       byte   0, 117, 199, 151, 39, 71, 246, 10, 5, 121, 203, 155, 43, 75, 234, 15
+033cc                 | 
+033cc     28 14 64 FD | hdmi            setq    #10
+033d0     00 41 05 FB |                 rdlong  framebuf,  ptra                 'read pointers
+033d4                 | 
+033d4     29 FE 65 FD |                 setq2   #255
+033d8     A6 00 00 FB |                 rdlong  $000, paletteptr                'read palette
+033dc     02 00 00 FF 
+033e0     00 4C 05 F1 |                 add     paletteptr,##1024                ' Atari type 256 colors  
+033e4     29 1E 64 FD |                 setq2   #15
+033e8     A6 C0 03 FB |                 rdlong  480,paletteptr                  ' 16 color palette at 480
+033ec                 |                 
+033ec                 | 
+033ec     00 72 6D FC |                 wrlong  #aend,#0                         'write driver length to hub#0: DEBUG/demo
+033f0     3C 00 66 FD |                 setcmod #$100                           'enable HDMI mode
+033f4     07 5C 05 F6 |                 mov     ii,#7
+033f8     06 5C 65 F0 |                 shl     ii,#6
+033fc     AA 5C 01 F1 |                 add     ii,hbase
+03400     58 5C 61 FD |                 drvl    ii                                 '#7<<6 + hdmi_base      ' enable HDMI pins
+03404     7B 0B 80 FF 
+03408     AE 00 0B FC |                 wrpin   ##%10110_1111_0111_10_00000_0, ii  '#7<<6 + hdmi_base      ' a '123 ohm BITDAC for pins
+0340c                 | 
+0340c     66 66 86 FF 
+03410     1D 9A 65 FD |                 setxfrq ##$0CCCCCCC+1                   'set streamer freq to 1/10th clk
+03414                 | 
+03414                 | 
+03414                 | ''--------  frame rendering main loop  ---------------------------------------------------
+03414                 | 
+03414     28 1E 64 FD | p101            setq    #15
+03418     A5 06 01 FB |                 rdlong  m_bs,modeptr                     ' read timings
+0341c                 |                 
+0341c     A2 04 01 FB |                 rdlong border,borderptr
+03420                 |      
+03420     01 30 05 F1 |                 add     frames,#1
+03424     A8 58 01 F6 |                 mov     dlptr2,dlptr
+03428                 | 
+03428     A4 32 01 FB |                 rdlong  cursorx, cursorptr               ' read cursor position
+0342c     99 34 E9 F8 |                 getbyte cursory, cursorx,#1              ' y position at byte #1
+03430     99 2E F1 F8 |                 getbyte cursorsh,cursorx,#2              ' shape at byte #2
+03434     FF 32 05 F5 |                 and     cursorx,#255                     ' clear the cursor x varioble from y and shape
+03438                 |  '' mailbox
+03438     A7 66 01 FB |                 rdlong  t1,commandptr                    ' A mailbox interface, read the command
+0343c     04 4E 05 F1 |                 add     commandptr,#4
+03440     A7 68 01 FB |                 rdlong  t2,commandptr                    ' read the argument
+03444     04 4E 85 F1 |                 sub     commandptr,#4                    ' restore the pionter
+03448     00 67 1D F2 |                 cmp     t1,#256  wcz                     '
+0344c     B3 68 31 CC |          if_lt  wrlut   t2,t1                            ' command 0..255-> set the color in LUT
+03450     01 67 05 F6 |                 mov     t1, #257                         ' 257=idle
+03454     A7 66 61 FC |                 wrlong  t1,commandptr                    ' write 257 to hub variable so the program can test if command was done
+03458                 |  '' up porch
+03458                 | 
+03458     7E 60 01 F6 |                 mov     hsync0,sync_000                  '
+0345c     7F 62 01 F6 |                 mov     hsync1,sync_001
+03460     52 14 45 FB |                 callpa  i_upporch ,#blank
+03464     A3 00 68 FC |                 wrlong  #0,vblankptr
+03468                 | 
+03468                 | '' cursor blinking
+03468                 | 
+03468     04 30 0D F4 |                 testb   frames,#4 wz                     ' cursor blinks at framerate/16, todo: define
+0346c     81 32 05 A6 |          if_z   mov     cursorx,#129                     ' to switch the cursor off, move it out of the screen
+03470                 | 
+03470                 | '' main screen
+03470                 | 
+03470     00 2A 05 F6 |                 mov linenum,#0
+03474                 | 
+03474     AC 5A 01 FB | p301            rdlong  dl,dlptr2
+03478                 | 
+03478                 |     
+03478                 | 
+03478     AD 66 E1 F8 |                 getbyte t1,dl,#0 
+0347c     00 66 0D F2 |                 cmp     t1,#0 wz
+03480     1C 01 90 AD |     if_z        jmp     #borderline
+03484                 |     
+03484     00 5A 15 F4 |                  testb   dl,#0  wc     ' bit 0 set = text OR extended:TODO     
+03488     28 00 90 CD |           if_c   jmp     #textline
+0348c                 | '         if_nc  jmp     #graphline
+0348c                 | '        
+0348c     01 2A 05 F1 | p302            add     linenum,#1
+03490     04 58 05 F1 |                 add     dlptr2,#4
+03494     92 2A 09 F2 |                 cmp     linenum,i_totalvis  wz
+03498     D8 FF 9F 5D |          if_nz  jmp     #p301                                  
+0349c                 |                
+0349c     A3 02 68 FC | p112            wrlong  #1,vblankptr 
+034a0     42 18 45 FB |                 callpa  i_downporch ,#blank             'bottom blanks
+034a4                 | 
+034a4     80 60 01 F6 |                 mov     hsync0,sync_222                 'vsync on
+034a8     81 62 01 F6 |                 mov     hsync1,sync_223
+034ac     3F 16 45 FB |                 callpa  i_vsync,#blank                  'vertical sync blanks
+034b0     60 FF 9F FD |                 jmp     #p101                    
+034b4                 |   
+034b4                 | '' ---------------  END of frame rendering loop -------------------------------------------  
+034b4                 | 
+034b4                 | 
+034b4                 | ''--%aaaa_aaaa_aaaa_aaaa_aazz_nnnn_llll_ll_01 - txt
+034b4                 |   '' aaaa_aaaa_aaaa_aaaa_aazz_rrrr_rrrr_cc_10 - graph
+034b4                 |   '' aaaa_aaaa_aaaa-aaaa_aarr_rrrr_rrrr_rr_11 - extended, next long to read 
+034b4                 |   
+034b4                 | '' Display a text line DL[31..12]=addr, nibble #1=textline, zoom: todo
+034b4                 | 
+034b4     99 38 01 F6 | textline        mov     cursorpos2,cursorx              ' we need another var for cursor as this code will repeat 16x for every char line
+034b8                 | 
+034b8     AD 64 51 F8 |                 getnib  fontline,dl,#2                 ' fontline is 0 to 15, a line in font def
+034bc                 | 
+034bc     AD 5E 01 F6 |                 mov     framebuf2,dl                    ' read a line start in the framebuffer from DL entry
+034c0     0E 5E 45 F0 |                 shr     framebuf2,#14
+034c4     02 5E 65 F0 |                 shl     framebuf2,#2 
+034c8     AD 28 01 F6 |                 mov     linestart,dl                  ' linestart will be used for checking cursor y and compute line start addr in the buffer
+034cc     02 28 45 F0 |                 shr     linestart,#2                  ' scanline to char line
+034d0     3F 28 05 F5 |                 and     linestart,#63
+034d4     9A 28 09 F2 |                 cmp     linestart,cursory wz            ' if the cursor is not here
+034d8     81 38 05 56 |           if_nz mov     cursorpos2,#129                 ' move it out of the screen
+034dc                 | 
+034dc     D8 00 B0 FD |                 call    #hsync                          ' now call hsync to gain some time between xconts
+034e0                 | 
+034e0                 |                        ' if fontline =0, get a border color
+034e0                 |                 
+034e0     87 66 31 F9 | p102            getword t1,m_border,#0                  
+034e4     00 66 0D F2 |                 cmp     t1, #0 wz
+034e8     82 0E C1 5C |           if_nz xcont   m_border,border                 ' display a left border if exists
+034ec                 |         
+034ec     97 64 19 F2 |                 cmp     fontline,cursorsh wcz           ' if the cursor have to be not displayed due to its shape
+034f0     81 36 05 C6 |           if_c  mov     cursorpos,#129                  ' move it out of the screen
+034f4     9C 36 01 36 |          if_nc  mov     cursorpos,cursorpos2
+034f8     01 36 05 F1 |                 add     cursorpos,#1                    ' we will substract #1 below so compensate this here
+034fc     A1 68 01 F6 |                 mov     t2,fontbuf                      ' font definition pointer
+03500     B2 68 01 F1 |                 add     t2,fontline                     ' add a current font line
+03504                 |       
+03504     8E 28 D8 FC |                 rep     @p103,i_cpl                     ' display cpl chars
+03508                 | ''---------------------------------------------------------------------------------------
+03508     AF 6A 01 FB |                         rdlong  char,framebuf2          ' read a long char                          '1
+0350c     B5 6C F1 F8 |                         getbyte backcolor,char,#2       ' byte #2 - background color                '2
+03510     B5 6E F9 F8 |                         getbyte charcolor,char,#3       ' byte #3 - foreground color                '3
+03514     B5 6A E1 F8 |                         getbyte char,char, #0           ' word #0 - char code                       '4
+03518     04 5E 05 F1 |                         add     framebuf2,#4            ' point to the next long                    '5
+0351c     04 6A 65 F0 |                         shl     char,#4                 ' 1 char=16 bytes in font def               '6
+03520     B4 6A 01 F1 |                         add     char,t2                 ' add this to font/line pointer             '7
+03524     B5 66 C1 FA |                         rdbyte  t1,char                 ' and get 8 pixels prom there               '8
+03528     01 36 8D F1 |                         sub     cursorpos,#1 wz         ' if there is a cursor                      '9
+0352c     FF 66 65 A5 |                 if_z    xor     t1, #$FF                ' reverse the colors                        '10
+03530                 |                                                                                                             ' prepare to sprite function, not yet implemented
+03530     61 66 61 FD |                         mergeb  t1                      ' convert to 16-color mode                  '11
+03534     B3 10 C1 FC |                         xcont   m_lut1,t1               ' and display this                          '12
+03538                 | 
+03538     B6 66 A1 FA |                         rdlut   t1,backcolor            ' read a background color from palette      '13
+0353c     96 66 31 FC |                         wrlut   t1,lutaddr              ' and write it to LUT #0 or #32             '14
+03540     01 2C 05 F1 |                         add     lutaddr,#1                                                          '15
+03544                 | 
+03544     B7 66 A1 FA |                         rdlut   t1,charcolor            ' the same for the foreground               '16
+03548     96 66 31 FC |                         wrlut   t1,lutaddr                                                          '17
+0354c     01 2C 85 F1 |                         sub     lutaddr,#1                                                          '18
+03550                 | 
+03550     10 10 E5 F4 |                         bitnot  m_lut1,#16                                                          '19
+03554     20 2C 65 F5 |                         xor     lutaddr,#32             ' use LUT #0-1 and 32-33                    '20
+03558                 | 
+03558                 | 
+03558                 | '' rep end  -------------------------------------------------------------------------------
+03558                 | 
+03558                 | 
+03558     87 66 31 F9 | p103            getword  t1,m_border,#0
+0355c     00 66 0D F2 |                 cmp      t1, #0 wz
+03560     82 0E C1 5C |                 if_nz    xcont   m_border,border            'display a right border if exists
+03564                 |                 
+03564     24 FF 9F FD |                 jmp #p302
+03568                 |                 
+03568                 | '' -------------------------------------- END of text line ---------------------------------              
+03568                 |                 
+03568                 | '' %aaaa_aaaa_aaaa_aaaa_aa00_zzcc_rrrr_rrrr - display a graphics line
+03568                 | 
+03568     87 66 31 F9 | graphline       getword t1,m_border,#0                  
+0356c     00 66 0D F2 |                 cmp     t1, #0 wz
+03570     82 0E C1 5C |                 if_nz xcont   m_border,border                 ' display a left border if exists 
+03574                 | 
+03574                 | 
+03574                 | 
+03574     AD 5E 01 F6 |                 mov     framebuf2,dl                    ' read a line start in the framebuffer from DL entry
+03578     0E 5E 65 F0 |                 shl     framebuf2,#14
+0357c     02 5E 45 F0 |                 shr     framebuf2,#2       
+03580                 |                 ''      todo:zzcc 
+03580                 |                                             
+03580     8E 06 D8 FC |                         rep     @p201,i_cpl                     ' display cpl pixels
+03584                 | '         
+03584                 | ''---------------------------------------------------------------------------------------
+03584     AF 66 01 FB |                         rdlong  t1,framebuf2          ' read a long char                          '1
+03588     04 5E 05 F1 |                         add     framebuf2,#4          ' point to the next long                    '5
+0358c     B3 10 C1 FC |                         xcont   m_lut1,t1             ' and display this                          '12
+03590                 | 
+03590                 | 
+03590                 | '' rep end ----------------------------------------------------------------------------
+03590                 |                         
+03590     87 66 31 F9 | p201            getword  t1,m_border,#0
+03594     00 66 0D F2 |                 cmp      t1, #0 wz
+03598     9F 0E C1 5C |                 if_nz    xcont   m_border,border2            'display a right border if exists
+0359c                 |                 
+0359c     EC FE 9F FD |                 jmp #p302
+035a0                 |                 
+035a0                 | 
+035a0                 | '--------------------------------------------------------------------------
+035a0     14 00 B0 FD | borderline      call    #hsync                      ' make a border
+035a4                 | 			'	mov     border,dl                   'set border color according to dl entry
+035a4     82 0C C1 FC |                 xcont   m_vi,border 
+035a8     E0 FE 9F FD |                 jmp     #p302 
+035ac                 | 
+035ac                 | 
+035ac     08 00 B0 FD | blank           call    #hsync                          'blank lines
+035b0     B0 0C C1 FC |                 xcont   m_vi,hsync0
+035b4     FD ED 6F 0B |         _ret_   djnz    pa,#blank
+035b8                 | 
+035b8     B0 06 C1 FC | hsync           xcont   m_bs,hsync0                     'horizontal sync
+035bc     B1 08 B1 FC |                 xzero   m_sn,hsync1
+035c0     B0 0A C1 0C |         _ret_   xcont   m_bv,hsync0
+035c4                 | 
+035c4                 | '' consts and vars
+035c4                 | 
+035c4     52 4D 35 D5 | sync_000        long    %1101010100_1101010100_1101010100_10    '
+035c8     AE 42 35 D5 | sync_001        long    %1101010100_1101010100_0010101011_10    '        hsync
+035cc     52 45 15 55 | sync_222        long    %0101010100_0101010100_0101010100_10    'vsync
+035d0     AE 4A 15 55 | sync_223        long    %0101010100_0101010100_1010101011_10    'vsync + hsync
+035d4                 | 
+035d4     00 2C 1A 00 | border          long    %00000000_00011010_00101100_00000000
+035d8                 | 
+035d8                 | '------ these longs will be set by setmode function
+035d8                 | 
+035d8     00 00 00 00 | m_bs            long    0        'blanks before sync
+035dc     00 00 00 00 | m_sn            long    0        'sync
+035e0     00 00 00 00 | m_bv            long    0        'blanks before visible
+035e4     00 00 00 00 | m_vi            long    0        'visible pixels #
+035e8     00 00 00 00 | m_border        long    0        'left/right borders
+035ec     00 00 00 00 | m_lut1          long    0        'characters
+035f0     00 00 00 00 | i_vborder       long    0        'up/down borders
+035f4     00 00 00 00 | i_upporch       long    0        'up porch lines
+035f8     00 00 00 00 | i_vsync         long    0        'vsync lines
+035fc     00 00 00 00 | i_downporch     long    0        'down porch lines
+03600     00 00 00 00 | i_modenum       long    0        'mode #
+03604     00 00 00 00 | i_cpl           long    0        'chars per line
+03608     00 00 00 00 | i_lines         long    0        'scanlines #
+0360c     00 00 00 00 | i_clock         long   0
+03610     00 00 00 00 | i_hubset        long    0
+03614     00 00 00 00 | i_totalvis      long    0 
+03618                 | 
+03618                 | 
+03618     04 00 00 00 | ashr            long    4
+0361c     00 00 00 00 | linestart       long    0
+03620     00 00 00 00 | linenum         long    0
+03624     00 01 00 00 | lutaddr         long    256
+03628                 | 
+03628     0E 00 00 00 | cursorsh        long    14
+0362c     00 00 00 00 | frames          long    0
+03630     00 00 00 00 | cursorx         long    0
+03634     00 00 00 00 | cursory         long    0
+03638     00 00 00 00 | cursorpos       long    0
+0363c     00 00 00 00 | cursorpos2      long    0
+03640     00 00 00 00 | fontstart       long    0
+03644     00 00 00 FF | aredtest long $FF000000
+03648     00 00 00 00 | border2 long 0
+0364c                 | framebuf        res     1
+0364c                 | fontbuf         res     1
+0364c                 | borderptr       res     1
+0364c                 | vblankptr       res     1
+0364c                 | cursorptr       res     1
+0364c                 | modeptr         res     1
+0364c                 | paletteptr      res     1
+0364c                 | commandptr      res     1
+0364c                 | dlptr			res     1
+0364c                 | fontnumptr      res     1
+0364c                 | hbase           res     1
+0364c                 | borderptr2      res     1
+0364c                 | dlptr2 res 1
+0364c                 | dl              res 1
+0364c                 | ii              res     1
+0364c                 | framebuf2       res     1
+0364c                 | hsync0          res     1
+0364c                 | hsync1          res     1
+0364c                 | fontline        res     1
+0364c                 | t1              res     1
+0364c                 | t2              res     1
+0364c                 | char            res     1
+0364c                 | backcolor       res     1
+0364c                 | charcolor       res     1
+0364c                 | repnum res 1
+0364c     00 00 00 00 | aend             long 0
+03650                 | objmem
+03650     00 00 00 00 | 	long	0[1]
+03654 07c             | 	org	COG_BSS_START
+03654 07c             | _var01
+03654 07c             | 	res	1
+03654 07d             | _var02
+03654 07d             | 	res	1
+03654 07e             | _var03
+03654 07e             | 	res	1
+03654 07f             | _var04
+03654 07f             | 	res	1
+03654 080             | _var05
+03654 080             | 	res	1
+03654 081             | arg01
+03654 081             | 	res	1
+03654 082             | arg02
+03654 082             | 	res	1
+03654 083             | arg03
+03654 083             | 	res	1
+03654 084             | arg04
+03654 084             | 	res	1
+03654 085             | local01
+03654 085             | 	res	1
+03654 086             | local02
+03654 086             | 	res	1
+03654 087             | local03
+03654 087             | 	res	1
+03654 088             | local04
+03654 088             | 	res	1
+03654 089             | local05
+03654 089             | 	res	1
+03654 08a             | local06
+03654 08a             | 	res	1
+03654 08b             | local07
+03654 08b             | 	res	1
+03654 08c             | local08
+03654 08c             | 	res	1
+03654 08d             | local09
+03654 08d             | 	res	1
+03654 08e             | local10
+03654 08e             | 	res	1
+03654 08f             | local11
+03654 08f             | 	res	1
+03654 090             | local12
+03654 090             | 	res	1
+03654 091             | local13
+03654 091             | 	res	1
+03654 092             | local14
+03654 092             | 	res	1
+03654 093             | local15
+03654 093             | 	res	1
+03654 094             | local16
+03654 094             | 	res	1
+03654 095             | local17
+03654 095             | 	res	1
+03654 096             | local18
+03654 096             | 	res	1
+03654 097             | local19
+03654 097             | 	res	1
+03654 098             | local20
+03654 098             | 	res	1
+03654 099             | local21
+03654 099             | 	res	1
+03654 09a             | local22
+03654 09a             | 	res	1
+03654 09b             | local23
+03654 09b             | 	res	1
+03654 09c             | local24
+03654 09c             | 	res	1
+03654 09d             | local25
+03654 09d             | 	res	1
+03654 09e             | local26
+03654 09e             | 	res	1
+03654 09f             | local27
+03654 09f             | 	res	1
+03654 0a0             | local28
+03654 0a0             | 	res	1
+03654 0a1             | local29
+03654 0a1             | 	res	1
+03654 0a2             | local30
+03654 0a2             | 	res	1
+03654 0a3             | local31
+03654 0a3             | 	res	1
+03654 0a4             | local32
+03654 0a4             | 	res	1
+03654 0a5             | local33
+03654 0a5             | 	res	1
+03654 0a6             | local34
+03654 0a6             | 	res	1
+03654 0a7             | local35
+03654 0a7             | 	res	1
+03654 0a8             | local36
+03654 0a8             | 	res	1
+03654 0a9             | local37
+03654 0a9             | 	res	1
+03654 0aa             | local38
+03654 0aa             | 	res	1
+03654 0ab             | local39
+03654 0ab             | 	res	1
+03654 0ac             | local40
+03654 0ac             | 	res	1
+03654 0ad             | local41
+03654 0ad             | 	res	1
+03654 0ae             | local42
+03654 0ae             | 	res	1
+03654 0af             | local43
+03654 0af             | 	res	1
+03654 0b0             | local44
+03654 0b0             | 	res	1
+03654 0b1             | local45
+03654 0b1             | 	res	1
+03654 0b2             | local46
+03654 0b2             | 	res	1
+03654 0b3             | local47
+03654 0b3             | 	res	1
+03654 0b4             | muldiva_
+03654 0b4             | 	res	1
+03654 0b5             | muldivb_
+03654 0b5             | 	res	1
+03654 0b6             | 	fit	480

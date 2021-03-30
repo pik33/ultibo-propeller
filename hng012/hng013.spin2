@@ -82,13 +82,13 @@ _clkfreq        = 200_000_000    'start safe, hubset will do the rest. The clock
 c_black         =    0
 c_blue          =  117
 c_green         =  199
-c_cyan          =  151
+c_cyan          =  149
 c_red           =   39
 c_magenta       =   71
 c_brown         =  246
 c_lightgray     =   10
 c_darkgray      =    5
-c_lightblue     =  123
+c_lightblue     =  121
 c_lightgreen    =  203
 c_lightcyan     =  155
 c_lightred      =   43
@@ -115,7 +115,7 @@ long hdmibase          'HDMI pin#
 '----------
 
 long cog               'driver cog#
-long bordercolor[38]   'border colors, TODO: move this to the buffer
+long bordercolor       'border color
 long buflen            'buffer length in longs
 byte cursor_x          'X cursor position in text modes
 byte cursor_y          'Y cursor position
@@ -159,47 +159,19 @@ long graphmode
 '                                                                        *
 '*************************************************************************
 
-pub dummy()
+pub dummy()|i
 '' this is not a main program.
 
-start(544,48)
-repeat
-  cls(4,$00000000)
-  waitvbl(50)
-  cls(4,$11111111)
-  waitvbl(50)
-  cls(4,$22222222)
-  waitvbl(50)
-  cls(4,$33333333)
-  waitvbl(50)
-  cls(4,$44444444)
-  waitvbl(50)
-  cls(4,$55555555)
-  waitvbl(50)
-  cls(4,$66666666)
-  waitvbl(50)
-  cls(4,$77777777)
-  waitvbl(50)
-  cls(4,$88888888)
-  waitvbl(50)
-  cls(4,$99999999)
-  waitvbl(50)
-  cls(4,$aaaaaaaa)
-  waitvbl(50)
-  cls(4,$bbbbbbbb)
-  waitvbl(50)
-  cls(4,$cccccccc)
-  waitvbl(50)
-  cls(4,$dddddddd)
-  waitvbl(50)
-  cls(4,$eeeeeeee)
-  waitvbl(50)
-  cls(4,$ffffffff)
-  waitvbl(50)
-  writeln(string("Hello, World!"))
-  writeln(string("You started the driver instead of your main program!"))
-  writeln(inttohex(buf_ptr,8))
-  waitvbl(100)
+start(0,48)
+cls(c_lightblue,0)
+writeln(string("Hello, World!"))
+writeln(string("You started the driver instead of your main program!"))
+writeln(string("This is an alpha 0.13 version of displaylisted driver"))
+writeln(inttohex(buf_ptr,8))
+writeln(string("This line is reversed"))
+writeln(string("The text above is double height, while this line is single height"))
+cogstop(cogid)
+
 '*************************************************************************
 '                                                                        *
 ' Font related functions                                                 *
@@ -305,6 +277,10 @@ pub getvgacolor(color):r
 
 return colors[color]
 
+pub getpalettecolor(color):r
+
+return long[@ataripalette+4*color]
+
 ''---------- Set font and back colors for all screen - from 256 color palette
 
 pub setscreencolors(ff,bb) | c ,i
@@ -313,15 +289,6 @@ c:=ff<<24+bb<<16
 
 repeat i from 0 to buflen-1
    long[buf_ptr+4*i]:= (long[buf_ptr+4*i] & $FFFF) |  c
-
-''---------- Set border color for all screen - rgb
-
-pub setbordercolors(r,g,b) |color, i
-
-color:=r<<16+g<<8+b  ''' todo!!! border buffer has to be defined like a main buffer
-
-repeat i from 0 to lines+1
-  bordercolor[i]:=color
 
 ''---------- Set the color for the character at line y and position x
 
@@ -349,10 +316,10 @@ long[buf_ptr+4*place]:=color
 
 ''---------- Set the border color, o is upper border, lines+1 is lower border
 
-pub setbordercolor(line,r,g,b) | color
+pub setbordercolor(r,g,b) | color
 
-color:=r<<16+g<<8+b
-bordercolor[line]:=color
+color:=r<<24+g<<16+b<<8
+bordercolor:=color
 
 ''---------- Set colors for putchar, write and writeln
 
@@ -628,32 +595,47 @@ lines:=timings[12]>>4
 buflen:=cpl*lines
 if mode>=512
   buflen:=buflen*8
-buf_ptr:=$80000-4*buflen
+buf_ptr:=$7C000-4*buflen
 mode_ptr:=@timings
 graphmode:=mode
 
 '---------- Make a display list
 
-pub makedl (mode)
+pub makedl (mode) |i
 
 '' display list
 '' %rrrr_rrrr_gggg_gggg_bbbb_bbbb_0000_0000 - display a border using rr gg bb
-'' %aaaa_aaaa_aaaa_aaaa_aaaa_1bbr_rrzz_nnnn - display a text line nnnn with border bb 00 wide 01 medium 01 narrow,11 no border
 '' %aaaa_aaaa_aaaa_aaaa_aaaa_0bbr_cczz_rrrr - display graphic line, cc colors, 00-2,-1-4,10-16,11-256, zz-zoom 1-2-4-8
 '' rrrrr - reserved
 
+'  '%aaaa_aaaa_aaaa_aaaa_aazz_nnnn_llll_ll_01 - txt
+
+
 if (mode &256==0) 
-  dl_ptr:=buf_ptr-576 
+  dl_ptr:=buf_ptr-4*576 
 else 
   dl_ptr:=buf_ptr-496
 
 if (mode==0)
   repeat i from 0 to 47
-    long[dl_ptr+i]:=bordercolor[0]<<8
+    long[dl_ptr+4*i]:=$00FF0000 '' bordercolor[0]<<8
   repeat i from 48 to 527
-    long[dl_ptr+i]:=(buf_ptr+cpl*((i-48)>>4)<<8)+$800+((i-48)+//16)<<4+%1100
+
+'   long[dl_ptr+4*i]:=(buf_ptr+(4*cpl*(i-48)>>4))<<12+1 +((i-48)+//16)<<8 + ((i-48)>>4)<<2   
+
+    long[dl_ptr+4*i]:=(buf_ptr+(4*cpl*(i-48)>>5))<<12+1 +(((i-48)+//32)>>1)<<8 + ((i-48)>>5)<<2   '' double height !!
+    if (i>=176) & (i<208)
+       long[dl_ptr+4*i]:=(buf_ptr+(4*cpl*(i-48)>>5))<<12+1 +((32-((i-48)+//32))>>1)<<8 + ((i-48)>>5)<<2   '' double height !!
+    if (i>=208) & (i<224)
+       long[dl_ptr+4*i]:=(buf_ptr+(4*cpl*(i-48)>>5))<<12+1 +(((i-48)+//16))<<8 + ((i-48)>>5)<<2   '' double height !!
+    if (i>=224) & (i<240)
+       long[dl_ptr+4*i]:=(buf_ptr+(4*cpl*(i-48)>>5))<<12+1 +0 + ((i-48)>>4)<<2   '' double height !!
+
+'    long[dl_ptr+4*i]:=(buf_ptr+(4*cpl*(i-48)>>6))<<12+1 +(((i-48)+//64)>>2)<<8 + ((i-48)>>6)<<2   '' 4x height !!
+'     long[dl_ptr+4*i]:=(buf_ptr+(4*cpl*(i-48)>>7))<<12+1 +(((i-48)+//128)>>3)<<8 + ((i-48)>>7)<<2   '' 8x height !!
+
   repeat i from 528 to 575
-    long[dl_ptr+i]:=bordercolor[0]<<8    
+    long[dl_ptr+4*i]:=$0000FF00    
 
 
 
@@ -673,7 +655,7 @@ hdmibase:=base
 ' the mode has to be set here to enable computing the buffer length
 
 setmode(mode)
-
+makedl(mode)
 
 
 vblank_ptr:=@vblank
@@ -702,7 +684,7 @@ waitms(20)
 ' clear the screen and set the colors to green on black
 
 cls(c_green,c_black)
-setbordercolors(0,0,0)
+setbordercolor(0,0,128)
 setwritecolors(c_green,c_black)
 
 return cog
@@ -740,7 +722,7 @@ timings448      long   40,   64,    42,     880,      0,     8,     0,        8,
 timings544      long   16,   80,    20,    1024,    112,     8,     48,      16,      16,    16,    544,  100,   480,     354693878,   %1_110000__11_0110_1100__1111_1011,   576
 
 
-vgacolors       byte   0, 117, 199, 151, 39, 71, 246, 10, 5, 123, 203, 155, 43, 75, 234, 15
+vgacolors       byte   0, 117, 199, 151, 39, 71, 246, 10, 5, 121, 203, 155, 43, 75, 234, 15
 
 '**********************************************************************************
 '
@@ -756,8 +738,8 @@ hdmi            setq    #10
                 setq2   #255
                 rdlong  $000, paletteptr                'read palette
                 add     paletteptr,##1024                ' Atari type 256 colors  
-                 setq2   #15
-                 rdlong  480,paletteptr                  ' 16 color palette at 480
+                setq2   #15
+                rdlong  480,paletteptr                  ' 16 color palette at 480
                 
 
                 wrlong  #aend,#0                         'write driver length to hub#0: DEBUG/demo
@@ -775,8 +757,11 @@ hdmi            setq    #10
 
 p101            setq    #15
                 rdlong  m_bs,modeptr                     ' read timings
+                
+                rdlong border,borderptr
      
                 add     frames,#1
+                mov     dlptr2,dlptr
 
                 rdlong  cursorx, cursorptr               ' read cursor position
                 getbyte cursory, cursorx,#1              ' y position at byte #1
@@ -796,7 +781,7 @@ p101            setq    #15
                 mov     hsync0,sync_000                  '
                 mov     hsync1,sync_001
                 callpa  i_upporch ,#blank
-                wrbyte  #0,vblankptr
+                wrlong  #0,vblankptr
 
 '' cursor blinking
 
@@ -805,22 +790,27 @@ p101            setq    #15
 
 '' main screen
 
-                mov linenum2,#0
-p301            rdlong  dl,dlptr
+                mov linenum,#0
 
-                getbyte t1,dlptr,#0 wz
-         if_z   jmp     #borderline
+p301            rdlong  dl,dlptr2
+
     
-                testb   dl,#11 wc
-         if_c   jmp     #textline
-         if_nc  jmp     #graphline
-        
-p302            add     linenum2,#1
-                add     dlptr,#4
+
+                getbyte t1,dl,#0 
+                cmp     t1,#0 wz
+    if_z        jmp     #borderline
+    
+                 testb   dl,#0  wc     ' bit 0 set = text OR extended:TODO     
+          if_c   jmp     #textline
+'         if_nc  jmp     #graphline
+'        
+p302            add     linenum,#1
+                add     dlptr2,#4
                 cmp     linenum,i_totalvis  wz
          if_nz  jmp     #p301                                  
                
-p112            callpa  i_downporch ,#blank             'bottom blanks
+p112            wrlong  #1,vblankptr 
+                callpa  i_downporch ,#blank             'bottom blanks
 
                 mov     hsync0,sync_222                 'vsync on
                 mov     hsync1,sync_223
@@ -828,64 +818,56 @@ p112            callpa  i_downporch ,#blank             'bottom blanks
                 jmp     #p101                    
   
 '' ---------------  END of frame rendering loop -------------------------------------------  
+
+
+''--%aaaa_aaaa_aaaa_aaaa_aazz_nnnn_llll_ll_01 - txt
+  '' aaaa_aaaa_aaaa_aaaa_aazz_rrrr_rrrr_cc_10 - graph
+  '' aaaa_aaaa_aaaa-aaaa_aarr_rrrr_rrrr_rr_11 - extended, next long to read 
   
-'' active lines
+'' Display a text line DL[31..12]=addr, nibble #1=textline, zoom: todo
 
-p111            mov     ii,i_lines                      ' read active lines count
-                mov     linenum,#0                      ' set line number to 0
+textline        mov     cursorpos2,cursorx              ' we need another var for cursor as this code will repeat 16x for every char line
 
-line1           mov     cursorpos2,cursorx              ' we need another var for cursor as this code will repeat 16x for every char line
+                getnib  fontline,dl,#2                 ' fontline is 0 to 15, a line in font def
 
-                getnib  fontline,linenum,#0             ' fontline is 0 to 15, a line in font def
-                mov     framebuf2,framebuf              ' compute a line start in the framebuffer, which is (line div 16)*cpl
-                mov     linestart,linenum               ' linestart will be used for checking cursor y and compute line start addr in the buffer
-                shr     linestart,ashr                  ' scanline to char line
+                mov     framebuf2,dl                    ' read a line start in the framebuffer from DL entry
+                shr     framebuf2,#14
+                shl     framebuf2,#2 
+                mov     linestart,dl                  ' linestart will be used for checking cursor y and compute line start addr in the buffer
+                shr     linestart,#2                  ' scanline to char line
+                and     linestart,#63
                 cmp     linestart,cursory wz            ' if the cursor is not here
           if_nz mov     cursorpos2,#129                 ' move it out of the screen
-                mul     linestart,i_cpl                 ' compute the address of char line in the buffer
-                shl     linestart,#2
-                add     framebuf2,linestart             ' and add it to the buffer start address
 
                 call    #hsync                          ' now call hsync to gain some time between xconts
 
-                cmp     fontline,#0 wz
-          if_nz jmp     #p102                           ' if fontline =0, get a border color
-
-                rdlong  border,borderptr2
-                add     borderptr2,#4
-                shl     border,#8
-
-p102            getword t1,m_border,#0                  ' else use the same border color for all the character line
+                       ' if fontline =0, get a border color
+                
+p102            getword t1,m_border,#0                  
                 cmp     t1, #0 wz
-          if_nz xcont   m_border,border                 ' display a left border
-           
-                         testb   i_modenum,#9 wc                  ' bit #8 set = graphics modes, not yet implemented
-                         if_c mov ashr, #1
-                         if_c   jmp     #p200            
-                mov ashr,#4
+          if_nz xcont   m_border,border                 ' display a left border if exists
+        
                 cmp     fontline,cursorsh wcz           ' if the cursor have to be not displayed due to its shape
           if_c  mov     cursorpos,#129                  ' move it out of the screen
          if_nc  mov     cursorpos,cursorpos2
                 add     cursorpos,#1                    ' we will substract #1 below so compensate this here
-                mov     t2,fontstart                    ' font definition pointer
+                mov     t2,fontbuf                      ' font definition pointer
                 add     t2,fontline                     ' add a current font line
-                
-          
-                
+      
                 rep     @p103,i_cpl                     ' display cpl chars
 ''---------------------------------------------------------------------------------------
                         rdlong  char,framebuf2          ' read a long char                          '1
                         getbyte backcolor,char,#2       ' byte #2 - background color                '2
                         getbyte charcolor,char,#3       ' byte #3 - foreground color                '3
-                        getbyte char,char, #0           ' byte #0 - char code                       '4
+                        getbyte char,char, #0           ' word #0 - char code                       '4
                         add     framebuf2,#4            ' point to the next long                    '5
                         shl     char,#4                 ' 1 char=16 bytes in font def               '6
                         add     char,t2                 ' add this to font/line pointer             '7
                         rdbyte  t1,char                 ' and get 8 pixels prom there               '8
                         sub     cursorpos,#1 wz         ' if there is a cursor                      '9
                 if_z    xor     t1, #$FF                ' reverse the colors                        '10
-                                                 ' prepare to sprite function, not yet implemented
-                        mergeb  t1                                              ' convert to 16-color mode                                      '11
+                                                                                                            ' prepare to sprite function, not yet implemented
+                        mergeb  t1                      ' convert to 16-color mode                  '11
                         xcont   m_lut1,t1               ' and display this                          '12
 
                         rdlut   t1,backcolor            ' read a background color from palette      '13
@@ -899,58 +881,52 @@ p102            getword t1,m_border,#0                  ' else use the same bord
                         bitnot  m_lut1,#16                                                          '19
                         xor     lutaddr,#32             ' use LUT #0-1 and 32-33                    '20
 
-'------------------------ only 8 nops left :(
 
-'' rep end ----------------------------------------------------------------------------
+'' rep end  -------------------------------------------------------------------------------
 
 
-p103            getword t1,m_border,#0
+p103            getword  t1,m_border,#0
+                cmp      t1, #0 wz
+                if_nz    xcont   m_border,border            'display a right border if exists
+                
+                jmp #p302
+                
+'' -------------------------------------- END of text line ---------------------------------              
+                
+'' %aaaa_aaaa_aaaa_aaaa_aa00_zzcc_rrrr_rrrr - display a graphics line
+
+graphline       getword t1,m_border,#0                  
                 cmp     t1, #0 wz
-                if_nz xcont   m_border,border            'display a right border if exists
-
-                add     linenum, #1
-                djnz    ii,#line1                       ' and goto next line if not all were displayed
-
-'' end of active screen
-
-                wrlong  #1,vblankptr
-                mov     ii,i_vborder wz                  'make a lower border if exists
-          if_z jmp #p112
-
-                 rdlong  border,borderptr2
-                 add     borderptr2,#4
-                 shl     border,#8
-down_border      call    #hsync
-                 xcont   m_vi,border
-                 djnz    ii,#down_border
-
-                         'loop
+                if_nz xcont   m_border,border                 ' display a left border if exists 
 
 
-' The bitmap driver will start here
-p200                    
-                                             
+
+                mov     framebuf2,dl                    ' read a line start in the framebuffer from DL entry
+                shl     framebuf2,#14
+                shr     framebuf2,#2       
+                ''      todo:zzcc 
+                                            
                         rep     @p201,i_cpl                     ' display cpl pixels
 '         
 ''---------------------------------------------------------------------------------------
                         rdlong  t1,framebuf2          ' read a long char                          '1
-                        add     framebuf2,#4            ' point to the next long                    '5
-                        xcont   m_lut1,t1              ' and display this                          '12
+                        add     framebuf2,#4          ' point to the next long                    '5
+                        xcont   m_lut1,t1             ' and display this                          '12
 
-
-'------------------------ only 8 nops left :(
 
 '' rep end ----------------------------------------------------------------------------
                         
-p201                       jmp #p103
-'' rep end ----------------------------------------------------------------------------
-
-
-
+p201            getword  t1,m_border,#0
+                cmp      t1, #0 wz
+                if_nz    xcont   m_border,border2            'display a right border if exists
+                
+                jmp #p302
+                
 
 '--------------------------------------------------------------------------
-borderline      call    #hsync                           ' make a border
-                xcont   m_vi,dl
+borderline      call    #hsync                      ' make a border
+			'	mov     border,dl                   'set border color according to dl entry
+                xcont   m_vi,border 
                 jmp     #p302 
 
 
@@ -1003,7 +979,8 @@ cursory         long    0
 cursorpos       long    0
 cursorpos2      long    0
 fontstart       long    0
-
+aredtest long $FF000000
+border2 long 0
 framebuf        res     1
 fontbuf         res     1
 borderptr       res     1
@@ -1016,6 +993,7 @@ dlptr			res     1
 fontnumptr      res     1
 hbase           res     1
 borderptr2      res     1
+dlptr2 res 1
 dl              res 1
 ii              res     1
 framebuf2       res     1
