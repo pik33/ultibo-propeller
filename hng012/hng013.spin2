@@ -66,7 +66,7 @@ CON
 
 
 hdmi_base       = 48             'must be a multiple of 8
-_clkfreq        = 200_000_000    'start safe, hubset will do the rest. The clock will be changed to:
+_clkfreq        = 345_000_000    'start safe, hubset will do the rest. The clock will be changed to:
 
 ' 354_689_500   200x Atari 8-bit PAL,  50x Amiga PAL  - real settings: 49,869-> 354_693_878  - 1.0000123 - mode 0 and 192
 ' 357_954_500   200x Atari 8-bit NTSC, 50x Amiga NTSC - real settings: 49,877-> 357_959_184  - 1.0000131 - mode 256
@@ -127,6 +127,7 @@ long vblank            'vblank signalling
 byte n_string[12]      'string buffer for inttostr and hextostr
 long timings[16]       'graphic mode timings
 long cpl               'char/pixels per line
+
 long lines             'screen text lines count
 long cmd1              'cmd long #1 (command) - 0..255->set color # to cmd2, 257 idle; to be changed if more commands needed
 long cmd2              'cmd long #2 (parameter)
@@ -162,16 +163,25 @@ long graphmode
 pub dummy()|i
 '' this is not a main program.
 
-start(0,48)
-cls(c_lightblue,0)
-writeln(string("Hello, World!"))
-writeln(string("You started the driver instead of your main program!"))
-writeln(string("This is an alpha 0.13 version of displaylisted driver"))
-writeln(inttohex(buf_ptr,8))
-writeln(string("This line is reversed"))
-writeln(string("The text above is double height, while this line is single height"))
-writeln(string("Did you ever see a BLUE monitor?"))
-cogstop(cogid)
+start(74,48)
+cls(154,147)
+cursoroff()
+setcursorpos(2,0)
+outtextxy(1,1,string("READY"))
+
+putcharxy(1,3,1)
+defchar(0,1,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255)
+'writeln(string("Hello, World!"))
+'writeln(string("You started the driver instead of your main program!"))
+'writeln(string("This is an alpha 0.13 version of displaylisted driver"))
+'writeln(inttohex(buf_ptr,8))
+'writeln(string("This line is reversed"))
+'writeln(string("The text above is double height, while this line is single height"))
+'writeln(string("Did you ever see a BLUE monitor?"))
+'repeat i from 0 to 300
+'  write(inttohex(long[dl_ptr+4*i],8))
+'  write(string("  "))
+cogstop(cogid())
 
 '*************************************************************************
 '                                                                        *
@@ -567,20 +577,21 @@ pub setmode(mode) | i
 if (mode<512)  '' text modes
   
   longmove(@streamer,@timingsxxt,6)
-  case  mode                               
-    000:  longmove(@timings,@timings000,16)   'PAL 50 Hz signaling 1140x624, active 800x480, 100x30 text, wide border, 2 colors per pixel, 00_00_00_00_00=0, 354_693_878 Hz
-    064:  longmove(@timings,@timings064,16)   'PAL 50 Hz signaling 1026x624, active 880x496, 110x31 text, medium border, 2 colors per pixel 00_01_00_00_00=64, 319_215_686 Hz
-    128:  longmove(@timings,@timings128,16)   'PAL 50 Hz signaling 912x624, active 800x480, 100x30 text, medium border, 2 colors per pixel 00_10_00_00_00=64, 283750000z
-    192:  longmove(@timings,@timings192,16)   'PAL 50 Hz signaling 1140x624, active 1024x576, 128x36 text, borderless, 2 colors per pixel 00_11_00_00_00=6192, 354_693_878 Hz
-    256:  longmove(@timings,@timings256,16)   'NTSC 50 Hz signaling 1140x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_00_00_00_00=256, 357959184 Hz
-    320:  longmove(@timings,@timings320,16)   'NTSC 50 Hz signaling 1026x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_01_00_00_00=320, 322162162 Hz
-    384:  longmove(@timings,@timings384,16)   'NTSC 50 Hz signaling 912x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_10_00_00_00=384, 286363636 Hz
-    448:  longmove(@timings,@timings448,16)   'NTSC 50 Hz signaling 1026x524, active 880x496, 110x31 text, borderless, 2 colors per pixel, 01_11_00_00_00=496, 322162162 Hz
+  case_fast  mode>>6                               
+    0:  longmove(@timings,@timings000,16)   'PAL 50 Hz signaling 1140x624, active 800x480, 100x30 text, wide border, 2 colors per pixel, 00_00_00_00_00=0, 354_693_878 Hz
+    1:  longmove(@timings,@timings064,16)   'PAL 50 Hz signaling 1026x624, active 880x496, 110x31 text, medium border, 2 colors per pixel 00_01_00_00_00=64, 319_215_686 Hz
+    2:  longmove(@timings,@timings128,16)   'PAL 50 Hz signaling 912x624, active 800x480, 100x30 text, medium border, 2 colors per pixel 00_10_00_00_00=64, 283750000z
+    3:  longmove(@timings,@timings192,16)   'PAL 50 Hz signaling 1140x624, active 1024x576, 128x36 text, borderless, 2 colors per pixel 00_11_00_00_00=6192, 354_693_878 Hz
+    4:  longmove(@timings,@timings256,16)   'NTSC 50 Hz signaling 1140x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_00_00_00_00=256, 357959184 Hz
+    5:  longmove(@timings,@timings320,16)   'NTSC 50 Hz signaling 1026x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_01_00_00_00=320, 322162162 Hz
+    6:  longmove(@timings,@timings384,16)   'NTSC 50 Hz signaling 912x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_10_00_00_00=384, 286363636 Hz
+    7:  longmove(@timings,@timings448,16)   'NTSC 50 Hz signaling 1026x524, active 880x496, 110x31 text, borderless, 2 colors per pixel, 01_11_00_00_00=496, 322162162 Hz
 
   repeat i from 0 to 5
     timings[i]:=timings[i]+streamer[i]+hdmibase<<17
   clkfreq:=timings[13]
   hubset(timings[14])
+  waitms(1)
 
 if (mode==544)    '' 10 00 10 00 00 Pal 50Hz, wide borders,4bpp
   longmove(@streamer,@timingsxg4,6)
@@ -590,7 +601,7 @@ if (mode==544)    '' 10 00 10 00 00 Pal 50Hz, wide borders,4bpp
   repeat i from 0 to 15
   clkfreq:=timings[13]
   hubset(timings[14])
-
+  waitms(1)
 cpl:=timings[11]
 lines:=timings[12]>>4
 buflen:=cpl*lines
@@ -602,14 +613,21 @@ graphmode:=mode
 
 '---------- Make a display list
 
-pub makedl (mode) |i
+pub makedl (mode) |i, fontline,charline,bufstart,zoom1,vzoom,lpc
 
 '' display list
 '' %rrrr_rrrr_gggg_gggg_bbbb_bbbb_0000_0000 - display a border using rr gg bb
 '' %aaaa_aaaa_aaaa_aaaa_aaaa_0bbr_cczz_rrrr - display graphic line, cc colors, 00-2,-1-4,10-16,11-256, zz-zoom 1-2-4-8
 '' rrrrr - reserved
+'   0 - display a up/down border line
+    
+'  ' aaaa_aaaa_aaaa_aaaa_aazz_nnnn_llll_ll_01 - text line
+'    aaaa_aaaa_aaaa_aaaa_aa00 - buffer start, has to be aligned, 1 long for char, ff_bb_rr_cc, foreground, background,reserved, charcode
+'    zz - zoom, 00-x1, 01-x2, 10-x4, 11-blank line
+'    nnnn - font line to display, 0..15
+'    llllll - character line, determines the cursor Y position
 
-'  '%aaaa_aaaa_aaaa_aaaa_aazz_nnnn_llll_ll_01 - txt
+
 
 
 if (mode &256==0) 
@@ -617,28 +635,67 @@ if (mode &256==0)
 else 
   dl_ptr:=buf_ptr-496
 
-if (mode==0)
+if mode<512 '' text modes
+
+zoom1:=1
+if (mode&3)==1
+  zoom1:=2
+if (mode&3)==2
+  zoom1:=4
+
+cpl:=cpl/zoom1  
+
+if mode<64
   repeat i from 0 to 47
-    long[dl_ptr+4*i]:=$00FF0000 '' bordercolor[0]<<8
-  repeat i from 48 to 527
-
-'   long[dl_ptr+4*i]:=(buf_ptr+(4*cpl*(i-48)>>4))<<12+1 +((i-48)+//16)<<8 + ((i-48)>>4)<<2   
-
-    long[dl_ptr+4*i]:=(buf_ptr+(4*cpl*(i-48)>>5))<<12+1 +(((i-48)+//32)>>1)<<8 + ((i-48)>>5)<<2   '' double height !!
-    if (i>=176) & (i<208)
-       long[dl_ptr+4*i]:=(buf_ptr+(4*cpl*(i-48)>>5))<<12+1 +((32-((i-48)+//32))>>1)<<8 + ((i-48)>>5)<<2   '' double height !!
-    if (i>=208) & (i<224)
-       long[dl_ptr+4*i]:=(buf_ptr+(4*cpl*(i-48)>>5))<<12+1 +(((i-48)+//16))<<8 + ((i-48)>>5)<<2   '' double height !!
-    if (i>=224) & (i<240)
-       long[dl_ptr+4*i]:=(buf_ptr+(4*cpl*(i-48)>>5))<<12+1 +0 + ((i-48)>>4)<<2   '' double height !!
-
-'    long[dl_ptr+4*i]:=(buf_ptr+(4*cpl*(i-48)>>6))<<12+1 +(((i-48)+//64)>>2)<<8 + ((i-48)>>6)<<2   '' 4x height !!
-'     long[dl_ptr+4*i]:=(buf_ptr+(4*cpl*(i-48)>>7))<<12+1 +(((i-48)+//128)>>3)<<8 + ((i-48)>>7)<<2   '' 8x height !!
-
+    long[dl_ptr+4*i]:=0
   repeat i from 528 to 575
-    long[dl_ptr+4*i]:=$0000FF00    
+    long[dl_ptr+4*i]:=$0  
+  vzoom:=((mode>>2) & 3)  
+  lpc:=16<<vzoom 
+  repeat i from 48 to 527
+    fontline:=((i-48)+//lpc)>>vzoom
+    charline:=(i-48)+/lpc
+    bufstart:=buf_ptr+4*((cpl)*charline)+(mode&3)
+    long[dl_ptr+4*i]:=(bufstart<<12)+(fontline<<8)+(charline<<2)+1
 
 
+if (mode>=64) and (mode<128)
+
+  repeat i from 0 to 23
+    long[dl_ptr+4*i]:=0
+  repeat i from 520 to 543
+    long[dl_ptr+4*i]:=$0  
+  vzoom:=((mode>>2) & 3)  
+  lpc:=16<<vzoom 
+  repeat i from 24 to 519
+    fontline:=((i-24)+//lpc)>>vzoom
+    charline:=(i-24)+/lpc
+    bufstart:=buf_ptr+4*((cpl)*charline)+(mode&3)
+    long[dl_ptr+4*i]:=(bufstart<<12)+(fontline<<8)+(charline<<2)+1
+
+if (mode>=128) and (mode<192)
+
+  repeat i from 0 to 7
+    long[dl_ptr+4*i]:=0
+  repeat i from 488 to 495
+    long[dl_ptr+4*i]:=$0  
+  vzoom:=((mode>>2) & 3)  
+  lpc:=16<<vzoom 
+  repeat i from 8 to 487
+    fontline:=((i-8)+//lpc)>>vzoom
+    charline:=(i-8)+/lpc
+    bufstart:=buf_ptr+4*((cpl)*charline)+(mode&3)
+    long[dl_ptr+4*i]:=(bufstart<<12)+(fontline<<8)+(charline<<2)+1
+
+if (mode>=192) and (mode<256)
+
+  vzoom:=((mode>>2) & 3)  
+  lpc:=16<<vzoom 
+  repeat i from 0 to 575
+    fontline:=((i)+//lpc)>>vzoom
+    charline:=(i)+/lpc
+    bufstart:=buf_ptr+4*((cpl)*charline)+(mode&3)
+    long[dl_ptr+4*i]:=(bufstart<<12)+(fontline<<8)+(charline<<2)+1
 
 
 
@@ -650,7 +707,7 @@ pub start(mode,base):result
 ' initialize pointers and variables
 
 border_ptr:=@bordercolor
-font_ptr:=@vga_font
+font_ptr:=@st_font
 hdmibase:=base
 
 ' the mode has to be set here to enable computing the buffer length
@@ -712,8 +769,8 @@ timingsxg4      long $70810000, $70810000, $70810000, $70810000, $70810000, $208
 
 '                     bf.hs, hs,  bf.vis  visible, lr bord, pixel, ud bord,  up p., vsync, down p., mode, cpl, scanlines,  clock,                  hubset                  total vis lines
 timings000      long   16,   80,    20,    1024,    112,     8,     48,      16,      16,    16,      0,  100,   480,     354693878,   %1_110000__11_0110_1100__1111_1011,   576
-timings064      long   18,   64,    16,     928,     24,     8,     24,      24,      32,    24,     64,  110,   496,     319215686,   %1_110010__11_0010_1101__1111_1011,   576
-timings128      long   16,   64,    16,     816,      8,     8,     8,       32,      64,    32,    128,  100,   480,     283750000,   %1_111111__11_1000_1011__1111_1011,   576
+timings064      long   18,   48,    16,     944,     24,     8,     24,      24,      32,    24,     64,  112,   496,     319215686,   %1_110010__11_0010_1101__1111_1011,   544
+timings128      long   16,   64,    16,     816,      8,     8,     8,       32,      64,    32,    128,  100,   480,     283750000,   %1_111111__11_1000_1011__1111_1011,   496
 timings192      long   16,   80,    20,    1024,      0,     8,     0,       16,      16,    16,    192,  128,   576,     354693878,   %1_110000__11_0110_1100__1111_1011,   576
 timings256      long   80,  160,    84,     816,      8,     8,     8,        8,      12,     8,    256,  100,   480,     357959184,   %1_110000__11_0110_0100__1111_1011,   496
 timings320      long   80,   50,    80,     816,      8,     8,     8,        8,      12,     8,    320,  100,   480,     322162162,   %1_100100__10_0101_0011__1111_1011,   496
@@ -830,12 +887,25 @@ p112            wrlong  #1,vblankptr
 textline        mov     cursorpos2,cursorx              ' we need another var for cursor as this code will repeat 16x for every char line
 
                 getnib  fontline,dl,#2                 ' fontline is 0 to 15, a line in font def
+                getnib  zoom, dl,#3
+                and		zoom, #3  
+                mov ashr,#0
+                mov skippattern,skipft1               
+                cmp zoom,#1 wz
+          if_z	mov ashr,#1
+          if_z  mov skippattern,skipft2      
+                cmp zoom,#2 wz
+          if_z	mov ashr,#2
+          if_z  mov skippattern,skipft4                    
+                cmp zoom,#3 wz
+          if_z	mov ashr,#0
+          if_z  mov skippattern,skipftblank                    
 
                 mov     framebuf2,dl                    ' read a line start in the framebuffer from DL entry
                 shr     framebuf2,#14
                 shl     framebuf2,#2 
-                mov     linestart,dl                  ' linestart will be used for checking cursor y and compute line start addr in the buffer
-                shr     linestart,#2                  ' scanline to char line
+                mov     linestart,dl                    ' linestart will be used for checking cursor y and compute line start addr in the buffer
+                shr     linestart,#2                    ' scanline to char line
                 and     linestart,#63
                 cmp     linestart,cursory wz            ' if the cursor is not here
           if_nz mov     cursorpos2,#129                 ' move it out of the screen
@@ -854,10 +924,13 @@ p102            getword t1,m_border,#0
                 add     cursorpos,#1                    ' we will substract #1 below so compensate this here
                 mov     t2,fontbuf                      ' font definition pointer
                 add     t2,fontline                     ' add a current font line
-      
-                rep     @p103,i_cpl                     ' display cpl chars
+                mov cpl2,i_cpl
+               
+                shr cpl2,ashr
+
+''              rep     @p103, cpl2                     ' display cpl chars
 ''---------------------------------------------------------------------------------------
-                        rdlong  char,framebuf2          ' read a long char                          '1
+ p121                   rdlong  char,framebuf2          ' read a long char                          '1
                         getbyte backcolor,char,#2       ' byte #2 - background color                '2
                         getbyte charcolor,char,#3       ' byte #3 - foreground color                '3
                         getbyte char,char, #0           ' word #0 - char code                       '4
@@ -867,9 +940,41 @@ p102            getword t1,m_border,#0
                         rdbyte  t1,char                 ' and get 8 pixels prom there               '8
                         sub     cursorpos,#1 wz         ' if there is a cursor                      '9
                 if_z    xor     t1, #$FF                ' reverse the colors                        '10
-                                                                                                            ' prepare to sprite function, not yet implemented
-                        mergeb  t1                      ' convert to 16-color mode                  '11
-                        xcont   m_lut1,t1               ' and display this                          '12
+                                                                                                            ' 
+                       '' ----- skipf sequence start
+                           ' 
+                        skipf  skippattern
+                       
+                        mov    t1 ,#0   
+                                                                  '0
+                        getnib t3,t1,#1                   ' 4 pixels to t3  						'1  - +
+                        getnib t1,t1,#0                   ' 4 pixels to t1							'2  - +
+                        mergew t1                         ' make 01010101 from 1111					'3  - +
+                        mul t1,#3                         ' now make 11111111 out of this			'4	- +
+                        getnib t4,t1,#1																'5  - -
+                        getnib t1,t1,#0																'6  - -
+                        mergew t1 																	'7  - -
+                        mul t1, #3																	'8  - -
+                        mergeb  t1                        ' convert to 16-color mode                '9  + + 
+                        xcont   m_lut1,t1                 ' and display this  						'10 + +
+                        mergew t4																	'11 - -
+                        mul t4,#3																	'12	- -	
+                        mergeb t4																	'13 - -
+                        xcont m_lut1, t4															'14 - -
+                        mergew t3                         ' repeat with another 4 pixels			'15 - +
+                        mul t3,#3																	'16 - +
+                        getnib t4,t3,#1																'17 - -
+                        getnib t3,t3,#0																'18 - -
+                        mergew t3																	'19 - -
+                        mul t3,#3																	'20 - -
+                        mergeb t3   																'21 - +
+                        xcont   m_lut1,t3         													'22 - +
+                        mergew t4																	'23 - - 
+                        mul t4,#3																	'24 - -
+                        mergeb t4  																	'25	- -
+                        xcont m_lut1, t4															'26 - -
+                        
+                        ''-----------------   skipf sequence end
 
                         rdlut   t1,backcolor            ' read a background color from palette      '13
                         wrlut   t1,lutaddr              ' and write it to LUT #0 or #32             '14
@@ -882,7 +987,7 @@ p102            getword t1,m_border,#0
                         bitnot  m_lut1,#16                                                          '19
                         xor     lutaddr,#32             ' use LUT #0-1 and 32-33                    '20
 
-
+                        djnz   cpl2,#p121  '' cannot have rep and skipf
 '' rep end  -------------------------------------------------------------------------------
 
 
@@ -963,7 +1068,7 @@ i_downporch     long    0        'down porch lines
 i_modenum       long    0        'mode #
 i_cpl           long    0        'chars per line
 i_lines         long    0        'scanlines #
-i_clock         long   0
+i_clock         long    0
 i_hubset        long    0
 i_totalvis      long    0 
 
@@ -982,6 +1087,11 @@ cursorpos2      long    0
 fontstart       long    0
 aredtest long $FF000000
 border2 long 0
+skipft1 long     %111111111111111100111111111
+skipft2 long     %111100111100111100111100001
+skipft4 long     %000000000000000000000000001
+skipftblank long %111111111111111100111111110
+
 framebuf        res     1
 fontbuf         res     1
 borderptr       res     1
@@ -1003,21 +1113,24 @@ hsync1          res     1
 fontline        res     1
 t1              res     1
 t2              res     1
+t3 res 1
+t4 res 1
+skippattern res 1
+cpl2 res 1
 char            res     1
 backcolor       res     1
 charcolor       res     1
 repnum res 1
+zoom res 1
 aend             long 0
                 fit     496                     '
 
-'' display list
-'' %rrrr_rrrr_gggg_gggg_bbbb_bbbb_0000_0000 - display a border using rr gg bb
-'' %aaaa_aaaa_aaaa_aaaa_aaaa_1bbr_nnnn_rrzz - display a text line nnnn with border bb 00 wide 01 medium 01 narrow,11 no border
-'' %aaaa_aaaa_aaaa_aaaa_aaaa_0bbr_rrrr_cczz - display graphic line, cc colors, 00-2,-1-4,10-16,11-256, zz-zoom 1-2-4-8
-'' rrrrr - reserved
+
  
 
 
 {{
 ------------ MIT License ---------------
 }}
+
+'' TODO: remove 110x31 text, remove 816x496, add 800x480 instead
