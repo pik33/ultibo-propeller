@@ -217,7 +217,6 @@ byte[s+13]:=b13
 byte[s+14]:=b14
 byte[s+15]:=b15
 
-
 '*************************************************************************
 '                                                                        *
 '  Cursor functions                                                      *
@@ -574,10 +573,10 @@ pub setmode(mode) | i
 '' hh - h.zoom, vv-v.zoom, cc-c.depth,
 '' bb - borders/total pixels, 00-wide/1140, 01 medium/1026, 10 narrow/912, 11 no border, 1024 px PAL, 880 px NTSC
 
-if (mode<512)  '' text modes
-  
-  longmove(@streamer,@timingsxxt,6)
-  case_fast  mode>>6                               
+longmove(@streamer,@timingsxxt,6)
+
+case_fast (mode>>6) & 7 ' timings are the same for graphic and text
+                              
     0:  longmove(@timings,@timings000,16)   'PAL 50 Hz signaling 1140x624, active 800x480, 100x30 text, wide border, 2 colors per pixel, 00_00_00_00_00=0, 354_693_878 Hz
     1:  longmove(@timings,@timings064,16)   'PAL 50 Hz signaling 1026x624, active 880x496, 110x31 text, medium border, 2 colors per pixel 00_01_00_00_00=64, 319_215_686 Hz
     2:  longmove(@timings,@timings128,16)   'PAL 50 Hz signaling 912x624, active 800x480, 100x30 text, medium border, 2 colors per pixel 00_10_00_00_00=64, 283750000z
@@ -587,26 +586,23 @@ if (mode<512)  '' text modes
     6:  longmove(@timings,@timings384,16)   'NTSC 50 Hz signaling 912x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_10_00_00_00=384, 286363636 Hz
     7:  longmove(@timings,@timings448,16)   'NTSC 50 Hz signaling 1026x524, active 880x496, 110x31 text, borderless, 2 colors per pixel, 01_11_00_00_00=496, 322162162 Hz
 
-  repeat i from 0 to 5
-    timings[i]:=timings[i]+streamer[i]+hdmibase<<17
-  clkfreq:=timings[13]
-  hubset(timings[14])
-  waitms(1)
+repeat i from 0 to 5
+  timings[i]:=timings[i]+streamer[i]+hdmibase<<17
+clkfreq:=timings[13]
+hubset(timings[14])
+waitms(1)
 
 if (mode==544)    '' 10 00 10 00 00 Pal 50Hz, wide borders,4bpp
-  longmove(@streamer,@timingsxg4,6)
-  longmove(@timings,@timings544,16)
-  repeat i from 0 to 5
-    timings[i]:=timings[i]+streamer[i]+hdmibase<<17
-  repeat i from 0 to 15
-  clkfreq:=timings[13]
-  hubset(timings[14])
-  waitms(1)
+  streamer[6]:=lutg4
+
+if(mode==560)    '' %10_0011_0000  Pal 50 Hz wide borders, 8bpp, 800x480
+  streamer[6]:=lutg8
+
+  
 cpl:=timings[11]
 lines:=timings[12]>>4
-buflen:=cpl*lines
-if mode>=512
-  buflen:=buflen*8
+buflen:=cpl*lines '' todo: zoom shortens the buffer !!!
+
 buf_ptr:=$7C000-4*buflen
 mode_ptr:=@timings
 graphmode:=mode
@@ -757,7 +753,8 @@ vga_font       file "vgafont.def"
 st_font        file "st4font.def"
 ataripalette   file "ataripalettep2.def"
 vga16		   long  $00000000,$00008000,$00800000,$00808000,$80000000,$80008000,$80400000,$AAAAAA00,$55555500,$0000FF00,$00FF0000,$00FFFF00,$FF000000,$FF00FF00,$FFFF0000,$FFFFFF00
-
+fourcolors     long  $00000000,$FF800000,$80808000,$FFFFFF00 'black,red,gray,white
+twocolors      
 '**********************************************************************************
 '
 '        Timings and colors definitions
@@ -765,7 +762,9 @@ vga16		   long  $00000000,$00008000,$00800000,$00808000,$80000000,$80008000,$804
 '**********************************************************************************
 
 timingsxxt      long $70810000, $70810000, $70810000, $70810000, $70810000, $20880000 'streamer sets for text mode, to add to timings[0..5]
-timingsxg4      long $70810000, $70810000, $70810000, $70810000, $70810000, $208f0000 'streamer sets for 4bpp mode, to add to timings[0..5]
+lutg4           long $208f0000 'streamer sets for 4bpp mode, to add to timings[0..5]
+lutg2           long $208e0000
+lutg8           long $20800000
 
 '                     bf.hs, hs,  bf.vis  visible, lr bord, pixel, ud bord,  up p., vsync, down p., mode, cpl, scanlines,  clock,                  hubset                  total vis lines
 timings000      long   16,   80,    20,    1024,    112,     8,     48,      16,      16,    16,      0,  100,   480,     354693878,   %1_110000__11_0110_1100__1111_1011,   576
@@ -777,10 +776,12 @@ timings320      long   80,   50,    80,     816,      8,     8,     8,        8,
 timings384      long   24,   48,    24,     816,      8,     8,     8,        8,      12,     8,    384,  100,   480,     286363636,   %1_010101__01_0011_1010__1111_1011,   496
 timings448      long   40,   64,    42,     880,      0,     8,     0,        8,      12,     8,    448,  110,   480,     322162162,   %1_100100__10_0101_0011__1111_1011,   496
 
-timings544      long   16,   80,    20,    1024,    112,     8,     48,      16,      16,    16,    544,  100,   480,     354693878,   %1_110000__11_0110_1100__1111_1011,   576
+timings512      long   16,   80,    20,    1024,    112,     8,     48,      16,      16,    16,    544,  100,   480,     354693878,   %1_110000__11_0110_1100__1111_1011,   576
+timings560      long   16,   80,    20,    1024,    112,     8,     48,      16,      16,    16,    544,  100,   480,     354693878,   %1_110000__11_0110_1100__1111_1011,   576
 
 
 vgacolors       byte   0, 117, 199, 151, 39, 71, 246, 10, 5, 121, 203, 155, 43, 75, 234, 15
+
 
 '**********************************************************************************
 '
@@ -1006,10 +1007,24 @@ graphline       getword t1,m_border,#0
                 if_nz xcont   m_border,border                 ' display a left border if exists 
 
 
-
+ '' aaaa_aaaa_aaaa_aaaa_aazz_rrrr_rrrr_cc_10 - graph
+ 
+ 
+ 
                 mov     framebuf2,dl                    ' read a line start in the framebuffer from DL entry
                 shl     framebuf2,#14
-                shr     framebuf2,#2       
+                shr     framebuf2,#2 
+                getnib  zoom,dl,#3
+                and     zoom,#3
+                getnib  colors1,dl,#1
+                shr     colors1,#2
+                
+                cmp     colors1,#3 wz
+                
+                
+ '' we use 256 LUTs for 256 c. palette
+                   
+                      
                 ''      todo:zzcc 
                                             
                         rep     @p201,i_cpl                     ' display cpl pixels
@@ -1115,6 +1130,7 @@ t1              res     1
 t2              res     1
 t3 res 1
 t4 res 1
+colors1 res 1
 skippattern res 1
 cpl2 res 1
 char            res     1
