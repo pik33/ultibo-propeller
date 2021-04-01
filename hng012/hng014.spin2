@@ -1,7 +1,7 @@
 '********************************************************************************************
 ' Nostalgic displaylisted HDMI for P2 - 1 cog version
 ' Version 0.14 alpha -01.04.2021
-' 1 cog,text and grapgics with or without border, 8x16 selectable and redefinable font
+' 1 cog,text and graphics with or without border, 8x16 selectable and redefinable font
 ' (c) 2012-2021 Piotr Kardasz pik33@o2.pl
 ' MIT license
 '
@@ -168,18 +168,24 @@ long putpixel
 pub dummy()|i,x,y
 '' this is not a main program.
 
-start(194,48)
+start(2,48)
 'pinwrite(15,0)
 'start(560,48)
 cls(154,147)
 'putpixel:=@putpixel8
 writeln(inttostr(buflen))
-waitms(4000)
+waitvbl(2400)
 setmode(560)
 repeat y from 0 to 479
   repeat x from 0 to 799
-    putpixel8(x,y,(x+y)//256)
-    
+    putpixel8(x,y,(x+y+i)//256)
+repeat i from 0 to 10000
+  repeat y from 0 to 479
+    repeat x from 0 to 799
+      bytemove(buf_ptr,buf_ptr+1,384000-1)
+      putpixel8(799,479,(x+y+i)//256)
+     ' putpixel8(x,y,(x+y+i)//256)
+      'waitvbl(0)
     
 putcharxyc8(50,50,97,40,0)    
 i:=cpl
@@ -994,6 +1000,18 @@ p102            getword t1,m_border,#0
                         sub     cursorpos,#1 wz         ' if there is a cursor                      '9
                   if_z  xor     t1, #$FF                ' reverse the colors                        '10         
 
+       jmp #p901
+
+
+          p901          nop
+              nop
+              nop
+            nop
+           
+           
+           
+              
+          
                         xcont m_lut2,t1
    
                         rdlut   t5,backcolor            ' read a background color from palette      '13
@@ -1026,6 +1044,13 @@ p102            getword t1,m_border,#0
                         sub     cursorpos,#1 wz         ' if there is a cursor                      '9
                   if_z  xor     t1, #$FF                ' reverse the colors                        '10         
   
+  
+  nop
+  nop
+  nop
+  nop
+  nop
+  nop
   
                         getnib t3,t1,#1                   ' 4 pixels to t3  						'1  - +
                         getnib t1,t1,#0                   ' 4 pixels to t1							'2  - +
@@ -1065,6 +1090,11 @@ p102            getword t1,m_border,#0
                         rdbyte  t1,char                 ' and get 8 pixels prom there               '8
                         sub     cursorpos,#1 wz         ' if there is a cursor                      '9
                   if_z  xor     t1, #$FF                ' reverse the colors                        '10
+
+
+ nop
+ nop
+ nop
 
                         mergeb t1
                         getword t3,t1,#1
@@ -1130,18 +1160,9 @@ graphline                         ' we need another var for cursor as this code 
 
                
                 mov ashr,#0
-   '             mov skippattern,skipft1               
-                   
-
-                mov     framebuf2,dl                    ' read a line start in the framebuffer from DL entry
-                shr     framebuf2,#14
-                shl     framebuf2,#2 
-
-
                 call    #hsync                          ' now call hsync to gain some time between xconts
 
-                       ' if fontline =0, get a border color
-                
+               
 p202            getword t1,m_border,#0                  
                 cmp     t1, #0 wz
           if_nz xcont   m_border,border                 ' display a left border if exists
@@ -1157,12 +1178,7 @@ p202            getword t1,m_border,#0
 ''---------------------------------------------------------------------------------------
  p221                   rdlong  char,framebuf2          ' read a long char                          '1
                                                                                                             ' 
-                       '' ----- skipf sequence start
-                           ' 
-
-                           
-   '                     skipf  skippattern
-                        
+                                       
                 
                         xcont   m_lut2,char                ' and display this  						'10 + +
                         add framebuf2,#4

@@ -10,7 +10,7 @@ long i
 
 obj
 
-v: "hng012"
+v: "hng013"
 
 pub demo() | random, l, j, k, s1,s2,s3,s4,s5,s6,s7,s8
 
@@ -25,7 +25,7 @@ s8:=string("1234567890")
 
 
 
-v.start(448,hdmi_base)
+v.start(448-256,hdmi_base)
 
 j:=0
 l:=0
@@ -109,7 +109,7 @@ repeat
   v.setfontnum(4096)
 
   v.cls(0,15)
-  v.setbordercolors(0,0,0)
+  v.setbordercolor(0,0,0)
   v.cursoroff()
   v.outtextxy(0,0,string(" File  Options  View  Special"))
   repeat i from 0 to 99
@@ -201,7 +201,7 @@ repeat
 
   repeat k from 0 to 99
     repeat i from 0 to 31
-      v.setbordercolor(i,getrnd() & 255,getrnd() & 255,getrnd()& 255)
+      v.setbordercolor(getrnd() & 255,getrnd() & 255,getrnd()& 255)
     repeat j from 0 to 29
       repeat i from 0 to 99
         v.setcharcolor(i,j,getrnd()&255)
@@ -212,7 +212,7 @@ repeat
 
   v.cls(151,145)
   v.setscreencolors (151,145)
-  v.setbordercolors(0,0,0)
+  v.setbordercolor(0,0,0)
 
   v.outtextxy (50-(strsize(s6)>>1),10,s6)
   v.waitvbl(50)
@@ -232,10 +232,10 @@ repeat
 
   repeat j from 0 to 15
     v.waitvbl(25)
-    v.setbordercolors (getrnd() & 255,getrnd() & 255,getrnd() & 255)
+    v.setbordercolor (getrnd() & 255,getrnd() & 255,getrnd() & 255)
 
   v.waitvbl(25)
-  v.setbordercolors(0,0,0)
+  v.setbordercolor(0,0,0)
 '
   repeat j from 0 to 29
    v.scrollup()
