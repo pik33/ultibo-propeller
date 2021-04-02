@@ -174,20 +174,13 @@ start(0,48)
 cls(154,147)
 'putpixel:=@putpixel8
 writeln(inttostr(buflen))
-waitvbl(2400)
+waitvbl(240)
 setmode(560)
-repeat y from 0 to 479
-  repeat x from 0 to 799
-    putpixel8(x,y,(x+y+i)//256)
-repeat i from 0 to 10000
-  repeat y from 0 to 479
-    repeat x from 0 to 799
-      bytemove(buf_ptr,buf_ptr+1,384000-1)
-      putpixel8(799,479,(x+y+i)//256)
-     ' putpixel8(x,y,(x+y+i)//256)
-      'waitvbl(0)
-    
-putcharxyc8(50,50,97,40,0)    
+cls(154-16,147-16)    
+putcharxycz8(50,50,97,40,0,6,6)
+repeat i from 800 to  -800  
+  outtextxycz8(i,200,string("1234567890123456789012345678901234567890"),138,131,2,2) 
+  waitvbl(2) 
 i:=cpl
 waitvbl(2400)
 setmode (0)
@@ -209,6 +202,18 @@ writeln(inttostr(i))
 repeat
   'cogstop(cogid())
 
+pub outtextxycz8(x,y,text,f,b,xz,yz) | iii,c
+
+repeat iii from 0 to strsize(text)-1
+
+    putcharxycz8(x+8*xz*iii,y,byte[text+iii],f,b,xz,yz)
+
+
+pub outtextxyc8(x,y,text,f,b) | iii,c
+
+repeat iii from 0 to strsize(text)-1
+
+    putcharxyc8(x+8*iii,y,byte[text+iii],f,b)
 
 
 pub putcharxyc8(x,y,achar,f,b) |xx, yy,bb
@@ -219,13 +224,37 @@ repeat yy from 0 to 15
     if (bb&(1<<xx))<>0
       putpixel8(xx+x,yy+y,f)
     else
-      putpixel8(xx+x,yy+y,b)     
+      putpixel8(xx+x,yy+y,b)  
+      
+      
+pub putcharxycz8(x,y,achar,f,b,xz,yz) |xx,xxx,yy,yyy,bb
+
+repeat yy from 0 to 15
+  bb:=byte[@vga_font+16*achar+yy]
+  repeat xx from 0 to 7
+    if (bb&(1<<xx))<>0
+      repeat yyy from 0 to yz-1
+        repeat xxx from 0 to xz-1
+          putpixel8(xz*xx+xxx+x,yz*yy+yyy+y,f)
+    else
+      repeat yyy from 0 to yz-1
+        repeat xxx from 0 to xz-1
+          putpixel8(xz*xx+xxx+x,yz*yy+yyy+y,b)
+
+
+pub putcharxyc8a(x,y,achar,f) |xx, yy,bb
+
+repeat yy from 0 to 15
+  bb:=byte[@vga_font+16*achar+yy]
+  repeat xx from 0 to 7
+    if (bb&(1<<xx))<>0
+      putpixel8(xx+x,yy+y,f)
 
 
 pub putpixel8(x,y,c)
 
- 
-byte[buf_ptr+4*cpl*y+x]:=c
+if ((x>=0) & (x<4*cpl) & (y>=0) & (y<lines)) 
+    byte[buf_ptr+4*cpl*y+x]:=c
 
 '*************************************************************************
 '                                                                        *
@@ -405,9 +434,10 @@ pub cls(fc,bc)   :c
 
 if (graphmode<512)
   c:=fc<<24+bc<<16+$20
+  longfill(buf_ptr,c,buflen)
 else
   c:=bc
-longfill(buf_ptr,c,buflen)
+  bytefill(buf_ptr,c,buflen*4)
 setwritecolors(fc,bc)
 cursor_x:=0
 cursor_y:=0
