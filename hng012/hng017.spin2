@@ -1,6 +1,6 @@
 '********************************************************************************************
 ' Nostalgic displaylisted HDMI for P2 - 1 cog version
-' Version 0.16 alpha -20210403
+' Version 0.17 alpha -20210404
 ' 1 cog,text and graphics with or without border, 8x16 selectable and redefinable font
 ' (c) 2012-2021 Piotr Kardasz pik33@o2.pl
 ' MIT license
@@ -165,40 +165,94 @@ long putpixel
 '                                                                        *
 '*************************************************************************
 
-pub dummy()|i,x,y
+pub dummy()|i,x,y,ntsc,bbb,ccc,zzx,zzy,amode
 '' this is not a main program.
 
-start(0,48)
+start( 32,48)
 'pinwrite(15,0)
 'start(560,48)
 cls(154,147)
 'putpixel:=@putpixel8
 writeln(inttostr(buflen))
 waitvbl(240)
-setmode(512+192+32)
-cls(0,1)    
+setmode (560)
+cls(40,0)
+outtextxyc8(0,100,string("1234567890123456789012345678901234567890"),120,0)
+waitvbl(240)
+setmode(513)
+cls(1,0)
+outtextxyc1(0,100,string("1234567890123456789012345678901234567890"),1,0)
+waitvbl(2400) 
+repeat ntsc from 0 to 1
+  repeat bbb from 0 to 3
+    repeat ccc from 0 to 3
+      repeat zzy from 0 to 3
+        repeat zzx from 0 to 3
+          amode:=512+256*ntsc+64*bbb+16*ccc+4*zzy+zzx
+          if amode<>(512+192)
+            setmode(amode)
+          if (ccc==0)
+            cls(0,1)
+            outtextxyc1(0,0,string("mode"),0,1)
+            outtextxyc1(0,16,string("cpl"),0,1)
+			outtextxyc1(0,32,string("bufptr"),0,1)
+			outtextxyc1(0,48,string("buflen"),0,1)
+			outtextxyc1(0,64,string("lines"),0,1)
+			outtextxyc1(50,0,inttostr(amode),0,1)
+			outtextxyc1(50,16,inttostr(cpl),0,1)
+			outtextxyc1(50,32,inttostr(buf_ptr),0,1)
+			outtextxyc1(50,48,inttostr(buflen*4),0,1)
+			outtextxyc1(50,64,inttostr(lines),0,1)            
+          if (ccc==1)
+            cls(0,1)
+            outtextxyc2(0,0,string("mode"),1,0)
+            outtextxyc2(0,16,string("cpl"),1,0)'
+            outtextxyc2(0,32,string("buf_ptr"),1,0)
+            outtextxyc2(0,48,string("buflen"),1,0)
+            outtextxyc2(0,64,string("lines"),1,0)
+            outtextxyc2(100,0,inttostr(amode),1,0)
+            outtextxyc2(100,16,inttostr(cpl),1,0)
+            outtextxyc2(100,32,inttostr(buf_ptr),1,0)
+            outtextxyc2(100,48,inttostr(buflen*4),1,0)
+            outtextxyc2(100,64,inttostr(lines),1,0)            
+          if (ccc==2)
+            cls(0,1)
+            outtextxyc1(100,100,inttostr(ccc),0,1)
+            outtextxyc2(0,0,string("mode"),1,0)
+            outtextxyc2(0,16,string("cpl"),1,0)'
+            outtextxyc2(0,32,string("buf_ptr"),1,0)
+            outtextxyc2(0,48,string("buflen"),1,0)
+            outtextxyc2(0,64,string("lines"),1,0)
+            outtextxyc2(100,0,inttostr(amode),1,0)
+            outtextxyc2(100,16,inttostr(cpl),1,0)
+            outtextxyc2(100,32,inttostr(buf_ptr),1,0)
+            outtextxyc2(100,48,inttostr(buflen*4),1,0)
+            outtextxyc2(100,64,inttostr(lines),1,0)            
+			
+          waitvbl(240)	
+'cls(0,1)    
 
 'putcharxycz8(50,50,97,40,0,1,1)
-repeat x from 0 to 31
-  repeat i from 0 to 479
-    putpixel4(i+x,i,2)
-  waitvbl(0)
-outtextxyc4(0,0,string("cpl"),1,0)
-outtextxyc4(0,16,string("buf_ptr"),1,0)
-outtextxyc4(0,32,string("buflen"),1,0)
-outtextxyc4(0,48,string("lines"),1,0)
-outtextxyc4(100,0,inttostr(cpl),1,0)
-outtextxyc4(100,16,inttostr(buf_ptr),1,0)
-outtextxyc4(100,32,inttostr(buflen*4),1,0)
-outtextxyc4(100,48,inttostr(lines),1,0)
-repeat i from 2*cpl to  -2*cpl  
-  outtextxyc4(i,100,string("1234567890123456789012345678901234567890"),1,0) 
-  waitvbl(5) 
-i:=cpl
-waitvbl(2400)
-setmode (0)
-cls(154,147)
-writeln(inttostr(i))
+'repeat x from 0 to 31
+'  repeat i from 0 to 479
+'    putpixel4(i+x,i,2)
+'  waitvbl(0)
+'outtextxyc4(0,0,string("cpl"),1,0)
+'outtextxyc4(0,16,string("buf_ptr"),1,0)
+'outtextxyc4(0,32,string("buflen"),1,0)
+'outtextxyc4(0,48,string("lines"),1,0)
+'outtextxyc4(100,0,inttostr(cpl),1,0)
+'outtextxyc4(100,16,inttostr(buf_ptr),1,0)
+'outtextxyc4(100,32,inttostr(buflen*4),1,0)
+'outtextxyc4(100,48,inttostr(lines),1,0)
+'repeat i from 2*cpl to  -2*cpl  
+'  outtextxyc4(i,100,string("1234567890123456789012345678901234567890"),1,0) 
+'  waitvbl(5) 
+'i:=cpl
+'waitvbl(2400)
+'setmode (0)
+'cls(154,147)
+'writeln(inttostr(i))
 'cls(154,147)
 'writeln(inttostr(xzoom))
 'writeln(inttostr(buflen))
@@ -765,7 +819,6 @@ case_fast (mode>>6) & 7 ' timings are the same for graphic and text
     6:  longmove(@timings,@timings384,16)   'NTSC 50 Hz signaling 912x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_10_00_00_00=384, 286363636 Hz
     7:  longmove(@timings,@timings448,16)   'NTSC 50 Hz signaling 1026x524, active 880x496, 110x31 text, borderless, 2 colors per pixel, 01_11_00_00_00=496, 322162162 Hz
 
-
 ' 4-bit graphics: do nothing with timings :) 
 
 if (mode & (%10_00_11_0000))==(%10_00_11_0000) ' 8bit graphics, 4 pixels per long instead of 8, cpp x2 
@@ -831,7 +884,14 @@ pub makedl (mode) |i, fontline,charline,bufstart,zoom1,vzoom,lpc,hzoom
 if (mode &256==0) 
   dl_ptr:=buf_ptr-4*576 
 else 
-  dl_ptr:=buf_ptr-496
+  dl_ptr:=buf_ptr-4*496
+
+vzoom:=((mode>>2) & 3)
+ 
+repeat i from 0 to timings[6]-1
+  long[dl_ptr+4*i]:=$0  
+
+
 
 if mode<512 '' text modes
 
@@ -841,7 +901,7 @@ if mode<64
     long[dl_ptr+4*i]:=0
   repeat i from 528 to 575
     long[dl_ptr+4*i]:=$0  
-  vzoom:=((mode>>2) & 3)  
+  
   lpc:=16<<vzoom 
   repeat i from 48 to 527
     fontline:=((i-48)+//lpc)>>vzoom
@@ -856,7 +916,7 @@ if (mode>=64) and (mode<128)
     long[dl_ptr+4*i]:=0
   repeat i from 520 to 543
     long[dl_ptr+4*i]:=$0  
-  vzoom:=((mode>>2) & 3)  
+ 
   lpc:=16<<vzoom 
   repeat i from 24 to 519
     fontline:=((i-24)+//lpc)>>vzoom
@@ -870,7 +930,7 @@ if (mode>=128) and (mode<192)
     long[dl_ptr+4*i]:=0
   repeat i from 488 to 495
     long[dl_ptr+4*i]:=$0  
-  vzoom:=((mode>>2) & 3)  
+ 
   lpc:=16<<vzoom 
   repeat i from 8 to 487
     fontline:=((i-8)+//lpc)>>vzoom
@@ -880,7 +940,7 @@ if (mode>=128) and (mode<192)
 
 if (mode>=192) and (mode<256)
 
-  vzoom:=((mode>>2) & 3)  
+ 
   lpc:=16<<vzoom 
   repeat i from 0 to 575
     fontline:=((i)+//lpc)>>vzoom
@@ -890,11 +950,11 @@ if (mode>=192) and (mode<256)
 
 '' graphics modes 
 
-if (mode & (%10_00_00_0000))==(%10_00_00_0000) ' graphics -> all modes TODO :mode 560+192=752 = 10_11_11_0000 impossib,e because out of memory
 
-  vzoom:=((mode>>2) & 3)
-  repeat i from 0 to timings[6]-1
-    long[dl_ptr+4*i]:=$0  
+
+if (mode>=512)' and (mode & (%10_00_00_0000))==(%10_00_00_0000) ' graphics -> all modes TODO :mode 560+192=752 = 10_11_11_0000 impossib,e because out of memory
+
+
   repeat i from timings[6] to timings[6]+timings[12]-1   
     bufstart:=buf_ptr+4*(cpl*((i-timings[6])>>vzoom))+(mode&3)
     long[dl_ptr+4*i]:=(bufstart<<12)+2+(mode &48)>>2  
@@ -977,7 +1037,7 @@ timings192      long   16,   80,    20,    1024,      0,     8,     0,       16,
 timings256      long   80,  160,    84,     816,      8,     8,     8,        8,      12,     8,    256,  100,   480,     357959184,   %1_110000__11_0110_0100__1111_1011,   496
 timings320      long   80,   50,    80,     816,      8,     8,     8,        8,      12,     8,    320,  100,   480,     322162162,   %1_100100__10_0101_0011__1111_1011,   496
 timings384      long   24,   48,    24,     816,      8,     8,     8,        8,      12,     8,    384,  100,   480,     286363636,   %1_010101__01_0011_1010__1111_1011,   496
-timings448      long   40,   64,    42,     880,      0,     8,     0,        8,      12,     8,    448,  110,   480,     322162162,   %1_100100__10_0101_0011__1111_1011,   496
+timings448      long   32,   64,    34,     896,      0,     8,     0,        8,      12,     8,    448,  112,   496,     322162162,   %1_100100__10_0101_0011__1111_1011,   496
 
 timings512      long   16,   80,    20,    1024,    112,     8,     48,      16,      16,    16,    544,  100,   480,     354693878,   %1_110000__11_0110_1100__1111_1011,   576
 timings560      long   16,   80,    20,    1024,    112,     4,     48,      16,      16,    16,    544,  200,   480,     354693878,   %1_110000__11_0110_1100__1111_1011,   576
@@ -1304,43 +1364,45 @@ p202            getword t1,m_border,#0
                 and     linestart,#12
    
                 cmp     linestart,#%0000 wz
-            if_z  mov m_lut2,lutg1   
-                 cmp     linestart,#%0100 wz
+           if_z  mov m_lut2,lutg1   
+        
+                cmp     linestart,#%0100 wz
              if_z  mov m_lut2,lutg2   
-                  cmp     linestart,#%1000 wz
-             if_z  mov m_lut2,lutg4   
+           
+                cmp     linestart,#%1000 wz
+  
+            if_z  mov m_lut2,lutg4   
                 cmp     linestart,#%1100 wz
-            if_z  mov m_lut2,lutg8
+                     
+
+           if_z  mov m_lut2,lutg8
+            
+    
 
 
                 mov     cpl2,i_cpl
  
                 cmp zoom, #%00 wz   '256 colors, zoom x1
-          if_z  mov skippattern,#%11010110
+          if_z  mov skippattern,#%1101011
                    
                 cmp zoom, #%01 wz   '256 colorz, zoom x2
-           if_z mov skippattern,#%10110100
+           if_z mov skippattern,#%1011010
  '         
                 cmp zoom, #%10 wz   '256 colorz, zoom x4
-           if_z mov skippattern,#%01110010
+           if_z mov skippattern,#%0111001
  '     
                 cmp zoom, #%11 wz   '256 colorz, zoom x8
-          if_z  mov skippattern,#%01100010
+          if_z  mov skippattern,#%0110001
           if_z  shr cpl2,#1
               '
           
 p516            add m_lut2, m_lut1           'mov    
            
                 
-p231               skipf skippattern
-                   rdlong  char,framebuf2          '0 0 0 0
+                
+p231               rdlong  char,framebuf2          '0 0 0 0
+                   skipf skippattern
                    movbyts char,#%01010000         '1 0 1 1
-
-            ' 1bpp x2: movbyts1010, nergew
-            ' 1bpp x4  movbyts0000, mergeb
-            ' 2bpp x2: movbyts1010, splitw,movbyts3120,mergeb
-            ' 2bpp x4: movbyts0000, mergeb,mergew          
-                      
                    movbyts char,#%00000000         '1 1 0 0
                    xcont   m_lut2,char             '0 0 0 0   
                    xcont   m_lut2,char             '1 1 1 0
@@ -1349,9 +1411,18 @@ p231               skipf skippattern
                    add     framebuf2,#1		    '1 1 0 0
                    djnz   cpl2,#p231  '' cannot have rep and skipf       
  
+ 
                jmp    #p203
          
-              
+         
+         
+p241  
+
+
+
+              '''   todo!!!!  <8 bpp modes needs individual zoom patterns OR convert to 8bit       
+ 
+               jmp    #p203             
                  
  ''-----------------------------------------------------------------------------------------
 p203            getword  t1,m_border,#0
@@ -1386,7 +1457,8 @@ sync_223        long    %0101010100_0101010100_1010101011_10    'vsync + hsync
 border          long    %00000000_00011010_00101100_00000000
 
 '------ these longs will be set by setmode function
-
+outerloop long 1
+andvalue long $FF
 m_bs            long    0        'blanks before sync
 m_sn            long    0        'sync
 m_bv            long    0        'blanks before visible
