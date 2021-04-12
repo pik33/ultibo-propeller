@@ -176,19 +176,19 @@ setmode (560)
 cls(15,0)
 outtextxyc8(0,0,string("1234567890123456789012345678901234567890"),120,0)
 waitvbl(240)
-amode:=(512+192+16+4+2)
+amode:=(512+192+16+8+3)
 setmode(amode)
 cls(3,3)
 outtextxyc2(0,0,string("mode"),2,3)
-outtextxyc2(0,16,string("cpl"),2,3)'
+outtextxyc2(0,16,string("lpl"),2,3)'
 outtextxyc2(0,32,string("buf_ptr"),2,3)
 outtextxyc2(0,48,string("buflen"),2,3)
 outtextxyc2(0,64,string("lines"),2,3)
-outtextxyc2(100,0,inttostr(amode),2,3)
-outtextxyc2(100,16,inttostr(cpl),2,3)
-outtextxyc2(100,32,inttostr(buf_ptr),2,3)
-outtextxyc2(100,48,inttostr(buflen*4),2,3)
-outtextxyc2(100,64,inttostr(lines),2,3)   
+outtextxyc2(80,0,inttostr(amode),2,3)
+outtextxyc2(80,16,inttostr(cpl),2,3)
+outtextxyc2(80,32,inttostr(buf_ptr),2,3)
+outtextxyc2(80,48,inttostr(buflen*4),2,3)
+outtextxyc2(80,64,inttostr(lines),2,3)   
 waitvbl(2400)
 setmode(512+192+48+0+1)
 cls(15,15)
@@ -1518,11 +1518,10 @@ p250          add m_lut2, m_lut1
               cmp zoom, #%10 wz     '4 colors, zoom x4
        if_z   jmp #p254        
       
-              cmp zoom, #%11 wz     '4 colors, zoom x8
-       if_z   mov skippattern,##%01100110011001
-             if_z  shr cpl2,#1
-       if_z   mov t6,#2
-                      
+ '             cmp zoom, #%11 wz     '4 colors, zoom x8
+               shr cpl2,#1
+                jmp #p256        
+                
       
          
 p251               rdlong  char,framebuf2          '0 0 0 0
@@ -1557,21 +1556,32 @@ p255               shl  char,#2              '1 0 0 0
                    djnz    cpl2,#p254  
                    jmp     #p203                    
                      
-p2556                 skipf   skippattern
-                     mov     t2,char              '0 1 1 1
-                     mov     t4,char              '1 1 1 0
-                     shl     char,#2              '1 0 0 0
-                     getnib  t1,char,#4           '1 0 1 1
-                     getnib  t1,char,#2           '1 1 0 1
-                     getnib  t1,char,#1           '1 1 1 0
-                     and     t1,#3                '1 0 0 0
-                     mul     t1,#5                '1 0 1 1
-                     mul     t1,#$55              '1 1 0 1
-                                     'aug          1 1 1 0
-                     mul     t1,##$5555           '1 1 1 0
-                     rolnib  t2,t1,#0             '1 0 1 1
-                     rolbyte t2,t1,#0             '1 1 0 1
-                     rolword t2,t1,#0             '1 1 1 0
+p256               rdbyte char,framebuf2
+                   mov t3,char
+                   mov  t5,#2  
+p257               shl  char,#2              '1 0 0 0
+                   getnib  t1,char,#1          '1 0 1 1
+ 
+                   and     t1,#3                '1 0 0 0
+                   mul     t1,##$5555                '1 0 1 1
+                   rolword  t2,t1,#0             '1 0 1 1
+                   djnz    t5,#p257             '1 0 0 0  
+                   xcont   m_lut2,t2
+                   mov t5,#2
+                  
+p258                    
+                   shl t3,#2
+                   getnib  t1,t3,#2 
+                   and     t1,#3                '1 0 0 0
+                   mul     t1,##$5555                '1 0 1 1
+                   rolword  t2,t1,#0             '1 0 1 1
+                   djnz    t5,#p258             '1 0 0 0  
+                   xcont   m_lut2,t2
+ 
+                    
+                   add     framebuf2,#1         '0 1 1 1 
+                   djnz    cpl2,#p256  
+                   jmp     #p203        
         
   
                     djnz    t5,#p252             '1 0 0 0
