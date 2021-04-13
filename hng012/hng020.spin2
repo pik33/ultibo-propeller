@@ -1488,13 +1488,13 @@ p241               rdlong  char,framebuf2
                    mergew  char                    '1 0 0 0
                    movbyts char,#%01000100         '1 1 0 0
                    mergew  char                    '1 1 0 0
-                   getword char2,char,#1           '1 1 1 0
+                   getword t2,char,#1           '1 1 1 0
                    movbyts char,#%01000100         '1 1 1 0
                    mergew  char                    '1 1 1 0
                    xcont   m_lut2,char             '0 0 0 0 
-                   movbyts char2,#%01000100        '1 1 1 0
-                   mergew char2                    '1 1 1 0
-                   xcont   m_lut2,char2            '1 1 1 0
+                   movbyts t2,#%01000100        '1 1 1 0
+                   mergew t2                    '1 1 1 0
+                   xcont   m_lut2,t2            '1 1 1 0
                    add     framebuf2,#2			   '1 0 1 1
                    add     framebuf2,#1		       '1 1 0 0
                    djnz   cpl2,#p241     
@@ -1651,8 +1651,7 @@ sync_223        long    %0101010100_0101010100_1010101011_10    'vsync + hsync
 border          long    %00000000_00011010_00101100_00000000
 
 '------ these longs will be set by setmode function
-outerloop long 1
-andvalue long $FF
+
 m_bs            long    0        'blanks before sync
 m_sn            long    0        'sync
 m_bv            long    0        'blanks before visible
@@ -1669,9 +1668,11 @@ i_lines         long    0        'scanlines #
 i_clock         long    0
 i_hubset        long    0
 i_totalvis      long    0 
+
+'-------------------------------------
+
 m_lut2          long    0
 
-ashr            long    4
 colordepth
 linestart       long    0
 linenum         long    0
@@ -1684,12 +1685,7 @@ cursory         long    0
 cursorpos       long    0
 cursorpos2      long    0
 fontstart       long    0
-aredtest long $FF000000
 border2 long 0
-skipft1 long     %111111111111111100111111111
-skipft2 long     %111100111100111100111100001
-skipft4 long     %000000000000000000000000001
-skipftblank long %111111111111111100111111110
 lutiv	        long $70810000
 lutt1           long $00880000 
 lutg1           long $008d0000
@@ -1720,16 +1716,11 @@ t2              res     1
 t3 res 1
 t4 res 1
 t5 res 1
-t6 res 1
-t7 res 1
-colors1 res 1
 skippattern res 1
 cpl2 res 1
 char            res     1
-char2   res 1
 backcolor       res     1
 charcolor       res     1
-repnum res 1
 zoom res 1
 aend             long 0
                 fit     496                     '

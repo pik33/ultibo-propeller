@@ -205,7 +205,7 @@
 005e0 077             | itmp2_
 005e0 077 00 00 00 00 | 	long	0
 005e4 078             | objptr
-005e4 078 E0 4D 00 00 | 	long	@objmem
+005e4 078 C0 4D 00 00 | 	long	@objmem
 005e8 079             | ptr___lockreg_
 005e8 079 D8 05 00 00 | 	long	@__lockreg
 005ec 07a             | ptr__dat__
@@ -5256,32 +5256,32 @@
 04724     2B 4B EA 0F | vgacolors       byte   0, 117, 199, 151, 39, 71, 246, 10, 5, 121, 203, 155, 43, 75, 234, 15
 04728                 | 
 04728     28 14 64 FD | hdmi            setq    #10
-0472c     00 5B 07 FB |                 rdlong  framebuf,  ptra                 'read pointers
+0472c     00 4B 07 FB |                 rdlong  framebuf,  ptra                 'read pointers
 04730                 | 
 04730     29 FE 65 FD |                 setq2   #255
-04734     B3 01 00 FB |                 rdlong  $000, paletteptr                'read palette
+04734     AB 01 00 FB |                 rdlong  $000, paletteptr                'read palette
 04738     02 00 00 FF 
-0473c     00 66 07 F1 |                 add     paletteptr,##1024                ' Atari type 256 colors  
+0473c     00 56 07 F1 |                 add     paletteptr,##1024                ' Atari type 256 colors  
 04740     29 1E 64 FD |                 setq2   #15
-04744     B3 C1 03 FB |                 rdlong  480,paletteptr                  ' 16 color palette at 480
+04744     AB C1 03 FB |                 rdlong  480,paletteptr                  ' 16 color palette at 480
 04748     00 00 00 FF 
-0474c     40 66 07 F1 |                 add     paletteptr,##64                 ' 
+0474c     40 56 07 F1 |                 add     paletteptr,##64                 ' 
 04750     29 06 64 FD |                 setq2   #3
-04754     B3 81 03 FB |                 rdlong  448,paletteptr                  ' 4  color palette at 448
+04754     AB 81 03 FB |                 rdlong  448,paletteptr                  ' 4  color palette at 448
 04758     00 00 00 FF 
-0475c     10 66 07 F1 |                 add     paletteptr,##16                
+0475c     10 56 07 F1 |                 add     paletteptr,##16                
 04760     29 02 64 FD |                 setq2   #1
-04764     B3 41 03 FB |                 rdlong  416,paletteptr                  ' 2 color palette at 416
+04764     AB 41 03 FB |                 rdlong  416,paletteptr                  ' 2 color palette at 416
 04768                 |                 
 04768                 | 
-04768     00 A0 6F FC |                 wrlong  #aend,#0                         'write driver length to hub#0: DEBUG/demo
+04768     00 86 6F FC |                 wrlong  #aend,#0                         'write driver length to hub#0: DEBUG/demo
 0476c     3C 00 66 FD |                 setcmod #$100                           'enable HDMI mode
-04770     07 76 07 F6 |                 mov     ii,#7
-04774     06 76 67 F0 |                 shl     ii,#6
-04778     B7 77 03 F1 |                 add     ii,hbase
-0477c     58 76 63 FD |                 drvl    ii                                 '#7<<6 + hdmi_base      ' enable HDMI pins
+04770     07 66 07 F6 |                 mov     ii,#7
+04774     06 66 67 F0 |                 shl     ii,#6
+04778     AF 67 03 F1 |                 add     ii,hbase
+0477c     58 66 63 FD |                 drvl    ii                                 '#7<<6 + hdmi_base      ' enable HDMI pins
 04780     7B 0B 80 FF 
-04784     BB 01 0B FC |                 wrpin   ##%10110_1111_0111_10_00000_0, ii  '#7<<6 + hdmi_base      ' a '123 ohm BITDAC for pins
+04784     B3 01 0B FC |                 wrpin   ##%10110_1111_0111_10_00000_0, ii  '#7<<6 + hdmi_base      ' a '123 ohm BITDAC for pins
 04788                 | 
 04788     66 66 86 FF 
 0478c     1D 9A 65 FD |                 setxfrq ##$0CCCCCCC+1                   'set streamer freq to 1/10th clk
@@ -5291,85 +5291,85 @@
 04790                 | 
 04790                 | p101            
 04790     28 14 64 FD |                 setq    #10
-04794     00 5B 07 FB |                 rdlong  framebuf,  ptra 
+04794     00 4B 07 FB |                 rdlong  framebuf,  ptra 
 04798     28 1E 64 FD |                 setq    #15
-0479c     B2 0B 03 FB |                 rdlong  m_bs,modeptr                     ' read timings
-047a0     AF 05 03 FB |                 rdlong border,borderptr
+0479c     AA 07 03 FB |                 rdlong  m_bs,modeptr                     ' read timings
+047a0     A7 05 03 FB |                 rdlong border,borderptr
 047a4                 |      
-047a4     01 36 07 F1 |                 add     frames,#1
-047a8     B5 73 03 F6 |                 mov     dlptr2,dlptr
+047a4     01 30 07 F1 |                 add     frames,#1
+047a8     AD 63 03 F6 |                 mov     dlptr2,dlptr
 047ac                 | 
-047ac     B1 39 03 FB |                 rdlong  cursorx, cursorptr               ' read cursor position
-047b0     9C 3B EB F8 |                 getbyte cursory, cursorx,#1              ' y position at byte #1
-047b4     9C 35 F3 F8 |                 getbyte cursorsh,cursorx,#2              ' shape at byte #2
-047b8     FF 38 07 F5 |                 and     cursorx,#255                     ' clear the cursor x varioble from y and shape
+047ac     A9 33 03 FB |                 rdlong  cursorx, cursorptr               ' read cursor position
+047b0     99 35 EB F8 |                 getbyte cursory, cursorx,#1              ' y position at byte #1
+047b4     99 2F F3 F8 |                 getbyte cursorsh,cursorx,#2              ' shape at byte #2
+047b8     FF 32 07 F5 |                 and     cursorx,#255                     ' clear the cursor x varioble from y and shape
 047bc                 |  '' mailbox
-047bc     B4 81 03 FB |                 rdlong  t1,commandptr                    ' A mailbox interface, read the command
-047c0     04 68 07 F1 |                 add     commandptr,#4
-047c4     B4 83 03 FB |                 rdlong  t2,commandptr                    ' read the argument
-047c8     04 68 87 F1 |                 sub     commandptr,#4                    ' restore the pionter
-047cc     00 81 1F F2 |                 cmp     t1,#256  wcz                     '
-047d0     C0 83 33 CC |          if_lt  wrlut   t2,t1                            ' command 0..255-> set the color in LUT
-047d4     01 81 07 F6 |                 mov     t1, #257                         ' 257=idle
-047d8     B4 81 63 FC |                 wrlong  t1,commandptr                    ' write 257 to hub variable so the program can test if command was done
+047bc     AC 71 03 FB |                 rdlong  t1,commandptr                    ' A mailbox interface, read the command
+047c0     04 58 07 F1 |                 add     commandptr,#4
+047c4     AC 73 03 FB |                 rdlong  t2,commandptr                    ' read the argument
+047c8     04 58 87 F1 |                 sub     commandptr,#4                    ' restore the pionter
+047cc     00 71 1F F2 |                 cmp     t1,#256  wcz                     '
+047d0     B8 73 33 CC |          if_lt  wrlut   t2,t1                            ' command 0..255-> set the color in LUT
+047d4     01 71 07 F6 |                 mov     t1, #257                         ' 257=idle
+047d8     AC 71 63 FC |                 wrlong  t1,commandptr                    ' write 257 to hub variable so the program can test if command was done
 047dc                 |  '' up porch
 047dc                 | 
-047dc     7E 7B 03 F6 |                 mov     hsync0,sync_000                  '
-047e0     7F 7D 03 F6 |                 mov     hsync1,sync_001
-047e4     1B 18 47 FB |                 callpa  i_upporch ,#blank
-047e8     B0 01 68 FC |                 wrlong  #0,vblankptr
+047dc     7E 6B 03 F6 |                 mov     hsync0,sync_000                  '
+047e0     7F 6D 03 F6 |                 mov     hsync1,sync_001
+047e4     1B 14 47 FB |                 callpa  i_upporch ,#blank
+047e8     A8 01 68 FC |                 wrlong  #0,vblankptr
 047ec                 | 
 047ec                 | '' cursor blinking
 047ec                 | 
-047ec     04 36 0F F4 |                 testb   frames,#4 wz                     ' cursor blinks at framerate/16, todo: define
-047f0     81 38 07 A6 |          if_z   mov     cursorx,#129                     ' to switch the cursor off, move it out of the screen
+047ec     04 30 0F F4 |                 testb   frames,#4 wz                     ' cursor blinks at framerate/16, todo: define
+047f0     81 32 07 A6 |          if_z   mov     cursorx,#129                     ' to switch the cursor off, move it out of the screen
 047f4                 | 
 047f4                 | '' main screen
 047f4                 | 
-047f4     00 30 07 F6 |                 mov linenum,#0
+047f4     00 2A 07 F6 |                 mov linenum,#0
 047f8                 | 
-047f8     B9 75 03 FB | p301            rdlong  dl,dlptr2
+047f8     B1 65 03 FB | p301            rdlong  dl,dlptr2
 047fc                 | 
-047fc     BA 79 03 F6 |                 mov     framebuf2,dl                    ' read a line start in the framebuffer from DL entry
-04800     0E 78 47 F0 |                 shr     framebuf2,#14
-04804     02 78 67 F0 |                 shl     framebuf2,#2     
+047fc     B2 69 03 F6 |                 mov     framebuf2,dl                    ' read a line start in the framebuffer from DL entry
+04800     0E 68 47 F0 |                 shr     framebuf2,#14
+04804     02 68 67 F0 |                 shl     framebuf2,#2     
 04808                 | 
-04808     BA 81 E3 F8 |                 getbyte t1,dl,#0 
-0480c     00 80 0F F2 |                 cmp     t1,#0 wz
+04808     B2 71 E3 F8 |                 getbyte t1,dl,#0 
+0480c     00 70 0F F2 |                 cmp     t1,#0 wz
 04810     34 00 90 AD |     if_z        jmp     #borderline
 04814                 |     
-04814     00 74 17 F4 |                  testb   dl,#0  wc     ' bit 0 set = text OR extended:TODO     
+04814     00 64 17 F4 |                  testb   dl,#0  wc     ' bit 0 set = text OR extended:TODO     
 04818     50 00 90 CD |           if_c   jmp     #textline
 0481c     50 02 90 3D |           if_nc  jmp     #graphline
 04820                 | '        
-04820     01 30 07 F1 | p302            add     linenum,#1
-04824     04 72 07 F1 |                 add     dlptr2,#4
-04828     94 31 0B F2 |                 cmp     linenum,i_totalvis  wz
+04820     01 2A 07 F1 | p302            add     linenum,#1
+04824     04 62 07 F1 |                 add     dlptr2,#4
+04828     92 2B 0B F2 |                 cmp     linenum,i_totalvis  wz
 0482c     C8 FF 9F 5D |          if_nz  jmp     #p301                                  
 04830                 |                
-04830     B0 03 68 FC | p112            wrlong  #1,vblankptr 
-04834     07 1C 47 FB |                 callpa  i_downporch ,#blank             'bottom blanks
+04830     A8 03 68 FC | p112            wrlong  #1,vblankptr 
+04834     07 18 47 FB |                 callpa  i_downporch ,#blank             'bottom blanks
 04838                 | 
-04838     80 7B 03 F6 |                 mov     hsync0,sync_222                 'vsync on
-0483c     81 7D 03 F6 |                 mov     hsync1,sync_223
-04840     04 1A 47 FB |                 callpa  i_vsync,#blank                  'vertical sync blanks
+04838     80 6B 03 F6 |                 mov     hsync0,sync_222                 'vsync on
+0483c     81 6D 03 F6 |                 mov     hsync1,sync_223
+04840     04 16 47 FB |                 callpa  i_vsync,#blank                  'vertical sync blanks
 04844     48 FF 9F FD |                 jmp     #p101                    
 04848                 |   
 04848                 | '' ---------------  END of frame rendering loop -------------------------------------------  
 04848                 | 
 04848                 | 
 04848     14 00 B0 FD | borderline      call    #hsync                      ' make a border
-0484c     82 11 C3 FC |                 xcont   m_vi,border 
+0484c     82 0D C3 FC |                 xcont   m_vi,border 
 04850     CC FF 9F FD |                 jmp     #p302 
 04854                 | 
 04854                 | 
 04854     08 00 B0 FD | blank           call    #hsync                          'blank lines
-04858     BD 11 C3 FC |                 xcont   m_vi,hsync0
+04858     B5 0D C3 FC |                 xcont   m_vi,hsync0
 0485c     FD ED 6F 0B |         _ret_   djnz    pa,#blank
 04860                 | 
-04860     BD 0B C3 FC | hsync           xcont   m_bs,hsync0                     'horizontal sync
-04864     BE 0D B3 FC |                 xzero   m_sn,hsync1
-04868     BD 0F C3 0C |         _ret_   xcont   m_bv,hsync0
+04860     B5 07 C3 FC | hsync           xcont   m_bs,hsync0                     'horizontal sync
+04864     B6 09 B3 FC |                 xzero   m_sn,hsync1
+04868     B5 0B C3 0C |         _ret_   xcont   m_bv,hsync0
 0486c                 | 
 0486c                 | 
 0486c                 | 
@@ -5379,184 +5379,184 @@
 0486c                 |   
 0486c                 | '' Display a text line DL[31..12]=addr, nibble #1=textline, zoom: todo
 0486c                 | 
-0486c     9C 3F 03 F6 | textline        mov     cursorpos2,cursorx              ' we need another var for cursor as this code will repeat 16x for every char line
+0486c     99 39 03 F6 | textline        mov     cursorpos2,cursorx              ' we need another var for cursor as this code will repeat 16x for every char line
 04870                 | 
-04870     BA 7F 53 F8 |                 getnib  fontline,dl,#2                 ' fontline is 0 to 15, a line in font def
-04874     BA 9F 5B F8 |                 getnib  zoom, dl,#3
-04878     03 9E 07 F5 |                 and		zoom, #3  
+04870     B2 6F 53 F8 |                 getnib  fontline,dl,#2                 ' fontline is 0 to 15, a line in font def
+04874     B2 85 5B F8 |                 getnib  zoom, dl,#3
+04878     03 84 07 F5 |                 and		zoom, #3  
 0487c                 |                 
 0487c                 | 
 0487c                 | 
-0487c     BA 2F 03 F6 |                 mov     linestart,dl                    ' linestart will be used for checking cursor y and compute line start addr in the buffer
-04880     02 2E 47 F0 |                 shr     linestart,#2                    ' scanline to char line
-04884     3F 2E 07 F5 |                 and     linestart,#63
-04888     9D 2F 0B F2 |                 cmp     linestart,cursory wz            ' if the cursor is not here
-0488c     81 3E 07 56 |           if_nz mov     cursorpos2,#129                 ' move it out of the screen
+0487c     B2 29 03 F6 |                 mov     linestart,dl                    ' linestart will be used for checking cursor y and compute line start addr in the buffer
+04880     02 28 47 F0 |                 shr     linestart,#2                    ' scanline to char line
+04884     3F 28 07 F5 |                 and     linestart,#63
+04888     9A 29 0B F2 |                 cmp     linestart,cursory wz            ' if the cursor is not here
+0488c     81 38 07 56 |           if_nz mov     cursorpos2,#129                 ' move it out of the screen
 04890                 | 
 04890     CC FF BF FD |                 call    #hsync                          ' now call hsync to gain some time between xconts
 04894                 | 
 04894                 |                        ' if fontline =0, get a border color
 04894                 |                 
-04894     89 81 33 F9 | p102            getword t1,m_border,#0                  
-04898     00 80 0F F2 |                 cmp     t1, #0 wz
-0489c     82 13 C3 5C |           if_nz xcont   m_border,border                 ' display a left border if exists
+04894     87 71 33 F9 | p102            getword t1,m_border,#0                  
+04898     00 70 0F F2 |                 cmp     t1, #0 wz
+0489c     82 0F C3 5C |           if_nz xcont   m_border,border                 ' display a left border if exists
 048a0                 |         
-048a0     9A 7F 1B F2 |                 cmp     fontline,cursorsh wcz           ' if the cursor have to be not displayed due to its shape
-048a4     81 3C 07 C6 |           if_c  mov     cursorpos,#129                  ' move it out of the screen
-048a8     9F 3D 03 36 |          if_nc  mov     cursorpos,cursorpos2
-048ac     01 3C 07 F1 |                 add     cursorpos,#1                    ' we will substract #1 below so compensate this here
-048b0     AE 83 03 F6 |                 mov     t2,fontbuf                      ' font definition pointer
-048b4     BF 83 03 F1 |                 add     t2,fontline                     ' add a current font line
-048b8     8A 2B 03 F6 |                 mov m_lut2, m_lut1
-048bc     A8 2B 03 F1 |                 add m_lut2, lutt1
-048c0     90 93 03 F6 |                 mov cpl2,i_cpl
+048a0     97 6F 1B F2 |                 cmp     fontline,cursorsh wcz           ' if the cursor have to be not displayed due to its shape
+048a4     81 36 07 C6 |           if_c  mov     cursorpos,#129                  ' move it out of the screen
+048a8     9C 37 03 36 |          if_nc  mov     cursorpos,cursorpos2
+048ac     01 36 07 F1 |                 add     cursorpos,#1                    ' we will substract #1 below so compensate this here
+048b0     A6 73 03 F6 |                 mov     t2,fontbuf                      ' font definition pointer
+048b4     B7 73 03 F1 |                 add     t2,fontline                     ' add a current font line
+048b8     88 27 03 F6 |                 mov m_lut2, m_lut1
+048bc     A0 27 03 F1 |                 add m_lut2, lutt1
+048c0     8E 7D 03 F6 |                 mov cpl2,i_cpl
 048c4                 |   
-048c4     02 9E 0F F2 |                cmp zoom,#2 wz
+048c4     02 84 0F F2 |                cmp zoom,#2 wz
 048c8     E4 00 90 AD |           if_z jmp #p420
-048cc     01 9E 0F F2 |                cmp zoom,#1 wz
+048cc     01 84 0F F2 |                cmp zoom,#1 wz
 048d0     64 00 90 AD |           if_z jmp #p410
-048d4     00 9E 0F F2 |                 cmp zoom,#0 wz
+048d4     00 84 0F F2 |                 cmp zoom,#0 wz
 048d8     04 00 90 AD |           if_z jmp #p400    
 048dc     50 01 90 FD |                jmp #p430  
 048e0                 |           
 048e0                 |                    '   
 048e0                 |  ''---------------------------------------------------------------------------------------------------------          
-048e0     BC 95 03 FB |  p400                   rdlong  char,framebuf2          ' read a long char                          '1
-048e4     CA 99 F3 F8 |                         getbyte backcolor,char,#2       ' byte #2 - background color                '2
-048e8     CA 9B FB F8 |                         getbyte charcolor,char,#3       ' byte #3 - foreground color                '3
-048ec     CA 95 E3 F8 |                         getbyte char,char, #0           ' word #0 - char code                       '4
-048f0     04 78 07 F1 |                         add     framebuf2,#4            ' point to the next long                    '5
-048f4     04 94 67 F0 |                         shl     char,#4                 ' 1 char=16 bytes in font def               '6
-048f8     C1 95 03 F1 |                         add     char,t2                 ' add this to font/line pointer             '7
-048fc     CA 81 C3 FA |                         rdbyte  t1,char                 ' and get 8 pixels prom there               '8
-04900     01 3C 8F F1 |                         sub     cursorpos,#1 wz         ' if there is a cursor                      '9
-04904     FF 80 67 A5 |                   if_z  xor     t1, #$FF                ' reverse the colors                        '10         
+048e0     B4 7F 03 FB |  p400                   rdlong  char,framebuf2          ' read a long char                          '1
+048e4     BF 81 F3 F8 |                         getbyte backcolor,char,#2       ' byte #2 - background color                '2
+048e8     BF 83 FB F8 |                         getbyte charcolor,char,#3       ' byte #3 - foreground color                '3
+048ec     BF 7F E3 F8 |                         getbyte char,char, #0           ' word #0 - char code                       '4
+048f0     04 68 07 F1 |                         add     framebuf2,#4            ' point to the next long                    '5
+048f4     04 7E 67 F0 |                         shl     char,#4                 ' 1 char=16 bytes in font def               '6
+048f8     B9 7F 03 F1 |                         add     char,t2                 ' add this to font/line pointer             '7
+048fc     BF 71 C3 FA |                         rdbyte  t1,char                 ' and get 8 pixels prom there               '8
+04900     01 36 8F F1 |                         sub     cursorpos,#1 wz         ' if there is a cursor                      '9
+04904     FF 70 67 A5 |                   if_z  xor     t1, #$FF                ' reverse the colors                        '10         
 04908                 | 
-04908     C0 2B C3 FC |                         xcont m_lut2,t1
+04908     B8 27 C3 FC |                         xcont m_lut2,t1
 0490c                 |    
-0490c     CC 89 A3 FA |                         rdlut   t5,backcolor            ' read a background color from palette      '13
-04910     99 89 33 FC |                         wrlut   t5,lutaddr              ' and write it to LUT #0 or #32             '14
-04914     01 32 07 F1 |                         add     lutaddr,#1                                                          '15
-04918     CD 89 A3 FA |                         rdlut   t5,charcolor            ' the same for the foreground               '16
-0491c     99 89 33 FC |                         wrlut   t5,lutaddr                                                          '17
-04920     01 32 87 F1 |                         sub     lutaddr,#1  
+0490c     C0 79 A3 FA |                         rdlut   t5,backcolor            ' read a background color from palette      '13
+04910     96 79 33 FC |                         wrlut   t5,lutaddr              ' and write it to LUT #0 or #32             '14
+04914     01 2C 07 F1 |                         add     lutaddr,#1                                                          '15
+04918     C1 79 A3 FA |                         rdlut   t5,charcolor            ' the same for the foreground               '16
+0491c     96 79 33 FC |                         wrlut   t5,lutaddr                                                          '17
+04920     01 2C 87 F1 |                         sub     lutaddr,#1  
 04924                 | 
-04924     10 2A E7 F4 |                         bitnot  m_lut2,#16                                                          '19
-04928     10 14 E7 F4 |                         bitnot  m_lut1,#16                                                          '19
-0492c     20 32 67 F5 |                         xor     lutaddr,#32             ' use LUT #0-1 and 32-33                    '20
+04924     10 26 E7 F4 |                         bitnot  m_lut2,#16                                                          '19
+04928     10 10 E7 F4 |                         bitnot  m_lut1,#16                                                          '19
+0492c     20 2C 67 F5 |                         xor     lutaddr,#32             ' use LUT #0-1 and 32-33                    '20
 04930                 | 
-04930     EB 93 6F FB |                         djnz   cpl2,#p400   
+04930     EB 7D 6F FB |                         djnz   cpl2,#p400   
 04934     28 01 90 FD |  p401                   jmp    #p103
 04938                 |                         
 04938                 | ''------------------------------------------------------------------------------------------------------------
 04938                 |   
-04938     01 92 47 F0 |  p410                   shr cpl2,#1 
+04938     01 7C 47 F0 |  p410                   shr cpl2,#1 
 0493c                 |                      
 0493c                 | ''---------------------------------------------------------------------------------------------------------          
-0493c     BC 95 03 FB |  p412                   rdlong  char,framebuf2          ' read a long char                          '1
-04940     CA 99 F3 F8 |                         getbyte backcolor,char,#2       ' byte #2 - background color                '2
-04944     CA 9B FB F8 |                         getbyte charcolor,char,#3       ' byte #3 - foreground color                '3
-04948     CA 95 E3 F8 |                         getbyte char,char, #0           ' word #0 - char code                       '4
-0494c     04 78 07 F1 |                         add     framebuf2,#4            ' point to the next long                    '5
-04950     04 94 67 F0 |                         shl     char,#4                 ' 1 char=16 bytes in font def               '6
-04954     C1 95 03 F1 |                         add     char,t2                 ' add this to font/line pointer             '7
-04958     CA 81 C3 FA |                         rdbyte  t1,char                 ' and get 8 pixels prom there               '8
-0495c     01 3C 8F F1 |                         sub     cursorpos,#1 wz         ' if there is a cursor                      '9
-04960     FF 80 67 A5 |                   if_z  xor     t1, #$FF                ' reverse the colors                        '10         
+0493c     B4 7F 03 FB |  p412                   rdlong  char,framebuf2          ' read a long char                          '1
+04940     BF 81 F3 F8 |                         getbyte backcolor,char,#2       ' byte #2 - background color                '2
+04944     BF 83 FB F8 |                         getbyte charcolor,char,#3       ' byte #3 - foreground color                '3
+04948     BF 7F E3 F8 |                         getbyte char,char, #0           ' word #0 - char code                       '4
+0494c     04 68 07 F1 |                         add     framebuf2,#4            ' point to the next long                    '5
+04950     04 7E 67 F0 |                         shl     char,#4                 ' 1 char=16 bytes in font def               '6
+04954     B9 7F 03 F1 |                         add     char,t2                 ' add this to font/line pointer             '7
+04958     BF 71 C3 FA |                         rdbyte  t1,char                 ' and get 8 pixels prom there               '8
+0495c     01 36 8F F1 |                         sub     cursorpos,#1 wz         ' if there is a cursor                      '9
+04960     FF 70 67 A5 |                   if_z  xor     t1, #$FF                ' reverse the colors                        '10         
 04964                 |   
 04964                 |   
-04964     C0 85 4B F8 |                         getnib t3,t1,#1                   ' 4 pixels to t3  						'1  - +
-04968     C0 81 43 F8 |                         getnib t1,t1,#0                   ' 4 pixels to t1							'2  - +
-0496c     63 80 63 FD |                         mergew t1                         ' make 01010101 from 1111					'3  - +
-04970     03 80 07 FA |                         mul t1,#3 
-04974     C0 2B C3 FC |                         xcont m_lut2,t1
-04978     CC 89 A3 FA |                         rdlut   t5,backcolor            ' read a background color from palette      '13
-0497c     99 89 33 FC |                         wrlut   t5,lutaddr              ' and write it to LUT #0 or #32             '14
-04980     01 32 07 F1 |                         add     lutaddr,#1                                                          '15
-04984     CD 89 A3 FA |                         rdlut   t5,charcolor            ' the same for the foreground               '16
-04988     99 89 33 FC |                         wrlut   t5,lutaddr                                                          '17
-0498c     01 32 87 F1 |                         sub     lutaddr,#1                         
-04990     63 84 63 FD |                         mergew t3
-04994     03 84 07 FA |                         mul t3,#3
-04998     C2 2B C3 FC |                         xcont m_lut2,t3
+04964     B8 75 4B F8 |                         getnib t3,t1,#1                   ' 4 pixels to t3  						'1  - +
+04968     B8 71 43 F8 |                         getnib t1,t1,#0                   ' 4 pixels to t1							'2  - +
+0496c     63 70 63 FD |                         mergew t1                         ' make 01010101 from 1111					'3  - +
+04970     03 70 07 FA |                         mul t1,#3 
+04974     B8 27 C3 FC |                         xcont m_lut2,t1
+04978     C0 79 A3 FA |                         rdlut   t5,backcolor            ' read a background color from palette      '13
+0497c     96 79 33 FC |                         wrlut   t5,lutaddr              ' and write it to LUT #0 or #32             '14
+04980     01 2C 07 F1 |                         add     lutaddr,#1                                                          '15
+04984     C1 79 A3 FA |                         rdlut   t5,charcolor            ' the same for the foreground               '16
+04988     96 79 33 FC |                         wrlut   t5,lutaddr                                                          '17
+0498c     01 2C 87 F1 |                         sub     lutaddr,#1                         
+04990     63 74 63 FD |                         mergew t3
+04994     03 74 07 FA |                         mul t3,#3
+04998     BA 27 C3 FC |                         xcont m_lut2,t3
 0499c                 |    
-0499c     10 2A E7 F4 |                         bitnot  m_lut2,#16                                                          '19
-049a0     10 14 E7 F4 |                         bitnot  m_lut1,#16                                                          '19
+0499c     10 26 E7 F4 |                         bitnot  m_lut2,#16                                                          '19
+049a0     10 10 E7 F4 |                         bitnot  m_lut1,#16                                                          '19
 049a4                 |                         
-049a4     20 32 67 F5 |                         xor     lutaddr,#32             ' use LUT #0-1 and 32-33                    '20
+049a4     20 2C 67 F5 |                         xor     lutaddr,#32             ' use LUT #0-1 and 32-33                    '20
 049a8                 | 
-049a8     E4 93 6F FB |                         djnz   cpl2,#p412              
+049a8     E4 7D 6F FB |                         djnz   cpl2,#p412              
 049ac     B0 00 90 FD |  p411                   jmp    #p103
 049b0                 |                         
 049b0                 | ''------------------------------------------------------------------------------------------------------------
 049b0                 | 
-049b0     02 92 47 F0 |  p420                   shr cpl2,#2
+049b0     02 7C 47 F0 |  p420                   shr cpl2,#2
 049b4                 | 
 049b4                 | ''---------------------------------------------------------------------------------------
-049b4     BC 95 03 FB |  p422                   rdlong  char,framebuf2          ' read a long char                          '1
-049b8     CA 99 F3 F8 |                         getbyte backcolor,char,#2       ' byte #2 - background color                '2
-049bc     CA 9B FB F8 |                         getbyte charcolor,char,#3       ' byte #3 - foreground color                '3
-049c0     CA 95 E3 F8 |                         getbyte char,char, #0           ' word #0 - char code                       '4
-049c4     04 78 07 F1 |                         add     framebuf2,#4            ' point to the next long                    '5
-049c8     04 94 67 F0 |                         shl     char,#4                 ' 1 char=16 bytes in font def               '6
-049cc     C1 95 03 F1 |                         add     char,t2                 ' add this to font/line pointer             '7
-049d0     CA 81 C3 FA |                         rdbyte  t1,char                 ' and get 8 pixels prom there               '8
-049d4     01 3C 8F F1 |                         sub     cursorpos,#1 wz         ' if there is a cursor                      '9
-049d8     FF 80 67 A5 |                   if_z  xor     t1, #$FF                ' reverse the colors                        '10
+049b4     B4 7F 03 FB |  p422                   rdlong  char,framebuf2          ' read a long char                          '1
+049b8     BF 81 F3 F8 |                         getbyte backcolor,char,#2       ' byte #2 - background color                '2
+049bc     BF 83 FB F8 |                         getbyte charcolor,char,#3       ' byte #3 - foreground color                '3
+049c0     BF 7F E3 F8 |                         getbyte char,char, #0           ' word #0 - char code                       '4
+049c4     04 68 07 F1 |                         add     framebuf2,#4            ' point to the next long                    '5
+049c8     04 7E 67 F0 |                         shl     char,#4                 ' 1 char=16 bytes in font def               '6
+049cc     B9 7F 03 F1 |                         add     char,t2                 ' add this to font/line pointer             '7
+049d0     BF 71 C3 FA |                         rdbyte  t1,char                 ' and get 8 pixels prom there               '8
+049d4     01 36 8F F1 |                         sub     cursorpos,#1 wz         ' if there is a cursor                      '9
+049d8     FF 70 67 A5 |                   if_z  xor     t1, #$FF                ' reverse the colors                        '10
 049dc                 | 
-049dc     61 80 63 FD |                         mergeb t1
-049e0     C0 85 3B F9 |                         getword t3,t1,#1
-049e4     0F 80 07 FA |                         mul t1,#15
-049e8     C0 2B C3 FC |                         xcont m_lut2,t1
+049dc     61 70 63 FD |                         mergeb t1
+049e0     B8 75 3B F9 |                         getword t3,t1,#1
+049e4     0F 70 07 FA |                         mul t1,#15
+049e8     B8 27 C3 FC |                         xcont m_lut2,t1
 049ec                 |                         
-049ec     CC 89 A3 FA |                         rdlut   t5,backcolor            ' read a background color from palette      '13
-049f0     99 89 33 FC |                         wrlut   t5,lutaddr              ' and write it to LUT #0 or #32             '14
-049f4     01 32 07 F1 |                         add     lutaddr,#1                                                          '15
-049f8     CD 89 A3 FA |                         rdlut   t5,charcolor            ' the same for the foreground               '16
-049fc     99 89 33 FC |                         wrlut   t5,lutaddr                                                          '17
-04a00     01 32 87 F1 |                         sub     lutaddr,#1 
+049ec     C0 79 A3 FA |                         rdlut   t5,backcolor            ' read a background color from palette      '13
+049f0     96 79 33 FC |                         wrlut   t5,lutaddr              ' and write it to LUT #0 or #32             '14
+049f4     01 2C 07 F1 |                         add     lutaddr,#1                                                          '15
+049f8     C1 79 A3 FA |                         rdlut   t5,charcolor            ' the same for the foreground               '16
+049fc     96 79 33 FC |                         wrlut   t5,lutaddr                                                          '17
+04a00     01 2C 87 F1 |                         sub     lutaddr,#1 
 04a04                 |                         
-04a04     C0 87 EB F8 |                         getbyte t4,t1,#1        '          
-04a08     C3 2B C3 FC |                         xcont m_lut2,t4                                                                                                           ' 
+04a04     B8 77 EB F8 |                         getbyte t4,t1,#1        '          
+04a08     BB 27 C3 FC |                         xcont m_lut2,t4                                                                                                           ' 
 04a0c                 |                        
-04a0c     0F 84 07 FA |                         mul t3,#15
-04a10     C2 2B C3 FC |                         xcont m_lut2,t3
+04a0c     0F 74 07 FA |                         mul t3,#15
+04a10     BA 27 C3 FC |                         xcont m_lut2,t3
 04a14                 |                         
-04a14     C2 89 EB F8 |                         getbyte t5,t3,#1
-04a18     C4 2B C3 FC |                         xcont m_lut2, t5
-04a1c     10 2A E7 F4 |                         bitnot  m_lut2,#16                                                          '19
-04a20     10 14 E7 F4 |                         bitnot  m_lut1,#16                                                          '19
+04a14     BA 79 EB F8 |                         getbyte t5,t3,#1
+04a18     BC 27 C3 FC |                         xcont m_lut2, t5
+04a1c     10 26 E7 F4 |                         bitnot  m_lut2,#16                                                          '19
+04a20     10 10 E7 F4 |                         bitnot  m_lut1,#16                                                          '19
 04a24                 |                         
-04a24     20 32 67 F5 |                         xor     lutaddr,#32             ' use LUT #0-1 and 32-33                    '20
+04a24     20 2C 67 F5 |                         xor     lutaddr,#32             ' use LUT #0-1 and 32-33                    '20
 04a28                 | 
-04a28     E2 93 6F FB |                         djnz   cpl2,#p422              
+04a28     E2 7D 6F FB |                         djnz   cpl2,#p422              
 04a2c     30 00 90 FD |  p421                   jmp    #p103 
 04a30                 |                         
 04a30                 | '--------------------------------------------------------------------------------------------------------------                      
 04a30                 |         
-04a30     BC 95 03 FB |  p430                   rdlong  char,framebuf2          ' read a long char                          '1
-04a34     CA 99 F3 F8 |                         getbyte backcolor,char,#2       ' byte #2 - background color                '2
-04a38     CA 9B FB F8 |                         getbyte charcolor,char,#3       ' byte #3 - foreground color                '3
+04a30     B4 7F 03 FB |  p430                   rdlong  char,framebuf2          ' read a long char                          '1
+04a34     BF 81 F3 F8 |                         getbyte backcolor,char,#2       ' byte #2 - background color                '2
+04a38     BF 83 FB F8 |                         getbyte charcolor,char,#3       ' byte #3 - foreground color                '3
 04a3c                 |      
-04a3c     00 2A C7 FC |                         xcont m_lut2,#0
+04a3c     00 26 C7 FC |                         xcont m_lut2,#0
 04a40                 |    
-04a40     CC 89 A3 FA |                         rdlut   t5,backcolor            ' read a background color from palette      '13
-04a44     99 89 33 FC |                         wrlut   t5,lutaddr              ' and write it to LUT #0 or #32             '14
-04a48     01 32 07 F1 |                         add     lutaddr,#1                                                          '15
-04a4c     CD 89 A3 FA |                         rdlut   t5,charcolor            ' the same for the foreground               '16
-04a50     99 89 33 FC |                         wrlut   t5,lutaddr                                                          '17
-04a54     01 32 87 F1 |                         sub     lutaddr,#1  
+04a40     C0 79 A3 FA |                         rdlut   t5,backcolor            ' read a background color from palette      '13
+04a44     96 79 33 FC |                         wrlut   t5,lutaddr              ' and write it to LUT #0 or #32             '14
+04a48     01 2C 07 F1 |                         add     lutaddr,#1                                                          '15
+04a4c     C1 79 A3 FA |                         rdlut   t5,charcolor            ' the same for the foreground               '16
+04a50     96 79 33 FC |                         wrlut   t5,lutaddr                                                          '17
+04a54     01 2C 87 F1 |                         sub     lutaddr,#1  
 04a58                 | 
-04a58     F5 93 6F FB |                         djnz   cpl2,#p430   
+04a58     F5 7D 6F FB |                         djnz   cpl2,#p430   
 04a5c     00 00 90 FD |  p431                   jmp    #p103
 04a60                 |                         
 04a60                 | ''------------------------------------------------------------------------------------------------------------
 04a60                 |   
 04a60                 |                     
 04a60                 | 
-04a60     89 81 33 F9 | p103            getword  t1,m_border,#0
-04a64     00 80 0F F2 |                 cmp      t1, #0 wz
-04a68     82 13 C3 5C |                 if_nz    xcont   m_border,border            'display a right border if exists
+04a60     87 71 33 F9 | p103            getword  t1,m_border,#0
+04a64     00 70 0F F2 |                 cmp      t1, #0 wz
+04a68     82 0F C3 5C |                 if_nz    xcont   m_border,border            'display a right border if exists
 04a6c                 |                 
 04a6c     B0 FD 9F FD |                 jmp #p302
 04a70                 |                 
@@ -5567,239 +5567,239 @@
 04a70     EC FD BF FD | graphline       call    #hsync                          ' now call hsync to gain some time between xconts
 04a74                 | 
 04a74                 |                
-04a74     89 81 33 F9 | p202            getword t1,m_border,#0                  
-04a78     00 80 0F F2 |                 cmp     t1, #0 wz
-04a7c     82 13 C3 5C |           if_nz xcont   m_border,border                 ' display a left border if exists
+04a74     87 71 33 F9 | p202            getword t1,m_border,#0                  
+04a78     00 70 0F F2 |                 cmp     t1, #0 wz
+04a7c     82 0F C3 5C |           if_nz xcont   m_border,border                 ' display a left border if exists
 04a80                 |           
 04a80                 | '----------------------------------------- display pixels
 04a80                 |  
-04a80     8A 2B 03 F6 |                 mov     m_lut2,m_lut1                   ' m_lut1 loaded from hub timing block, pixel per long
-04a84     90 93 03 F6 |                 mov     cpl2,i_cpl                      ' i_cpl in graphic modes is longs per line
+04a80     88 27 03 F6 |                 mov     m_lut2,m_lut1                   ' m_lut1 loaded from hub timing block, pixel per long
+04a84     8E 7D 03 F6 |                 mov     cpl2,i_cpl                      ' i_cpl in graphic modes is longs per line
 04a88                 | 
-04a88     BA 9F 5B F8 |                 getnib  zoom, dl,#3
-04a8c     03 9E 07 F5 |                 and		zoom, #3                        ' get a horizontal zoom for the line
+04a88     B2 85 5B F8 |                 getnib  zoom, dl,#3
+04a8c     03 84 07 F5 |                 and		zoom, #3                        ' get a horizontal zoom for the line
 04a90                 |              
-04a90     BA 2F 03 F6 |                 mov     colordepth,dl                   ' get a color depth, reuse linestart var f         '
-04a94     0C 2E 07 F5 |                 and     colordepth,#12
+04a90     B2 29 03 F6 |                 mov     colordepth,dl                   ' get a color depth, reuse linestart var f         '
+04a94     0C 28 07 F5 |                 and     colordepth,#12
 04a98                 |  
-04a98     00 2E 0F F2 |                 cmp     colordepth,#%0000 wz            ' 1 bpp modes
-04a9c     A9 2B 03 A1 |           if_z  add     m_lut2,lutg1   
+04a98     00 28 0F F2 |                 cmp     colordepth,#%0000 wz            ' 1 bpp modes
+04a9c     A1 27 03 A1 |           if_z  add     m_lut2,lutg1   
 04aa0     68 00 90 AD |           if_z  jmp     #p240
 04aa4                 |           
-04aa4     04 2E 0F F2 |                 cmp     colordepth,#%0100 wz            ' 2 bpp modes
-04aa8     AA 2B 03 A1 |           if_z  add     m_lut2,lutg2   
+04aa4     04 28 0F F2 |                 cmp     colordepth,#%0100 wz            ' 2 bpp modes
+04aa8     A2 27 03 A1 |           if_z  add     m_lut2,lutg2   
 04aac     D0 00 90 AD |           if_z  jmp     #p250
 04ab0                 |           
-04ab0     08 2E 0F F2 |                 cmp     colordepth,#%1000 wz            ' 4 bpp modes
-04ab4     AB 2B 03 A1 |           if_z  add     m_lut2,lutg4   
+04ab0     08 28 0F F2 |                 cmp     colordepth,#%1000 wz            ' 4 bpp modes
+04ab4     A3 27 03 A1 |           if_z  add     m_lut2,lutg4   
 04ab8     B4 01 90 AD |           if_z  jmp     #p260
 04abc                 | 
-04abc     AC 2B 03 F1 |                 add m_lut2,lutg8                        ' 8 bpp modes
+04abc     A4 27 03 F1 |                 add m_lut2,lutg8                        ' 8 bpp modes
 04ac0                 |             
 04ac0                 | '' --- 8 bit color modes 
 04ac0                 | 
-04ac0     00 9E 0F F2 |                 cmp zoom, #%00 wz   '256 colors, zoom x1
+04ac0     00 84 0F F2 |                 cmp zoom, #%00 wz   '256 colors, zoom x1
 04ac4     D8 00 90 AD |                 if_z jmp #p251      'there is an universal loop for 1x zoom at p251, saves one long of skip pattern
 04ac8                 |                    
-04ac8     01 9E 0F F2 |                 cmp zoom, #%01 wz   '256 colors, zoom x2
-04acc     2A 90 07 A6 |            if_z mov skippattern,#%101010
+04ac8     01 84 0F F2 |                 cmp zoom, #%01 wz   '256 colors, zoom x2
+04acc     2A 7A 07 A6 |            if_z mov skippattern,#%101010
 04ad0                 |  '         
-04ad0     02 9E 0F F2 |                 cmp zoom, #%10 wz   '256 colors, zoom x4
-04ad4     19 90 07 A6 |            if_z mov skippattern,#%011001
+04ad0     02 84 0F F2 |                 cmp zoom, #%10 wz   '256 colors, zoom x4
+04ad4     19 7A 07 A6 |            if_z mov skippattern,#%011001
 04ad8                 |  '     
-04ad8     03 9E 0F F2 |                 cmp zoom, #%11 wz   '256 colors, zoom x8
-04adc     11 90 07 A6 |           if_z  mov skippattern,#%010001
-04ae0     01 92 47 A0 |           if_z  shr cpl2,#1         ' if 8x zoom, 2 xconts used in one loop, so divide loop count by 2
+04ad8     03 84 0F F2 |                 cmp zoom, #%11 wz   '256 colors, zoom x8
+04adc     11 7A 07 A6 |           if_z  mov skippattern,#%010001
+04ae0     01 7C 47 A0 |           if_z  shr cpl2,#1         ' if 8x zoom, 2 xconts used in one loop, so divide loop count by 2
 04ae4                 |               '
 04ae4                 |                
-04ae4     BC 95 03 FB | p231               rdlong  char,framebuf2           
-04ae8     32 90 63 FD |                    skipf skippattern
-04aec     50 94 FF F9 |                    movbyts char,#%01010000         '0 1 1
-04af0     00 94 FF F9 |                    movbyts char,#%00000000         '1 0 0
-04af4     CA 2B C3 FC |                    xcont   m_lut2,char             '0 0 0   
-04af8     CA 2B C3 FC |                    xcont   m_lut2,char             '1 1 0
+04ae4     B4 7F 03 FB | p231               rdlong  char,framebuf2           
+04ae8     32 7A 63 FD |                    skipf skippattern
+04aec     50 7E FF F9 |                    movbyts char,#%01010000         '0 1 1
+04af0     00 7E FF F9 |                    movbyts char,#%00000000         '1 0 0
+04af4     BF 27 C3 FC |                    xcont   m_lut2,char             '0 0 0   
+04af8     BF 27 C3 FC |                    xcont   m_lut2,char             '1 1 0
 04afc                 |               '    add     framebuf2,#4            '1 1 1
-04afc     02 78 07 F1 |                    add     framebuf2,#2			   '0 1 1
-04b00     01 78 07 F1 |                    add     framebuf2,#1		       '1 0 0
-04b04     F7 93 6F FB |                    djnz    cpl2,#p231                  
+04afc     02 68 07 F1 |                    add     framebuf2,#2			   '0 1 1
+04b00     01 68 07 F1 |                    add     framebuf2,#1		       '1 0 0
+04b04     F7 7D 6F FB |                    djnz    cpl2,#p231                  
 04b08                 |  
 04b08     04 02 90 FD |                jmp    #p203
 04b0c                 |          
 04b0c                 | '' --- 1 bit color modes   
 04b0c                 | 
-04b0c     00 9E 0F F2 | p240          cmp zoom, #%00 wz     '2 colors, zoom x1
+04b0c     00 84 0F F2 | p240          cmp zoom, #%00 wz     '2 colors, zoom x1
 04b10     8C 00 90 AD |        if_z   jmp #p251              'there is an universal loop for 1x zoom at p251, saves one long of skip pattern 
 04b14                 |                  
-04b14     01 9E 0F F2 |               cmp zoom, #%01 wz     '2 colors, zoom x2
+04b14     01 84 0F F2 |               cmp zoom, #%01 wz     '2 colors, zoom x2
 04b18     0B 00 00 AF 
-04b1c     7C 91 07 A6 |        if_z   mov skippattern,##%1011101111100
+04b1c     7C 7B 07 A6 |        if_z   mov skippattern,##%1011101111100
 04b20                 |            
-04b20     02 9E 0F F2 |               cmp zoom, #%10 wz     '2 colors, zoom x4
+04b20     02 84 0F F2 |               cmp zoom, #%10 wz     '2 colors, zoom x4
 04b24     07 00 00 AF 
-04b28     70 91 07 A6 |        if_z   mov skippattern,##%0111101110000
+04b28     70 7B 07 A6 |        if_z   mov skippattern,##%0111101110000
 04b2c                 |       
-04b2c     03 9E 0F F2 |               cmp zoom, #%11 wz     '2 colors, zoom x8
+04b2c     03 84 0F F2 |               cmp zoom, #%11 wz     '2 colors, zoom x8
 04b30     04 00 00 AF 
-04b34     00 90 07 A6 |        if_z   mov skippattern,##%0100000000000
-04b38     01 92 47 A0 |        if_z   shr cpl2,#1
+04b34     00 7A 07 A6 |        if_z   mov skippattern,##%0100000000000
+04b38     01 7C 47 A0 |        if_z   shr cpl2,#1
 04b3c                 |  
 04b3c                 |          
-04b3c     BC 95 03 FB | p241               rdlong  char,framebuf2           
-04b40     32 90 63 FD |                    skipf skippattern                   
-04b44     44 94 FF F9 |                    movbyts char,#%01000100         '1 0 0 0
-04b48     63 94 63 FD |                    mergew  char                    '1 0 0 0
-04b4c     44 94 FF F9 |                    movbyts char,#%01000100         '1 1 0 0
-04b50     63 94 63 FD |                    mergew  char                    '1 1 0 0
-04b54     CA 97 3B F9 |                    getword char2,char,#1           '1 1 1 0
-04b58     44 94 FF F9 |                    movbyts char,#%01000100         '1 1 1 0
-04b5c     63 94 63 FD |                    mergew  char                    '1 1 1 0
-04b60     CA 2B C3 FC |                    xcont   m_lut2,char             '0 0 0 0 
-04b64     44 96 FF F9 |                    movbyts char2,#%01000100        '1 1 1 0
-04b68     63 96 63 FD |                    mergew char2                    '1 1 1 0
-04b6c     CB 2B C3 FC |                    xcont   m_lut2,char2            '1 1 1 0
-04b70     02 78 07 F1 |                    add     framebuf2,#2			   '1 0 1 1
-04b74     01 78 07 F1 |                    add     framebuf2,#1		       '1 1 0 0
-04b78     F0 93 6F FB |                    djnz   cpl2,#p241     
+04b3c     B4 7F 03 FB | p241               rdlong  char,framebuf2           
+04b40     32 7A 63 FD |                    skipf skippattern                   
+04b44     44 7E FF F9 |                    movbyts char,#%01000100         '1 0 0 0
+04b48     63 7E 63 FD |                    mergew  char                    '1 0 0 0
+04b4c     44 7E FF F9 |                    movbyts char,#%01000100         '1 1 0 0
+04b50     63 7E 63 FD |                    mergew  char                    '1 1 0 0
+04b54     BF 73 3B F9 |                    getword t2,char,#1           '1 1 1 0
+04b58     44 7E FF F9 |                    movbyts char,#%01000100         '1 1 1 0
+04b5c     63 7E 63 FD |                    mergew  char                    '1 1 1 0
+04b60     BF 27 C3 FC |                    xcont   m_lut2,char             '0 0 0 0 
+04b64     44 72 FF F9 |                    movbyts t2,#%01000100        '1 1 1 0
+04b68     63 72 63 FD |                    mergew t2                    '1 1 1 0
+04b6c     B9 27 C3 FC |                    xcont   m_lut2,t2            '1 1 1 0
+04b70     02 68 07 F1 |                    add     framebuf2,#2			   '1 0 1 1
+04b74     01 68 07 F1 |                    add     framebuf2,#1		       '1 1 0 0
+04b78     F0 7D 6F FB |                    djnz   cpl2,#p241     
 04b7c                 |                 
 04b7c                 |  
 04b7c     90 01 90 FD |                jmp    #p203
 04b80                 | 
 04b80                 | '' --- 2 bit color modes   
 04b80                 | 
-04b80     00 9E 0F F2 | p250          cmp zoom, #%00 wz     '4 colors, zoom x1
+04b80     00 84 0F F2 | p250          cmp zoom, #%00 wz     '4 colors, zoom x1
 04b84     18 00 90 AD |        if_z   jmp #p251 
 04b88                 |              
-04b88     01 9E 0F F2 |               cmp zoom, #%01 wz     '4 colors, zoom x2
+04b88     01 84 0F F2 |               cmp zoom, #%01 wz     '4 colors, zoom x2
 04b8c     24 00 90 AD |        if_z   jmp #p252   
 04b90                 |            
-04b90     02 9E 0F F2 |               cmp zoom, #%10 wz     '4 colors, zoom x4
+04b90     02 84 0F F2 |               cmp zoom, #%10 wz     '4 colors, zoom x4
 04b94     4C 00 90 AD |        if_z   jmp #p254        
 04b98                 |       
-04b98     01 92 47 F0 |               shr cpl2,#1
+04b98     01 7C 47 F0 |               shr cpl2,#1
 04b9c     74 00 90 FD |               jmp #p256        
 04ba0                 |                 
 04ba0                 |       
 04ba0                 |          
-04ba0     BC 95 03 FB | p251               rdlong  char,framebuf2           
-04ba4     CA 2B C3 FC |                    xcont   m_lut2,char 
-04ba8     04 78 07 F1 |                    add     framebuf2,#4          
-04bac     FC 93 6F FB |                    djnz    cpl2,#p251  
+04ba0     B4 7F 03 FB | p251               rdlong  char,framebuf2           
+04ba4     BF 27 C3 FC |                    xcont   m_lut2,char 
+04ba8     04 68 07 F1 |                    add     framebuf2,#4          
+04bac     FC 7D 6F FB |                    djnz    cpl2,#p251  
 04bb0     5C 01 90 FD |                    jmp     #p203  
 04bb4                 |   
-04bb4     BC 95 E3 FA | p252               rdword char,framebuf2
-04bb8     08 88 07 F6 |                    mov  t5,#8  
-04bbc     02 94 67 F0 | p253               shl  char,#2                  
-04bc0     CA 81 63 F8 |                    getnib  t1,char,#4            
-04bc4     03 80 07 F5 |                    and     t1,#3                
-04bc8     05 80 07 FA |                    mul     t1,#5                
-04bcc     C0 83 83 F8 |                    rolnib  t2,t1,#0              
-04bd0     FA 89 6F FB |                    djnz    t5,#p253              
-04bd4     C1 2B C3 FC |                    xcont   m_lut2,t2 
-04bd8     02 78 07 F1 |                    add     framebuf2,#2          
-04bdc     F5 93 6F FB |                    djnz    cpl2,#p252  
+04bb4     B4 7F E3 FA | p252               rdword char,framebuf2
+04bb8     08 78 07 F6 |                    mov  t5,#8  
+04bbc     02 7E 67 F0 | p253               shl  char,#2                  
+04bc0     BF 71 63 F8 |                    getnib  t1,char,#4            
+04bc4     03 70 07 F5 |                    and     t1,#3                
+04bc8     05 70 07 FA |                    mul     t1,#5                
+04bcc     B8 73 83 F8 |                    rolnib  t2,t1,#0              
+04bd0     FA 79 6F FB |                    djnz    t5,#p253              
+04bd4     B9 27 C3 FC |                    xcont   m_lut2,t2 
+04bd8     02 68 07 F1 |                    add     framebuf2,#2          
+04bdc     F5 7D 6F FB |                    djnz    cpl2,#p252  
 04be0     2C 01 90 FD |                    jmp     #p203                    
 04be4                 | 
-04be4     BC 95 C3 FA | p254               rdbyte char,framebuf2
-04be8     04 88 07 F6 |                    mov  t5,#4  
-04bec     02 94 67 F0 | p255               shl  char,#2              
-04bf0     CA 81 53 F8 |                    getnib  t1,char,#2           
-04bf4     03 80 07 F5 |                    and     t1,#3                '1 0 0 0
-04bf8     55 80 07 FA |                    mul     t1,#$55                '1 0 1 1
-04bfc     C0 83 03 F9 |                    rolbyte  t2,t1,#0             '1 0 1 1
-04c00     FA 89 6F FB |                    djnz    t5,#p255             '1 0 0 0  
-04c04     C1 2B C3 FC |                    xcont   m_lut2,t2 
-04c08     01 78 07 F1 |                    add     framebuf2,#1         '0 1 1 1 
-04c0c     F5 93 6F FB |                    djnz    cpl2,#p254  
+04be4     B4 7F C3 FA | p254               rdbyte char,framebuf2
+04be8     04 78 07 F6 |                    mov  t5,#4  
+04bec     02 7E 67 F0 | p255               shl  char,#2              
+04bf0     BF 71 53 F8 |                    getnib  t1,char,#2           
+04bf4     03 70 07 F5 |                    and     t1,#3                '1 0 0 0
+04bf8     55 70 07 FA |                    mul     t1,#$55                '1 0 1 1
+04bfc     B8 73 03 F9 |                    rolbyte  t2,t1,#0             '1 0 1 1
+04c00     FA 79 6F FB |                    djnz    t5,#p255             '1 0 0 0  
+04c04     B9 27 C3 FC |                    xcont   m_lut2,t2 
+04c08     01 68 07 F1 |                    add     framebuf2,#1         '0 1 1 1 
+04c0c     F5 7D 6F FB |                    djnz    cpl2,#p254  
 04c10     FC 00 90 FD |                    jmp     #p203                    
 04c14                 |                      
-04c14     BC 95 C3 FA | p256               rdbyte char,framebuf2
-04c18     CA 85 03 F6 |                    mov t3,char
-04c1c     02 88 07 F6 |                    mov  t5,#2  
-04c20     02 94 67 F0 | p257               shl  char,#2              '1 0 0 0
-04c24     CA 81 4B F8 |                    getnib  t1,char,#1          '1 0 1 1
+04c14     B4 7F C3 FA | p256               rdbyte char,framebuf2
+04c18     BF 75 03 F6 |                    mov t3,char
+04c1c     02 78 07 F6 |                    mov  t5,#2  
+04c20     02 7E 67 F0 | p257               shl  char,#2              '1 0 0 0
+04c24     BF 71 4B F8 |                    getnib  t1,char,#1          '1 0 1 1
 04c28                 |  
-04c28     03 80 07 F5 |                    and     t1,#3                '1 0 0 0
+04c28     03 70 07 F5 |                    and     t1,#3                '1 0 0 0
 04c2c     2A 00 00 FF 
-04c30     55 81 07 FA |                    mul     t1,##$5555                '1 0 1 1
-04c34     C0 83 43 F9 |                    rolword  t2,t1,#0             '1 0 1 1
-04c38     F9 89 6F FB |                    djnz    t5,#p257             '1 0 0 0  
-04c3c     C1 2B C3 FC |                    xcont   m_lut2,t2
-04c40     02 88 07 F6 |                    mov t5,#2
+04c30     55 71 07 FA |                    mul     t1,##$5555                '1 0 1 1
+04c34     B8 73 43 F9 |                    rolword  t2,t1,#0             '1 0 1 1
+04c38     F9 79 6F FB |                    djnz    t5,#p257             '1 0 0 0  
+04c3c     B9 27 C3 FC |                    xcont   m_lut2,t2
+04c40     02 78 07 F6 |                    mov t5,#2
 04c44                 |                   
 04c44                 | p258                    
-04c44     02 84 67 F0 |                    shl t3,#2
-04c48     C2 81 53 F8 |                    getnib  t1,t3,#2 
-04c4c     03 80 07 F5 |                    and     t1,#3                '1 0 0 0
+04c44     02 74 67 F0 |                    shl t3,#2
+04c48     BA 71 53 F8 |                    getnib  t1,t3,#2 
+04c4c     03 70 07 F5 |                    and     t1,#3                '1 0 0 0
 04c50     2A 00 00 FF 
-04c54     55 81 07 FA |                    mul     t1,##$5555                '1 0 1 1
-04c58     C0 83 43 F9 |                    rolword  t2,t1,#0             '1 0 1 1
-04c5c     F9 89 6F FB |                    djnz    t5,#p258             '1 0 0 0  
-04c60     C1 2B C3 FC |                    xcont   m_lut2,t2
+04c54     55 71 07 FA |                    mul     t1,##$5555                '1 0 1 1
+04c58     B8 73 43 F9 |                    rolword  t2,t1,#0             '1 0 1 1
+04c5c     F9 79 6F FB |                    djnz    t5,#p258             '1 0 0 0  
+04c60     B9 27 C3 FC |                    xcont   m_lut2,t2
 04c64                 |  
 04c64                 |                     
-04c64     01 78 07 F1 |                    add     framebuf2,#1         '0 1 1 1 
-04c68     EA 93 6F FB |                    djnz    cpl2,#p256  
+04c64     01 68 07 F1 |                    add     framebuf2,#1         '0 1 1 1 
+04c68     EA 7D 6F FB |                    djnz    cpl2,#p256  
 04c6c     A0 00 90 FD |                    jmp     #p203        
 04c70                 |   
 04c70                 | 
-04c70     00 9E 0F F2 | p260          cmp zoom, #%00 wz     '4 colors, zoom x1, the same loop as 2bpp
+04c70     00 84 0F F2 | p260          cmp zoom, #%00 wz     '4 colors, zoom x1, the same loop as 2bpp
 04c74     28 FF 9F AD |        if_z   jmp #p251 
 04c78                 |              
-04c78     01 9E 0F F2 |              cmp zoom, #%01 wz     '4 colors, zoom x2
+04c78     01 84 0F F2 |              cmp zoom, #%01 wz     '4 colors, zoom x2
 04c7c     10 00 90 AD |        if_z   jmp #p262   
 04c80                 |            
-04c80     02 9E 0F F2 |                cmp zoom, #%10 wz     '4 colors, zoom x4
+04c80     02 84 0F F2 |                cmp zoom, #%10 wz     '4 colors, zoom x4
 04c84     2C 00 90 AD |         if_z   jmp #p263        
-04c88     01 92 47 F0 |             shr cpl2,#1
+04c88     01 7C 47 F0 |             shr cpl2,#1
 04c8c     50 00 90 FD |            jmp #p264        
 04c90                 |                 
 04c90                 |         
-04c90     BC 95 E3 FA | p262               rdword  char,framebuf2           
+04c90     B4 7F E3 FA | p262               rdword  char,framebuf2           
 04c94     04 06 DC FC |     			   rep #3,#4
-04c98     CA 83 9B F8 |     			     rolnib t2,char,#3
-04c9c     CA 83 9B F8 |    		  	         rolnib t2,char,#3
-04ca0     04 94 67 F0 |     			     shl char,#4
-04ca4     C1 2B C3 FC |                    xcont   m_lut2,t2 
-04ca8     02 78 07 F1 |                    add     framebuf2,#2          
-04cac     F8 93 6F FB |                    djnz    cpl2,#p262  
+04c98     BF 73 9B F8 |     			     rolnib t2,char,#3
+04c9c     BF 73 9B F8 |    		  	         rolnib t2,char,#3
+04ca0     04 7E 67 F0 |     			     shl char,#4
+04ca4     B9 27 C3 FC |                    xcont   m_lut2,t2 
+04ca8     02 68 07 F1 |                    add     framebuf2,#2          
+04cac     F8 7D 6F FB |                    djnz    cpl2,#p262  
 04cb0     5C 00 90 FD |                    jmp     #p203 
 04cb4                 | 
 04cb4                 | 
-04cb4     BC 95 C3 FA | p263               rdbyte char,framebuf2           
+04cb4     B4 7F C3 FA | p263               rdbyte char,framebuf2           
 04cb8     02 0A DC FC |     			   rep #5,#2
-04cbc     CA 83 8B F8 |     			     rolnib t2,char,#1
-04cc0     CA 83 8B F8 |    		  	         rolnib t2,char,#1
-04cc4     CA 83 8B F8 |     			     rolnib t2,char,#1
-04cc8     CA 83 8B F8 |    		  	         rolnib t2,char,#1
-04ccc     04 94 67 F0 |     			     shl char,#4
-04cd0     C1 2B C3 FC |                    xcont   m_lut2,t2 
-04cd4     01 78 07 F1 |                    add     framebuf2,#1          
-04cd8     F6 93 6F FB |                    djnz    cpl2,#p263  
+04cbc     BF 73 8B F8 |     			     rolnib t2,char,#1
+04cc0     BF 73 8B F8 |    		  	         rolnib t2,char,#1
+04cc4     BF 73 8B F8 |     			     rolnib t2,char,#1
+04cc8     BF 73 8B F8 |    		  	         rolnib t2,char,#1
+04ccc     04 7E 67 F0 |     			     shl char,#4
+04cd0     B9 27 C3 FC |                    xcont   m_lut2,t2 
+04cd4     01 68 07 F1 |                    add     framebuf2,#1          
+04cd8     F6 7D 6F FB |                    djnz    cpl2,#p263  
 04cdc     30 00 90 FD |                    jmp     #p203 
 04ce0                 | 
 04ce0                 |       
-04ce0     BC 95 C3 FA | p264               rdbyte char,framebuf2           
-04ce4     CA 83 43 F8 |     		       getnib t2,char,#0
-04ce8     11 82 07 FA |    		  	       mul t2,#17
-04cec     00 82 FF F9 |    		  	       movbyts t2,#0
-04cf0     C1 2B C3 FC |                    xcont   m_lut2,t2 
-04cf4     CA 85 4B F8 |    		           getnib t3,char,#1
-04cf8     11 84 07 FA |    		  	       mul t3,#17
-04cfc     00 84 FF F9 |    		  	       movbyts t3,#0
-04d00     C2 2B C3 FC |                    xcont   m_lut2,t3 
+04ce0     B4 7F C3 FA | p264               rdbyte char,framebuf2           
+04ce4     BF 73 43 F8 |     		       getnib t2,char,#0
+04ce8     11 72 07 FA |    		  	       mul t2,#17
+04cec     00 72 FF F9 |    		  	       movbyts t2,#0
+04cf0     B9 27 C3 FC |                    xcont   m_lut2,t2 
+04cf4     BF 75 4B F8 |    		           getnib t3,char,#1
+04cf8     11 74 07 FA |    		  	       mul t3,#17
+04cfc     00 74 FF F9 |    		  	       movbyts t3,#0
+04d00     BA 27 C3 FC |                    xcont   m_lut2,t3 
 04d04                 |                    
 04d04                 |                    
-04d04     01 78 07 F1 |                    add     framebuf2,#1          
-04d08     F5 93 6F FB |                    djnz    cpl2,#p264  
+04d04     01 68 07 F1 |                    add     framebuf2,#1          
+04d08     F5 7D 6F FB |                    djnz    cpl2,#p264  
 04d0c     00 00 90 FD |                    jmp     #p203 
 04d10                 | 
 04d10                 |       
 04d10                 |  
 04d10                 | 
 04d10                 |  ''-----------------------------------------------------------------------------------------
-04d10     89 81 33 F9 | p203            getword  t1,m_border,#0
-04d14     00 80 0F F2 |                 cmp      t1, #0 wz
-04d18     82 13 C3 5C |                 if_nz    xcont   m_border,border            'display a right border if exists
+04d10     87 71 33 F9 | p203            getword  t1,m_border,#0
+04d14     00 70 0F F2 |                 cmp      t1, #0 wz
+04d18     82 0F C3 5C |                 if_nz    xcont   m_border,border            'display a right border if exists
 04d1c                 |                 
 04d1c     00 FB 9F FD |                 jmp #p302
 04d20                 |                 
@@ -5815,478 +5815,469 @@
 04d30     00 2C 1A 00 | border          long    %00000000_00011010_00101100_00000000
 04d34                 | 
 04d34                 | '------ these longs will be set by setmode function
-04d34     01 00 00 00 | outerloop long 1
-04d38     FF 00 00 00 | andvalue long $FF
-04d3c     00 00 00 00 | m_bs            long    0        'blanks before sync
-04d40     00 00 00 00 | m_sn            long    0        'sync
-04d44     00 00 00 00 | m_bv            long    0        'blanks before visible
-04d48     00 00 00 00 | m_vi            long    0        'visible pixels #
-04d4c     00 00 00 00 | m_border        long    0        'left/right borders
-04d50     00 00 00 00 | m_lut1          long    0        'characters
-04d54     00 00 00 00 | i_vborder       long    0        'up/down borders
-04d58     00 00 00 00 | i_upporch       long    0        'up porch lines
-04d5c     00 00 00 00 | i_vsync         long    0        'vsync lines
-04d60     00 00 00 00 | i_downporch     long    0        'down porch lines
-04d64     00 00 00 00 | i_modenum       long    0        'mode #
-04d68     00 00 00 00 | i_cpl           long    0        'chars/longs per line
-04d6c     00 00 00 00 | i_lines         long    0        'scanlines #
-04d70     00 00 00 00 | i_clock         long    0
-04d74     00 00 00 00 | i_hubset        long    0
-04d78     00 00 00 00 | i_totalvis      long    0 
-04d7c     00 00 00 00 | m_lut2          long    0
-04d80                 | 
-04d80     04 00 00 00 | ashr            long    4
-04d84                 | colordepth
-04d84     00 00 00 00 | linestart       long    0
-04d88     00 00 00 00 | linenum         long    0
-04d8c     00 01 00 00 | lutaddr         long    256
-04d90                 | 
-04d90     0E 00 00 00 | cursorsh        long    14
-04d94     00 00 00 00 | frames          long    0
-04d98     00 00 00 00 | cursorx         long    0
-04d9c     00 00 00 00 | cursory         long    0
-04da0     00 00 00 00 | cursorpos       long    0
-04da4     00 00 00 00 | cursorpos2      long    0
-04da8     00 00 00 00 | fontstart       long    0
-04dac     00 00 00 FF | aredtest long $FF000000
-04db0     00 00 00 00 | border2 long 0
-04db4     FF F9 FF 07 | skipft1 long     %111111111111111100111111111
-04db8     E1 79 9E 07 | skipft2 long     %111100111100111100111100001
-04dbc     01 00 00 00 | skipft4 long     %000000000000000000000000001
-04dc0     FE F9 FF 07 | skipftblank long %111111111111111100111111110
-04dc4     00 00 81 70 | lutiv	        long $70810000
-04dc8     00 00 88 00 | lutt1           long $00880000 
-04dcc     00 00 8D 00 | lutg1           long $008d0000
-04dd0     00 00 8E 10 | lutg2           long $108e0000
-04dd4     00 00 8F 20 | lutg4           long $208f0000 
-04dd8     00 00 80 30 | lutg8           long $30800000
-04ddc                 | framebuf        res     1
-04ddc                 | fontbuf         res     1
-04ddc                 | borderptr       res     1
-04ddc                 | vblankptr       res     1
-04ddc                 | cursorptr       res     1
-04ddc                 | modeptr         res     1
-04ddc                 | paletteptr      res     1
-04ddc                 | commandptr      res     1
-04ddc                 | dlptr			res     1
-04ddc                 | fontnumptr      res     1
-04ddc                 | hbase           res     1
-04ddc                 | borderptr2      res     1
-04ddc                 | dlptr2 res 1
-04ddc                 | dl              res 1
-04ddc                 | ii              res     1
-04ddc                 | framebuf2       res     1
-04ddc                 | hsync0          res     1
-04ddc                 | hsync1          res     1
-04ddc                 | fontline        res     1
-04ddc                 | t1              res     1
-04ddc                 | t2              res     1
-04ddc                 | t3 res 1
-04ddc                 | t4 res 1
-04ddc                 | t5 res 1
-04ddc                 | t6 res 1
-04ddc                 | t7 res 1
-04ddc                 | colors1 res 1
-04ddc                 | skippattern res 1
-04ddc                 | cpl2 res 1
-04ddc                 | char            res     1
-04ddc                 | char2   res 1
-04ddc                 | backcolor       res     1
-04ddc                 | charcolor       res     1
-04ddc                 | repnum res 1
-04ddc                 | zoom res 1
-04ddc     00 00 00 00 | aend             long 0
-04de0                 | objmem
-04de0     00 00 00 00 | 	long	0[1]
-04de4 07c             | 	org	COG_BSS_START
-04de4 07c             | _var01
-04de4 07c             | 	res	1
-04de4 07d             | _var02
-04de4 07d             | 	res	1
-04de4 07e             | _var03
-04de4 07e             | 	res	1
-04de4 07f             | _var04
-04de4 07f             | 	res	1
-04de4 080             | _var05
-04de4 080             | 	res	1
-04de4 081             | _var06
-04de4 081             | 	res	1
-04de4 082             | _var07
-04de4 082             | 	res	1
-04de4 083             | _var08
-04de4 083             | 	res	1
-04de4 084             | _var09
-04de4 084             | 	res	1
-04de4 085             | _var10
-04de4 085             | 	res	1
-04de4 086             | _var100
-04de4 086             | 	res	1
-04de4 087             | _var101
-04de4 087             | 	res	1
-04de4 088             | _var102
-04de4 088             | 	res	1
-04de4 089             | _var103
-04de4 089             | 	res	1
-04de4 08a             | _var104
-04de4 08a             | 	res	1
-04de4 08b             | _var105
-04de4 08b             | 	res	1
-04de4 08c             | _var106
-04de4 08c             | 	res	1
-04de4 08d             | _var107
-04de4 08d             | 	res	1
-04de4 08e             | _var108
-04de4 08e             | 	res	1
-04de4 08f             | _var109
-04de4 08f             | 	res	1
-04de4 090             | _var11
-04de4 090             | 	res	1
-04de4 091             | _var110
-04de4 091             | 	res	1
-04de4 092             | _var111
-04de4 092             | 	res	1
-04de4 093             | _var112
-04de4 093             | 	res	1
-04de4 094             | _var113
-04de4 094             | 	res	1
-04de4 095             | _var114
-04de4 095             | 	res	1
-04de4 096             | _var115
-04de4 096             | 	res	1
-04de4 097             | _var116
-04de4 097             | 	res	1
-04de4 098             | _var117
-04de4 098             | 	res	1
-04de4 099             | _var118
-04de4 099             | 	res	1
-04de4 09a             | _var119
-04de4 09a             | 	res	1
-04de4 09b             | _var12
-04de4 09b             | 	res	1
-04de4 09c             | _var120
-04de4 09c             | 	res	1
-04de4 09d             | _var13
-04de4 09d             | 	res	1
-04de4 09e             | _var14
-04de4 09e             | 	res	1
-04de4 09f             | _var15
-04de4 09f             | 	res	1
-04de4 0a0             | _var16
-04de4 0a0             | 	res	1
-04de4 0a1             | _var17
-04de4 0a1             | 	res	1
-04de4 0a2             | _var18
-04de4 0a2             | 	res	1
-04de4 0a3             | _var19
-04de4 0a3             | 	res	1
-04de4 0a4             | _var20
-04de4 0a4             | 	res	1
-04de4 0a5             | _var21
-04de4 0a5             | 	res	1
-04de4 0a6             | _var22
-04de4 0a6             | 	res	1
-04de4 0a7             | _var23
-04de4 0a7             | 	res	1
-04de4 0a8             | _var24
-04de4 0a8             | 	res	1
-04de4 0a9             | _var25
-04de4 0a9             | 	res	1
-04de4 0aa             | _var26
-04de4 0aa             | 	res	1
-04de4 0ab             | _var27
-04de4 0ab             | 	res	1
-04de4 0ac             | _var28
-04de4 0ac             | 	res	1
-04de4 0ad             | _var29
-04de4 0ad             | 	res	1
-04de4 0ae             | _var30
-04de4 0ae             | 	res	1
-04de4 0af             | _var31
-04de4 0af             | 	res	1
-04de4 0b0             | _var32
-04de4 0b0             | 	res	1
-04de4 0b1             | _var33
-04de4 0b1             | 	res	1
-04de4 0b2             | _var34
-04de4 0b2             | 	res	1
-04de4 0b3             | _var35
-04de4 0b3             | 	res	1
-04de4 0b4             | _var36
-04de4 0b4             | 	res	1
-04de4 0b5             | _var37
-04de4 0b5             | 	res	1
-04de4 0b6             | _var38
-04de4 0b6             | 	res	1
-04de4 0b7             | _var39
-04de4 0b7             | 	res	1
-04de4 0b8             | _var40
-04de4 0b8             | 	res	1
-04de4 0b9             | _var41
-04de4 0b9             | 	res	1
-04de4 0ba             | _var42
-04de4 0ba             | 	res	1
-04de4 0bb             | _var43
-04de4 0bb             | 	res	1
-04de4 0bc             | _var44
-04de4 0bc             | 	res	1
-04de4 0bd             | _var45
-04de4 0bd             | 	res	1
-04de4 0be             | _var46
-04de4 0be             | 	res	1
-04de4 0bf             | _var47
-04de4 0bf             | 	res	1
-04de4 0c0             | _var48
-04de4 0c0             | 	res	1
-04de4 0c1             | _var49
-04de4 0c1             | 	res	1
-04de4 0c2             | _var50
-04de4 0c2             | 	res	1
-04de4 0c3             | _var51
-04de4 0c3             | 	res	1
-04de4 0c4             | _var52
-04de4 0c4             | 	res	1
-04de4 0c5             | _var53
-04de4 0c5             | 	res	1
-04de4 0c6             | _var54
-04de4 0c6             | 	res	1
-04de4 0c7             | _var55
-04de4 0c7             | 	res	1
-04de4 0c8             | _var56
-04de4 0c8             | 	res	1
-04de4 0c9             | _var57
-04de4 0c9             | 	res	1
-04de4 0ca             | _var58
-04de4 0ca             | 	res	1
-04de4 0cb             | _var59
-04de4 0cb             | 	res	1
-04de4 0cc             | _var60
-04de4 0cc             | 	res	1
-04de4 0cd             | _var61
-04de4 0cd             | 	res	1
-04de4 0ce             | _var62
-04de4 0ce             | 	res	1
-04de4 0cf             | _var63
-04de4 0cf             | 	res	1
-04de4 0d0             | _var64
-04de4 0d0             | 	res	1
-04de4 0d1             | _var65
-04de4 0d1             | 	res	1
-04de4 0d2             | _var66
-04de4 0d2             | 	res	1
-04de4 0d3             | _var67
-04de4 0d3             | 	res	1
-04de4 0d4             | _var68
-04de4 0d4             | 	res	1
-04de4 0d5             | _var69
-04de4 0d5             | 	res	1
-04de4 0d6             | _var70
-04de4 0d6             | 	res	1
-04de4 0d7             | _var71
-04de4 0d7             | 	res	1
-04de4 0d8             | _var72
-04de4 0d8             | 	res	1
-04de4 0d9             | _var73
-04de4 0d9             | 	res	1
-04de4 0da             | _var74
-04de4 0da             | 	res	1
-04de4 0db             | _var75
-04de4 0db             | 	res	1
-04de4 0dc             | _var76
-04de4 0dc             | 	res	1
-04de4 0dd             | _var77
-04de4 0dd             | 	res	1
-04de4 0de             | _var78
-04de4 0de             | 	res	1
-04de4 0df             | _var79
-04de4 0df             | 	res	1
-04de4 0e0             | _var80
-04de4 0e0             | 	res	1
-04de4 0e1             | _var81
-04de4 0e1             | 	res	1
-04de4 0e2             | _var82
-04de4 0e2             | 	res	1
-04de4 0e3             | _var83
-04de4 0e3             | 	res	1
-04de4 0e4             | _var84
-04de4 0e4             | 	res	1
-04de4 0e5             | _var85
-04de4 0e5             | 	res	1
-04de4 0e6             | _var86
-04de4 0e6             | 	res	1
-04de4 0e7             | _var87
-04de4 0e7             | 	res	1
-04de4 0e8             | _var88
-04de4 0e8             | 	res	1
-04de4 0e9             | _var89
-04de4 0e9             | 	res	1
-04de4 0ea             | _var90
-04de4 0ea             | 	res	1
-04de4 0eb             | _var91
-04de4 0eb             | 	res	1
-04de4 0ec             | _var92
-04de4 0ec             | 	res	1
-04de4 0ed             | _var93
-04de4 0ed             | 	res	1
-04de4 0ee             | _var94
-04de4 0ee             | 	res	1
-04de4 0ef             | _var95
-04de4 0ef             | 	res	1
-04de4 0f0             | _var96
-04de4 0f0             | 	res	1
-04de4 0f1             | _var97
-04de4 0f1             | 	res	1
-04de4 0f2             | _var98
-04de4 0f2             | 	res	1
-04de4 0f3             | _var99
-04de4 0f3             | 	res	1
-04de4 0f4             | arg01
-04de4 0f4             | 	res	1
-04de4 0f5             | arg02
-04de4 0f5             | 	res	1
-04de4 0f6             | arg03
-04de4 0f6             | 	res	1
-04de4 0f7             | arg04
-04de4 0f7             | 	res	1
-04de4 0f8             | arg05
-04de4 0f8             | 	res	1
-04de4 0f9             | local01
-04de4 0f9             | 	res	1
-04de4 0fa             | local02
-04de4 0fa             | 	res	1
-04de4 0fb             | local03
-04de4 0fb             | 	res	1
-04de4 0fc             | local04
-04de4 0fc             | 	res	1
-04de4 0fd             | local05
-04de4 0fd             | 	res	1
-04de4 0fe             | local06
-04de4 0fe             | 	res	1
-04de4 0ff             | local07
-04de4 0ff             | 	res	1
-04de4 100             | local08
-04de4 100             | 	res	1
-04de4 101             | local09
-04de4 101             | 	res	1
-04de4 102             | local10
-04de4 102             | 	res	1
-04de4 103             | local11
-04de4 103             | 	res	1
-04de4 104             | local12
-04de4 104             | 	res	1
-04de4 105             | local13
-04de4 105             | 	res	1
-04de4 106             | local14
-04de4 106             | 	res	1
-04de4 107             | local15
-04de4 107             | 	res	1
-04de4 108             | local16
-04de4 108             | 	res	1
-04de4 109             | local17
-04de4 109             | 	res	1
-04de4 10a             | local18
-04de4 10a             | 	res	1
-04de4 10b             | local19
-04de4 10b             | 	res	1
-04de4 10c             | local20
-04de4 10c             | 	res	1
-04de4 10d             | local21
-04de4 10d             | 	res	1
-04de4 10e             | local22
-04de4 10e             | 	res	1
-04de4 10f             | local23
-04de4 10f             | 	res	1
-04de4 110             | local24
-04de4 110             | 	res	1
-04de4 111             | local25
-04de4 111             | 	res	1
-04de4 112             | local26
-04de4 112             | 	res	1
-04de4 113             | local27
-04de4 113             | 	res	1
-04de4 114             | local28
-04de4 114             | 	res	1
-04de4 115             | local29
-04de4 115             | 	res	1
-04de4 116             | local30
-04de4 116             | 	res	1
-04de4 117             | local31
-04de4 117             | 	res	1
-04de4 118             | local32
-04de4 118             | 	res	1
-04de4 119             | local33
-04de4 119             | 	res	1
-04de4 11a             | local34
-04de4 11a             | 	res	1
-04de4 11b             | local35
-04de4 11b             | 	res	1
-04de4 11c             | local36
-04de4 11c             | 	res	1
-04de4 11d             | local37
-04de4 11d             | 	res	1
-04de4 11e             | local38
-04de4 11e             | 	res	1
-04de4 11f             | local39
-04de4 11f             | 	res	1
-04de4 120             | local40
-04de4 120             | 	res	1
-04de4 121             | local41
-04de4 121             | 	res	1
-04de4 122             | local42
-04de4 122             | 	res	1
-04de4 123             | local43
-04de4 123             | 	res	1
-04de4 124             | local44
-04de4 124             | 	res	1
-04de4 125             | local45
-04de4 125             | 	res	1
-04de4 126             | local46
-04de4 126             | 	res	1
-04de4 127             | local47
-04de4 127             | 	res	1
-04de4 128             | local48
-04de4 128             | 	res	1
-04de4 129             | local49
-04de4 129             | 	res	1
-04de4 12a             | local50
-04de4 12a             | 	res	1
-04de4 12b             | local51
-04de4 12b             | 	res	1
-04de4 12c             | local52
-04de4 12c             | 	res	1
-04de4 12d             | local53
-04de4 12d             | 	res	1
-04de4 12e             | local54
-04de4 12e             | 	res	1
-04de4 12f             | local55
-04de4 12f             | 	res	1
-04de4 130             | local56
-04de4 130             | 	res	1
-04de4 131             | local57
-04de4 131             | 	res	1
-04de4 132             | local58
-04de4 132             | 	res	1
-04de4 133             | local59
-04de4 133             | 	res	1
-04de4 134             | local60
-04de4 134             | 	res	1
-04de4 135             | local61
-04de4 135             | 	res	1
-04de4 136             | local62
-04de4 136             | 	res	1
-04de4 137             | local63
-04de4 137             | 	res	1
-04de4 138             | local64
-04de4 138             | 	res	1
-04de4 139             | local65
-04de4 139             | 	res	1
-04de4 13a             | local66
-04de4 13a             | 	res	1
-04de4 13b             | local67
-04de4 13b             | 	res	1
-04de4 13c             | local68
-04de4 13c             | 	res	1
-04de4 13d             | muldiva_
-04de4 13d             | 	res	1
-04de4 13e             | muldivb_
-04de4 13e             | 	res	1
-04de4 13f             | 	fit	480
+04d34                 | 
+04d34     00 00 00 00 | m_bs            long    0        'blanks before sync
+04d38     00 00 00 00 | m_sn            long    0        'sync
+04d3c     00 00 00 00 | m_bv            long    0        'blanks before visible
+04d40     00 00 00 00 | m_vi            long    0        'visible pixels #
+04d44     00 00 00 00 | m_border        long    0        'left/right borders
+04d48     00 00 00 00 | m_lut1          long    0        'characters
+04d4c     00 00 00 00 | i_vborder       long    0        'up/down borders
+04d50     00 00 00 00 | i_upporch       long    0        'up porch lines
+04d54     00 00 00 00 | i_vsync         long    0        'vsync lines
+04d58     00 00 00 00 | i_downporch     long    0        'down porch lines
+04d5c     00 00 00 00 | i_modenum       long    0        'mode #
+04d60     00 00 00 00 | i_cpl           long    0        'chars/longs per line
+04d64     00 00 00 00 | i_lines         long    0        'scanlines #
+04d68     00 00 00 00 | i_clock         long    0
+04d6c     00 00 00 00 | i_hubset        long    0
+04d70     00 00 00 00 | i_totalvis      long    0 
+04d74                 | 
+04d74                 | '-------------------------------------
+04d74                 | 
+04d74     00 00 00 00 | m_lut2          long    0
+04d78                 | 
+04d78                 | colordepth
+04d78     00 00 00 00 | linestart       long    0
+04d7c     00 00 00 00 | linenum         long    0
+04d80     00 01 00 00 | lutaddr         long    256
+04d84                 | 
+04d84     0E 00 00 00 | cursorsh        long    14
+04d88     00 00 00 00 | frames          long    0
+04d8c     00 00 00 00 | cursorx         long    0
+04d90     00 00 00 00 | cursory         long    0
+04d94     00 00 00 00 | cursorpos       long    0
+04d98     00 00 00 00 | cursorpos2      long    0
+04d9c     00 00 00 00 | fontstart       long    0
+04da0     00 00 00 00 | border2 long 0
+04da4     00 00 81 70 | lutiv	        long $70810000
+04da8     00 00 88 00 | lutt1           long $00880000 
+04dac     00 00 8D 00 | lutg1           long $008d0000
+04db0     00 00 8E 10 | lutg2           long $108e0000
+04db4     00 00 8F 20 | lutg4           long $208f0000 
+04db8     00 00 80 30 | lutg8           long $30800000
+04dbc                 | framebuf        res     1
+04dbc                 | fontbuf         res     1
+04dbc                 | borderptr       res     1
+04dbc                 | vblankptr       res     1
+04dbc                 | cursorptr       res     1
+04dbc                 | modeptr         res     1
+04dbc                 | paletteptr      res     1
+04dbc                 | commandptr      res     1
+04dbc                 | dlptr			res     1
+04dbc                 | fontnumptr      res     1
+04dbc                 | hbase           res     1
+04dbc                 | borderptr2      res     1
+04dbc                 | dlptr2 res 1
+04dbc                 | dl              res 1
+04dbc                 | ii              res     1
+04dbc                 | framebuf2       res     1
+04dbc                 | hsync0          res     1
+04dbc                 | hsync1          res     1
+04dbc                 | fontline        res     1
+04dbc                 | t1              res     1
+04dbc                 | t2              res     1
+04dbc                 | t3 res 1
+04dbc                 | t4 res 1
+04dbc                 | t5 res 1
+04dbc                 | skippattern res 1
+04dbc                 | cpl2 res 1
+04dbc                 | char            res     1
+04dbc                 | backcolor       res     1
+04dbc                 | charcolor       res     1
+04dbc                 | zoom res 1
+04dbc     00 00 00 00 | aend             long 0
+04dc0                 | objmem
+04dc0     00 00 00 00 | 	long	0[1]
+04dc4 07c             | 	org	COG_BSS_START
+04dc4 07c             | _var01
+04dc4 07c             | 	res	1
+04dc4 07d             | _var02
+04dc4 07d             | 	res	1
+04dc4 07e             | _var03
+04dc4 07e             | 	res	1
+04dc4 07f             | _var04
+04dc4 07f             | 	res	1
+04dc4 080             | _var05
+04dc4 080             | 	res	1
+04dc4 081             | _var06
+04dc4 081             | 	res	1
+04dc4 082             | _var07
+04dc4 082             | 	res	1
+04dc4 083             | _var08
+04dc4 083             | 	res	1
+04dc4 084             | _var09
+04dc4 084             | 	res	1
+04dc4 085             | _var10
+04dc4 085             | 	res	1
+04dc4 086             | _var100
+04dc4 086             | 	res	1
+04dc4 087             | _var101
+04dc4 087             | 	res	1
+04dc4 088             | _var102
+04dc4 088             | 	res	1
+04dc4 089             | _var103
+04dc4 089             | 	res	1
+04dc4 08a             | _var104
+04dc4 08a             | 	res	1
+04dc4 08b             | _var105
+04dc4 08b             | 	res	1
+04dc4 08c             | _var106
+04dc4 08c             | 	res	1
+04dc4 08d             | _var107
+04dc4 08d             | 	res	1
+04dc4 08e             | _var108
+04dc4 08e             | 	res	1
+04dc4 08f             | _var109
+04dc4 08f             | 	res	1
+04dc4 090             | _var11
+04dc4 090             | 	res	1
+04dc4 091             | _var110
+04dc4 091             | 	res	1
+04dc4 092             | _var111
+04dc4 092             | 	res	1
+04dc4 093             | _var112
+04dc4 093             | 	res	1
+04dc4 094             | _var113
+04dc4 094             | 	res	1
+04dc4 095             | _var114
+04dc4 095             | 	res	1
+04dc4 096             | _var115
+04dc4 096             | 	res	1
+04dc4 097             | _var116
+04dc4 097             | 	res	1
+04dc4 098             | _var117
+04dc4 098             | 	res	1
+04dc4 099             | _var118
+04dc4 099             | 	res	1
+04dc4 09a             | _var119
+04dc4 09a             | 	res	1
+04dc4 09b             | _var12
+04dc4 09b             | 	res	1
+04dc4 09c             | _var120
+04dc4 09c             | 	res	1
+04dc4 09d             | _var13
+04dc4 09d             | 	res	1
+04dc4 09e             | _var14
+04dc4 09e             | 	res	1
+04dc4 09f             | _var15
+04dc4 09f             | 	res	1
+04dc4 0a0             | _var16
+04dc4 0a0             | 	res	1
+04dc4 0a1             | _var17
+04dc4 0a1             | 	res	1
+04dc4 0a2             | _var18
+04dc4 0a2             | 	res	1
+04dc4 0a3             | _var19
+04dc4 0a3             | 	res	1
+04dc4 0a4             | _var20
+04dc4 0a4             | 	res	1
+04dc4 0a5             | _var21
+04dc4 0a5             | 	res	1
+04dc4 0a6             | _var22
+04dc4 0a6             | 	res	1
+04dc4 0a7             | _var23
+04dc4 0a7             | 	res	1
+04dc4 0a8             | _var24
+04dc4 0a8             | 	res	1
+04dc4 0a9             | _var25
+04dc4 0a9             | 	res	1
+04dc4 0aa             | _var26
+04dc4 0aa             | 	res	1
+04dc4 0ab             | _var27
+04dc4 0ab             | 	res	1
+04dc4 0ac             | _var28
+04dc4 0ac             | 	res	1
+04dc4 0ad             | _var29
+04dc4 0ad             | 	res	1
+04dc4 0ae             | _var30
+04dc4 0ae             | 	res	1
+04dc4 0af             | _var31
+04dc4 0af             | 	res	1
+04dc4 0b0             | _var32
+04dc4 0b0             | 	res	1
+04dc4 0b1             | _var33
+04dc4 0b1             | 	res	1
+04dc4 0b2             | _var34
+04dc4 0b2             | 	res	1
+04dc4 0b3             | _var35
+04dc4 0b3             | 	res	1
+04dc4 0b4             | _var36
+04dc4 0b4             | 	res	1
+04dc4 0b5             | _var37
+04dc4 0b5             | 	res	1
+04dc4 0b6             | _var38
+04dc4 0b6             | 	res	1
+04dc4 0b7             | _var39
+04dc4 0b7             | 	res	1
+04dc4 0b8             | _var40
+04dc4 0b8             | 	res	1
+04dc4 0b9             | _var41
+04dc4 0b9             | 	res	1
+04dc4 0ba             | _var42
+04dc4 0ba             | 	res	1
+04dc4 0bb             | _var43
+04dc4 0bb             | 	res	1
+04dc4 0bc             | _var44
+04dc4 0bc             | 	res	1
+04dc4 0bd             | _var45
+04dc4 0bd             | 	res	1
+04dc4 0be             | _var46
+04dc4 0be             | 	res	1
+04dc4 0bf             | _var47
+04dc4 0bf             | 	res	1
+04dc4 0c0             | _var48
+04dc4 0c0             | 	res	1
+04dc4 0c1             | _var49
+04dc4 0c1             | 	res	1
+04dc4 0c2             | _var50
+04dc4 0c2             | 	res	1
+04dc4 0c3             | _var51
+04dc4 0c3             | 	res	1
+04dc4 0c4             | _var52
+04dc4 0c4             | 	res	1
+04dc4 0c5             | _var53
+04dc4 0c5             | 	res	1
+04dc4 0c6             | _var54
+04dc4 0c6             | 	res	1
+04dc4 0c7             | _var55
+04dc4 0c7             | 	res	1
+04dc4 0c8             | _var56
+04dc4 0c8             | 	res	1
+04dc4 0c9             | _var57
+04dc4 0c9             | 	res	1
+04dc4 0ca             | _var58
+04dc4 0ca             | 	res	1
+04dc4 0cb             | _var59
+04dc4 0cb             | 	res	1
+04dc4 0cc             | _var60
+04dc4 0cc             | 	res	1
+04dc4 0cd             | _var61
+04dc4 0cd             | 	res	1
+04dc4 0ce             | _var62
+04dc4 0ce             | 	res	1
+04dc4 0cf             | _var63
+04dc4 0cf             | 	res	1
+04dc4 0d0             | _var64
+04dc4 0d0             | 	res	1
+04dc4 0d1             | _var65
+04dc4 0d1             | 	res	1
+04dc4 0d2             | _var66
+04dc4 0d2             | 	res	1
+04dc4 0d3             | _var67
+04dc4 0d3             | 	res	1
+04dc4 0d4             | _var68
+04dc4 0d4             | 	res	1
+04dc4 0d5             | _var69
+04dc4 0d5             | 	res	1
+04dc4 0d6             | _var70
+04dc4 0d6             | 	res	1
+04dc4 0d7             | _var71
+04dc4 0d7             | 	res	1
+04dc4 0d8             | _var72
+04dc4 0d8             | 	res	1
+04dc4 0d9             | _var73
+04dc4 0d9             | 	res	1
+04dc4 0da             | _var74
+04dc4 0da             | 	res	1
+04dc4 0db             | _var75
+04dc4 0db             | 	res	1
+04dc4 0dc             | _var76
+04dc4 0dc             | 	res	1
+04dc4 0dd             | _var77
+04dc4 0dd             | 	res	1
+04dc4 0de             | _var78
+04dc4 0de             | 	res	1
+04dc4 0df             | _var79
+04dc4 0df             | 	res	1
+04dc4 0e0             | _var80
+04dc4 0e0             | 	res	1
+04dc4 0e1             | _var81
+04dc4 0e1             | 	res	1
+04dc4 0e2             | _var82
+04dc4 0e2             | 	res	1
+04dc4 0e3             | _var83
+04dc4 0e3             | 	res	1
+04dc4 0e4             | _var84
+04dc4 0e4             | 	res	1
+04dc4 0e5             | _var85
+04dc4 0e5             | 	res	1
+04dc4 0e6             | _var86
+04dc4 0e6             | 	res	1
+04dc4 0e7             | _var87
+04dc4 0e7             | 	res	1
+04dc4 0e8             | _var88
+04dc4 0e8             | 	res	1
+04dc4 0e9             | _var89
+04dc4 0e9             | 	res	1
+04dc4 0ea             | _var90
+04dc4 0ea             | 	res	1
+04dc4 0eb             | _var91
+04dc4 0eb             | 	res	1
+04dc4 0ec             | _var92
+04dc4 0ec             | 	res	1
+04dc4 0ed             | _var93
+04dc4 0ed             | 	res	1
+04dc4 0ee             | _var94
+04dc4 0ee             | 	res	1
+04dc4 0ef             | _var95
+04dc4 0ef             | 	res	1
+04dc4 0f0             | _var96
+04dc4 0f0             | 	res	1
+04dc4 0f1             | _var97
+04dc4 0f1             | 	res	1
+04dc4 0f2             | _var98
+04dc4 0f2             | 	res	1
+04dc4 0f3             | _var99
+04dc4 0f3             | 	res	1
+04dc4 0f4             | arg01
+04dc4 0f4             | 	res	1
+04dc4 0f5             | arg02
+04dc4 0f5             | 	res	1
+04dc4 0f6             | arg03
+04dc4 0f6             | 	res	1
+04dc4 0f7             | arg04
+04dc4 0f7             | 	res	1
+04dc4 0f8             | arg05
+04dc4 0f8             | 	res	1
+04dc4 0f9             | local01
+04dc4 0f9             | 	res	1
+04dc4 0fa             | local02
+04dc4 0fa             | 	res	1
+04dc4 0fb             | local03
+04dc4 0fb             | 	res	1
+04dc4 0fc             | local04
+04dc4 0fc             | 	res	1
+04dc4 0fd             | local05
+04dc4 0fd             | 	res	1
+04dc4 0fe             | local06
+04dc4 0fe             | 	res	1
+04dc4 0ff             | local07
+04dc4 0ff             | 	res	1
+04dc4 100             | local08
+04dc4 100             | 	res	1
+04dc4 101             | local09
+04dc4 101             | 	res	1
+04dc4 102             | local10
+04dc4 102             | 	res	1
+04dc4 103             | local11
+04dc4 103             | 	res	1
+04dc4 104             | local12
+04dc4 104             | 	res	1
+04dc4 105             | local13
+04dc4 105             | 	res	1
+04dc4 106             | local14
+04dc4 106             | 	res	1
+04dc4 107             | local15
+04dc4 107             | 	res	1
+04dc4 108             | local16
+04dc4 108             | 	res	1
+04dc4 109             | local17
+04dc4 109             | 	res	1
+04dc4 10a             | local18
+04dc4 10a             | 	res	1
+04dc4 10b             | local19
+04dc4 10b             | 	res	1
+04dc4 10c             | local20
+04dc4 10c             | 	res	1
+04dc4 10d             | local21
+04dc4 10d             | 	res	1
+04dc4 10e             | local22
+04dc4 10e             | 	res	1
+04dc4 10f             | local23
+04dc4 10f             | 	res	1
+04dc4 110             | local24
+04dc4 110             | 	res	1
+04dc4 111             | local25
+04dc4 111             | 	res	1
+04dc4 112             | local26
+04dc4 112             | 	res	1
+04dc4 113             | local27
+04dc4 113             | 	res	1
+04dc4 114             | local28
+04dc4 114             | 	res	1
+04dc4 115             | local29
+04dc4 115             | 	res	1
+04dc4 116             | local30
+04dc4 116             | 	res	1
+04dc4 117             | local31
+04dc4 117             | 	res	1
+04dc4 118             | local32
+04dc4 118             | 	res	1
+04dc4 119             | local33
+04dc4 119             | 	res	1
+04dc4 11a             | local34
+04dc4 11a             | 	res	1
+04dc4 11b             | local35
+04dc4 11b             | 	res	1
+04dc4 11c             | local36
+04dc4 11c             | 	res	1
+04dc4 11d             | local37
+04dc4 11d             | 	res	1
+04dc4 11e             | local38
+04dc4 11e             | 	res	1
+04dc4 11f             | local39
+04dc4 11f             | 	res	1
+04dc4 120             | local40
+04dc4 120             | 	res	1
+04dc4 121             | local41
+04dc4 121             | 	res	1
+04dc4 122             | local42
+04dc4 122             | 	res	1
+04dc4 123             | local43
+04dc4 123             | 	res	1
+04dc4 124             | local44
+04dc4 124             | 	res	1
+04dc4 125             | local45
+04dc4 125             | 	res	1
+04dc4 126             | local46
+04dc4 126             | 	res	1
+04dc4 127             | local47
+04dc4 127             | 	res	1
+04dc4 128             | local48
+04dc4 128             | 	res	1
+04dc4 129             | local49
+04dc4 129             | 	res	1
+04dc4 12a             | local50
+04dc4 12a             | 	res	1
+04dc4 12b             | local51
+04dc4 12b             | 	res	1
+04dc4 12c             | local52
+04dc4 12c             | 	res	1
+04dc4 12d             | local53
+04dc4 12d             | 	res	1
+04dc4 12e             | local54
+04dc4 12e             | 	res	1
+04dc4 12f             | local55
+04dc4 12f             | 	res	1
+04dc4 130             | local56
+04dc4 130             | 	res	1
+04dc4 131             | local57
+04dc4 131             | 	res	1
+04dc4 132             | local58
+04dc4 132             | 	res	1
+04dc4 133             | local59
+04dc4 133             | 	res	1
+04dc4 134             | local60
+04dc4 134             | 	res	1
+04dc4 135             | local61
+04dc4 135             | 	res	1
+04dc4 136             | local62
+04dc4 136             | 	res	1
+04dc4 137             | local63
+04dc4 137             | 	res	1
+04dc4 138             | local64
+04dc4 138             | 	res	1
+04dc4 139             | local65
+04dc4 139             | 	res	1
+04dc4 13a             | local66
+04dc4 13a             | 	res	1
+04dc4 13b             | local67
+04dc4 13b             | 	res	1
+04dc4 13c             | local68
+04dc4 13c             | 	res	1
+04dc4 13d             | muldiva_
+04dc4 13d             | 	res	1
+04dc4 13e             | muldivb_
+04dc4 13e             | 	res	1
+04dc4 13f             | 	fit	480
