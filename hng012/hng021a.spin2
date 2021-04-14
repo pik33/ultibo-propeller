@@ -751,14 +751,14 @@ return q
 
 ''---------  Set the graphics mode
 
+
+
 pub setmode(mode) | i', 'xzoom, yzoom, azoom
 
 '' mode:tn_bb_cc_vv_hh
 '' hh - h.zoom, vv-v.zoom, cc-c.depth,
 '' bb - borders/total pixels, 00-wide/1140, 01 medium/1026, 10 narrow/912, 11 no border, 1024 px PAL, 880 px NTSC
 
-if mode==(512+192+48) 'borderless 8 bpp, no ram for this
-  return
 case_fast (mode>>6) & 7 ' timings are the same for graphic and text
                               
     0:  longmove(@timings,@timings000,16)   'PAL 50 Hz signaling 1140x624, active 800x480, 100x30 text, wide border, 2 colors per pixel, 00_00_00_00_00=0, 354_693_878 Hz
@@ -775,20 +775,83 @@ case_fast (mode>>6) & 7 ' timings are the same for graphic and text
 if (mode & (%10_00_11_0000))==(%10_00_11_0000) ' 8bit graphics, 4 pixels per long instead of 8, cpp x2 
   timings[5]:=4
   timings[11]:=timings[11]<<1
-  putpixel:=@putpixel8
-    
+  
 if (mode & (%10_00_11_0000))==(%10_00_01_0000) ' 2bit graphics, 16 pixels per long instead of 8, cpp /2 
   timings[5]:=16
   timings[11]:=timings[11]>>1
-  putpixel:=@putpixel2  
   
 if (mode & (%10_00_11_0000))==(%10_00_00_0000) ' 1bit graphics, 32 pixels per long instead of 8, cpp /4 
   timings[5]:=32
   timings[11]:=timings[11]>>2
-  putpixel:=@putpixel1  
+
+
+repeat i from 0 to 4
+  timings[i]:=timings[i]+hdmibase<<17+ timingsxxt
+timings[5]:=timings[5]+hdmibase<<17  
+clkfreq:=timings[13]
+hubset(timings[14])
+waitms(1)
+
   
-if (mode & (%10_00_11_0000))==(%10_00_10_0000) ' 4bit graphics, 32 pixels per long instead of 8, cpp /4 
-  putpixel:=@putpixel4  
+xzoom:=1<<(mode & 3)
+yzoom:=1<<((mode>>2) & 3)
+azoom:=xzoom*yzoom
+   
+cpl:=timings[11]
+if (mode<512)
+  lines:=(timings[12]>>4)+/yzoom
+  if ((timings[12]>>4)+//yzoom) <>0
+    lines +=1
+  cpl:=cpl/xzoom
+else
+  lines:=timings[12]/yzoom
+  cpl:=cpl/xzoom
+
+buflen:=(cpl*lines)
+
+buf_ptr:=$80000-4*buflen
+mode_ptr:=@timings
+graphmode:=mode
+pintoggle(15)
+makedl(mode)
+
+
+pub setmode2(mode) | i', 'xzoom, yzoom, azoom
+
+'' mode:tn_bb_cc_vv_hh
+'' hh - h.zoom, vv-v.zoom, cc-c.depth,
+'' bb - borders/total pixels, 00-wide/1140, 01 medium/1026, 10 narrow/912, 11 no border, 1024 px PAL, 880 px NTSC
+
+'if mode==(512+192+48) 'borderless 8 bpp, no ram for this
+'  return
+case_fast (mode>>6) & 7 ' timings are the same for graphic and text
+                              
+    0:  longmove(@timings,@timings000,16)   'PAL 50 Hz signaling 1140x624, active 800x480, 100x30 text, wide border, 2 colors per pixel, 00_00_00_00_00=0, 354_693_878 Hz
+    1:  longmove(@timings,@timings064,16)   'PAL 50 Hz signaling 1026x624, active 880x496, 110x31 text, medium border, 2 colors per pixel 00_01_00_00_00=64, 319_215_686 Hz
+    2:  longmove(@timings,@timings128,16)   'PAL 50 Hz signaling 912x624, active 800x480, 100x30 text, medium border, 2 colors per pixel 00_10_00_00_00=64, 283750000z
+    3:  longmove(@timings,@timings192,16)   'PAL 50 Hz signaling 1140x624, active 1024x576, 128x36 text, borderless, 2 colors per pixel 00_11_00_00_00=6192, 354_693_878 Hz
+    4:  longmove(@timings,@timings256,16)   'NTSC 50 Hz signaling 1140x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_00_00_00_00=256, 357959184 Hz
+    5:  longmove(@timings,@timings320,16)   'NTSC 50 Hz signaling 1026x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_01_00_00_00=320, 322162162 Hz
+    6:  longmove(@timings,@timings384,16)   'NTSC 50 Hz signaling 912x524, active 800x480, 100x30 text, NO PLACE FOR wide border, 2 colors per pixel, 01_10_00_00_00=384, 286363636 Hz
+    7:  longmove(@timings,@timings448,16)   'NTSC 50 Hz signaling 1026x524, active 880x496, 110x31 text, borderless, 2 colors per pixel, 01_11_00_00_00=496, 322162162 Hz
+
+if (mode & (%10_00_11_0000))==(%10_00_11_0000) ' 8bit graphics, 4 pixels per long instead of 8, cpp x2 
+  timings[5]:=4
+  timings[11]:=timings[11]<<1
+'  putpixel:=@putpixel8
+    
+if (mode & (%10_00_11_0000))==(%10_00_01_0000) ' 2bit graphics, 16 pixels per long instead of 8, cpp /2 
+  timings[5]:=16
+  timings[11]:=timings[11]>>1
+'  putpixel:=@putpixel2  
+  
+if (mode & (%10_00_11_0000))==(%10_00_00_0000) ' 1bit graphics, 32 pixels per long instead of 8, cpp /4 
+  timings[5]:=32
+  timings[11]:=timings[11]>>2
+'  putpixel:=@putpixel1  
+  
+'if (mode & (%10_00_11_0000))==(%10_00_10_0000) ' 4bit graphics, 32 pixels per long instead of 8, cpp /4 
+'  putpixel:=@putpixel4  
 
 
 repeat i from 0 to 4
@@ -840,6 +903,7 @@ graphmode:=mode
 makedl(mode)
 
 
+
 '---------- Make a display list
 
 pub makedl (mode) |i, fontline,charline,bufstart,zoom1,vzoom,lpc,hzoom
@@ -864,9 +928,6 @@ else
 
 vzoom:=((mode>>2) & 3)
  
-
-
-
 
 if mode<512 '' text modes
 
