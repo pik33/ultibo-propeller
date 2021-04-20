@@ -1,0 +1,191 @@
+' 
+' _clkfreq=200000000
+con
+	_clkfreq = 200000000
+dat
+	nop
+	cogid	pa
+	coginit	pa,##$404
+	orgh	$10
+	long	0	'reserved
+	long	0 ' clock frequency: will default to 200000000
+	long	0 ' clock mode: will default to $10009fb
+	orgh	$400
+ _ret_	mov	result1, #0
+	org	0
+entry
+	cmp	ptra, #0 wz
+ if_ne	jmp	#spininit
+	mov	ptra, objptr
+	add	ptra, #20
+	rdlong	pa, #20 wz
+ if_ne	jmp	#skip_clock_set_
+	hubset	#0
+	hubset	##16779768
+	waitx	##200000
+	mov	pa, ##16779771
+	hubset	pa
+	wrlong	pa, #24
+	wrlong	##200000000, #20
+	jmp	#skip_clock_set_
+	orgf	32
+skip_clock_set_
+	locknew	__lockreg
+	wrlong	__lockreg, ptr___lockreg_
+	call	#_start
+cogexit
+	waitx	##160000
+	cogid	arg01
+	cogstop	arg01
+spininit
+	rdlong	objptr, ptra
+	add	ptra, #4
+	rdlong	result1, ptra
+	add	ptra, #4
+	rdlong	arg01, ptra
+	add	ptra, #4
+	rdlong	arg02, ptra
+	add	ptra, #4
+	rdlong	arg03, ptra
+	add	ptra, #4
+	rdlong	arg04, ptra
+	sub	ptra, #16
+	call	result1
+	jmp	#cogexit
+FCACHE_LOAD_
+    pop	fcache_tmpb_
+    add	fcache_tmpb_, pa
+    push	fcache_tmpb_
+    sub	fcache_tmpb_, pa
+    shr	pa, #2
+    mov	fcache_tmpa_, pa
+    add	fcache_tmpa_, #$100
+    wrlut ret_instr_, fcache_tmpa_
+    sub	pa, #1
+    setq2	pa
+    rdlong	$100-0, fcache_tmpb_
+    jmp	#\$300 ' jmp to cache
+ret_instr_
+    ret
+fcache_tmpa_
+    long 0
+fcache_tmpb_
+    long 0
+COUNT_
+    long 0
+RETADDR_
+    long 0
+fp
+    long 0
+gosub_
+    mov  COUNT_, #0
+    mov  pa, arg01
+    pop  RETADDR_
+    jmp  #pushregs_done_
+pushregs_
+    pop  pa
+    pop  RETADDR_
+    tjz  COUNT_, #pushregs_done_
+    sub  COUNT_, #1
+    setq COUNT_
+    wrlong local01, ptra
+    add  COUNT_, #1
+pushregs_done_
+    shl  COUNT_, #2
+    add  ptra, COUNT_
+    shr  COUNT_, #2
+    setq #2 ' push 3 registers starting at COUNT_
+    wrlong COUNT_, ptra
+    add    ptra, #12
+    mov    fp, ptra
+    jmp  pa
+ popregs_
+    pop    pa
+    sub    ptra, #12
+    setq   #2
+    rdlong COUNT_, ptra
+    tjz    COUNT_, #popregs__ret
+    shl    COUNT_, #2
+    sub    ptra, COUNT_
+    shr    COUNT_, #2
+    sub    COUNT_, #1
+    setq   COUNT_
+    rdlong local01, ptra
+popregs__ret
+    push   RETADDR_
+    jmp    pa
+
+__lockreg
+	long	0
+objptr
+	long	@objmem
+ptr___lockreg_
+	long	@__lockreg
+result1
+	long	0
+COG_BSS_START
+	fit	480
+	orgh
+hubentry
+
+' 
+' 
+' 
+' pub start()
+_start
+	mov	COUNT_, #3
+	call	#pushregs_
+	add	objptr, #8
+	rdlong	arg03, objptr
+	add	objptr, #8
+	rdlong	local01, objptr
+	sub	objptr, #16
+	add	arg03, local01
+' 
+' d:=test(a,b,c+i)
+	rdlong	arg01, objptr
+	add	objptr, #4
+	rdlong	arg02, objptr
+	sub	objptr, #4
+	add	arg01, arg02
+	add	arg01, arg03
+	mov	local02, #0
+	loc	pa,	#(@LR__0002-@LR__0001)
+	call	#FCACHE_LOAD_
+LR__0001
+	mov	local03, arg01
+	add	local03, local02
+'   d:=a+b+c+i
+	add	local02, #1
+	cmps	local02, #11 wcz
+ if_b	jmp	#LR__0001
+LR__0002
+' return d
+	mov	result1, local03
+	add	objptr, #12
+	wrlong	result1, objptr
+	sub	objptr, #12
+	mov	ptra, fp
+	call	#popregs_
+_start_ret
+	ret
+hubexit
+	jmp	#cogexit
+objmem
+	long	0[1]
+	org	COG_BSS_START
+arg01
+	res	1
+arg02
+	res	1
+arg03
+	res	1
+arg04
+	res	1
+local01
+	res	1
+local02
+	res	1
+local03
+	res	1
+	fit	480

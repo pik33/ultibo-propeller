@@ -71,7 +71,6 @@ long cmd1
 long cmd2
 long fontnum
 byte teststring[101]
-
 {{
 m_bs        - before sync,             16      80
 m_sn        - sync                     80     160
@@ -426,7 +425,7 @@ repeat
   outtextxy(50,14,@teststring)
 
   outtextxy(65,7,string("524,288 Bytes Memory"))
- ' i:=$80000-@charcolor
+  i:=$80000
   outtextxy(66,8,inttostr(i / 1000))
   outtextxy(69,8,string(","))
   outtextxy(70,8,inttostr(i // 1000))
@@ -981,7 +980,7 @@ palette_ptr:=@ataripalette
 command_ptr:=@cmd1
 fontnum_ptr:=@fontnum
 
-fontnum:=2048  ' ST type font
+fontnum:=0  ' ST type font
 
 ' initialize a cursor
 

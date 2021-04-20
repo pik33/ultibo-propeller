@@ -1,0 +1,206 @@
+
+00000                 | 
+00000                 | #line 1 "D:/Programowanie/ultibo-propeller/hng012/test.p2asm"
+00000                 | ' 
+00000                 | ' _clkfreq=200000000
+00000                 | con
+00000                 | 	_clkfreq = 200000000
+00000                 | dat
+00000 000 00 00 00 00 | 	nop
+00004 001 01 EC 63 FD | 	cogid	pa
+00008 002 02 00 00 FF 
+0000c 003 04 EC E7 FC | 	coginit	pa,##$404
+00010                 | 	orgh	$10
+00010     00 00 00 00 | 	long	0	'reserved
+00014     00 00 00 00 | 	long	0 ' clock frequency: will default to 200000000
+00018     00 00 00 00 | 	long	0 ' clock mode: will default to $10009fb
+0001c     00 00 00 00 
+      ...             
+003f8     00 00 00 00 
+003fc     00 00 00 00 | 	orgh	$400
+00400     00 D4 04 06 |  _ret_	mov	result1, #0
+00404 000             | 	org	0
+00404 000             | entry
+00404 000 00 F0 0F F2 | 	cmp	ptra, #0 wz
+00408 001 94 00 90 5D |  if_ne	jmp	#spininit
+0040c 002 68 F0 03 F6 | 	mov	ptra, objptr
+00410 003 14 F0 07 F1 | 	add	ptra, #20
+00414 004 14 EC 0F FB | 	rdlong	pa, #20 wz
+00418 005 68 00 90 5D |  if_ne	jmp	#skip_clock_set_
+0041c 006 00 00 64 FD | 	hubset	#0
+00420 007 04 80 80 FF 
+00424 008 00 F0 67 FD | 	hubset	##16779768
+00428 009 86 01 80 FF 
+0042c 00a 1F 80 66 FD | 	waitx	##200000
+00430 00b 04 80 00 FF 
+00434 00c FB ED 07 F6 | 	mov	pa, ##16779771
+00438 00d 00 EC 63 FD | 	hubset	pa
+0043c 00e 18 EC 67 FC | 	wrlong	pa, #24
+00440 00f E1 F5 85 FF 
+00444 010 14 00 6C FC | 	wrlong	##200000000, #20
+00448 011 38 00 90 FD | 	jmp	#skip_clock_set_
+0044c 012 00 00 00 00 
+      ...             
+0047c 01e 00 00 00 00 
+00480 01f 00 00 00 00 | 	orgf	32
+00484 020             | skip_clock_set_
+00484 020 04 CE 60 FD | 	locknew	__lockreg
+00488 021 69 CE 60 FC | 	wrlong	__lockreg, ptr___lockreg_
+0048c 022 B0 05 A0 FD | 	call	#_start
+00490 023             | cogexit
+00490 023 38 01 80 FF 
+00494 024 1F 00 66 FD | 	waitx	##160000
+00498 025 01 D6 60 FD | 	cogid	arg01
+0049c 026 03 D6 60 FD | 	cogstop	arg01
+004a0 027             | spininit
+004a0 027 00 D1 04 FB | 	rdlong	objptr, ptra
+004a4 028 04 F0 07 F1 | 	add	ptra, #4
+004a8 029 00 D5 04 FB | 	rdlong	result1, ptra
+004ac 02a 04 F0 07 F1 | 	add	ptra, #4
+004b0 02b 00 D7 04 FB | 	rdlong	arg01, ptra
+004b4 02c 04 F0 07 F1 | 	add	ptra, #4
+004b8 02d 00 D9 04 FB | 	rdlong	arg02, ptra
+004bc 02e 04 F0 07 F1 | 	add	ptra, #4
+004c0 02f 00 DB 04 FB | 	rdlong	arg03, ptra
+004c4 030 04 F0 07 F1 | 	add	ptra, #4
+004c8 031 00 DD 04 FB | 	rdlong	arg04, ptra
+004cc 032 10 F0 87 F1 | 	sub	ptra, #16
+004d0 033 2D D4 60 FD | 	call	result1
+004d4 034 B8 FF 9F FD | 	jmp	#cogexit
+004d8 035             | FCACHE_LOAD_
+004d8 035 2B 86 60 FD |     pop	fcache_tmpb_
+004dc 036 F6 87 00 F1 |     add	fcache_tmpb_, pa
+004e0 037 2A 86 60 FD |     push	fcache_tmpb_
+004e4 038 F6 87 80 F1 |     sub	fcache_tmpb_, pa
+004e8 039 02 EC 47 F0 |     shr	pa, #2
+004ec 03a F6 85 00 F6 |     mov	fcache_tmpa_, pa
+004f0 03b 00 85 04 F1 |     add	fcache_tmpa_, #$100
+004f4 03c 42 82 30 FC |     wrlut ret_instr_, fcache_tmpa_
+004f8 03d 01 EC 87 F1 |     sub	pa, #1
+004fc 03e 29 EC 63 FD |     setq2	pa
+00500 03f 43 00 02 FB |     rdlong	$100-0, fcache_tmpb_
+00504 040 00 03 80 FD |     jmp	#\$300 ' jmp to cache
+00508 041             | ret_instr_
+00508 041 2D 00 64 FD |     ret
+0050c 042             | fcache_tmpa_
+0050c 042 00 00 00 00 |     long 0
+00510 043             | fcache_tmpb_
+00510 043 00 00 00 00 |     long 0
+00514 044             | COUNT_
+00514 044 00 00 00 00 |     long 0
+00518 045             | RETADDR_
+00518 045 00 00 00 00 |     long 0
+0051c 046             | fp
+0051c 046 00 00 00 00 |     long 0
+00520 047             | gosub_
+00520 047 00 88 04 F6 |     mov  COUNT_, #0
+00524 048 6B EC 03 F6 |     mov  pa, arg01
+00528 049 2B 8A 60 FD |     pop  RETADDR_
+0052c 04a 1C 00 90 FD |     jmp  #pushregs_done_
+00530 04b             | pushregs_
+00530 04b 2B EC 63 FD |     pop  pa
+00534 04c 2B 8A 60 FD |     pop  RETADDR_
+00538 04d 04 88 94 FB |     tjz  COUNT_, #pushregs_done_
+0053c 04e 01 88 84 F1 |     sub  COUNT_, #1
+00540 04f 28 88 60 FD |     setq COUNT_
+00544 050 00 DF 64 FC |     wrlong local01, ptra
+00548 051 01 88 04 F1 |     add  COUNT_, #1
+0054c 052             | pushregs_done_
+0054c 052 02 88 64 F0 |     shl  COUNT_, #2
+00550 053 44 F0 03 F1 |     add  ptra, COUNT_
+00554 054 02 88 44 F0 |     shr  COUNT_, #2
+00558 055 28 04 64 FD |     setq #2 ' push 3 registers starting at COUNT_
+0055c 056 00 89 64 FC |     wrlong COUNT_, ptra
+00560 057 0C F0 07 F1 |     add    ptra, #12
+00564 058 F8 8D 00 F6 |     mov    fp, ptra
+00568 059 2C EC 63 FD |     jmp  pa
+0056c 05a             |  popregs_
+0056c 05a 2B EC 63 FD |     pop    pa
+00570 05b 0C F0 87 F1 |     sub    ptra, #12
+00574 05c 28 04 64 FD |     setq   #2
+00578 05d 00 89 04 FB |     rdlong COUNT_, ptra
+0057c 05e 06 88 94 FB |     tjz    COUNT_, #popregs__ret
+00580 05f 02 88 64 F0 |     shl    COUNT_, #2
+00584 060 44 F0 83 F1 |     sub    ptra, COUNT_
+00588 061 02 88 44 F0 |     shr    COUNT_, #2
+0058c 062 01 88 84 F1 |     sub    COUNT_, #1
+00590 063 28 88 60 FD |     setq   COUNT_
+00594 064 00 DF 04 FB |     rdlong local01, ptra
+00598 065             | popregs__ret
+00598 065 2A 8A 60 FD |     push   RETADDR_
+0059c 066 2C EC 63 FD |     jmp    pa
+005a0 067             | 
+005a0 067             | __lockreg
+005a0 067 00 00 00 00 | 	long	0
+005a4 068             | objptr
+005a4 068 28 06 00 00 | 	long	@objmem
+005a8 069             | ptr___lockreg_
+005a8 069 A0 05 00 00 | 	long	@__lockreg
+005ac 06a             | result1
+005ac 06a 00 00 00 00 | 	long	0
+005b0 06b             | COG_BSS_START
+005b0 06b             | 	fit	480
+005b0                 | 	orgh
+005b0                 | hubentry
+005b0                 | 
+005b0                 | ' 
+005b0                 | ' 
+005b0                 | ' 
+005b0                 | ' pub start()
+005b0                 | _start
+005b0     03 88 04 F6 | 	mov	COUNT_, #3
+005b4     4B 00 A0 FD | 	call	#pushregs_
+005b8     08 D0 04 F1 | 	add	objptr, #8
+005bc     68 DA 00 FB | 	rdlong	arg03, objptr
+005c0     08 D0 04 F1 | 	add	objptr, #8
+005c4     68 DE 00 FB | 	rdlong	local01, objptr
+005c8     10 D0 84 F1 | 	sub	objptr, #16
+005cc     6F DA 00 F1 | 	add	arg03, local01
+005d0                 | ' 
+005d0                 | ' d:=test(a,b,c+i)
+005d0     68 D6 00 FB | 	rdlong	arg01, objptr
+005d4     04 D0 04 F1 | 	add	objptr, #4
+005d8     68 D8 00 FB | 	rdlong	arg02, objptr
+005dc     04 D0 84 F1 | 	sub	objptr, #4
+005e0     6C D6 00 F1 | 	add	arg01, arg02
+005e4     6D D6 00 F1 | 	add	arg01, arg03
+005e8     00 E0 04 F6 | 	mov	local02, #0
+005ec     24 FA 9F FE | 	loc	pa,	#(@LR__0002-@LR__0001)
+005f0     35 00 A0 FD | 	call	#FCACHE_LOAD_
+005f4                 | LR__0001
+005f4     6B E2 00 F6 | 	mov	local03, arg01
+005f8     70 E2 00 F1 | 	add	local03, local02
+005fc                 | '   d:=a+b+c+i
+005fc     01 E0 04 F1 | 	add	local02, #1
+00600     0B E0 5C F2 | 	cmps	local02, #11 wcz
+00604     EC FF 9F CD |  if_b	jmp	#LR__0001
+00608                 | LR__0002
+00608                 | ' return d
+00608     71 D4 00 F6 | 	mov	result1, local03
+0060c     0C D0 04 F1 | 	add	objptr, #12
+00610     68 D4 60 FC | 	wrlong	result1, objptr
+00614     0C D0 84 F1 | 	sub	objptr, #12
+00618     46 F0 03 F6 | 	mov	ptra, fp
+0061c     5A 00 A0 FD | 	call	#popregs_
+00620                 | _start_ret
+00620     2D 00 64 FD | 	ret
+00624                 | hubexit
+00624     23 00 80 FD | 	jmp	#cogexit
+00628                 | objmem
+00628     00 00 00 00 | 	long	0[1]
+0062c 06b             | 	org	COG_BSS_START
+0062c 06b             | arg01
+0062c 06b             | 	res	1
+0062c 06c             | arg02
+0062c 06c             | 	res	1
+0062c 06d             | arg03
+0062c 06d             | 	res	1
+0062c 06e             | arg04
+0062c 06e             | 	res	1
+0062c 06f             | local01
+0062c 06f             | 	res	1
+0062c 070             | local02
+0062c 070             | 	res	1
+0062c 071             | local03
+0062c 071             | 	res	1
+0062c 072             | 	fit	480

@@ -1,0 +1,19 @@
+con
+
+_clkfreq=200000000
+
+var
+
+long a,b,c,d,i
+
+
+
+pub start()
+
+d:=test(a,b,c+i)
+
+pub test(a,b,c):d |i
+
+repeat i from 0 to 10
+  d:=a+b+c+i
+return d
