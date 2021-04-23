@@ -1,0 +1,108 @@
+
+00000                 | 
+00000                 | #line 1 "D:/Programowanie/ultibo-propeller/hng012/testtemp.spin2"
+00000                 | _clkfreq        =       180_000_000
+00000                 | debug_pin       =       56
+00000                 | debug_baud      =       115_200
+00000                 | 
+00000                 | 
+00000                 | dat
+00000                 |                 orgh    0
+00000                 | '
+00000                 | ' Launch all cogs with test program.
+00000                 | '
+00000 000             |                 org
+00000 000             | 
+00000 000 04 80 80 FF 
+00004 001 00 F0 65 FD |                 hubset	##clkmode_ & !%11
+00008 002 86 01 80 FF 
+0000c 003 1F 80 66 FD | 	waitx	##20_000_000/100
+00010 004 04 80 80 FF 
+00014 005 00 F6 65 FD | 	hubset	##clkmode_
+00018 006             | 
+00018 006             | 
+00018 006             | .loop           coginit cognum,#@pgm            'last iteration relaunches cog 0
+00018 006 24 10 E4 FC 
+0001c 007 FE 11 7C FB |                 djnf    cognum,#.loop
+00020 008             | 
+00020 008             | cognum          long    7
+00020 008 07 00 00 00 
+00024 009             | '
+00024 009             | ' Toggle 8 pins, get long from hub, start cordic command
+00024 009             | '
+00024 000             |                 org
+00024 000             | 
+00024 000             | pgm             waitx   ##clkfreq_/2            'wait for all cogs to launch
+00024 000 A5 AE 82 FF 
+00028 001 1F 00 65 FD 
+0002c 002             | 
+0002c 002 01 66 60 FD |                 cogid   x                       'cog7?
+00030 003 07 66 0C F2 |                 cmp     x,#7            wz
+00034 004 70 00 90 AD |         if_z    jmp     #.cog7
+00038 005             | 
+00038 005 1B 66 60 FD |                 getrnd  x                       'set up the color converter
+0003c 006 38 66 60 FD |                 setcy   x
+00040 007 1B 66 60 FD |                 getrnd  x
+00044 008 39 66 60 FD |                 setci   x
+00048 009 1B 66 60 FD |                 getrnd  x
+0004c 00a 3A 66 60 FD |                 setcq   x
+00050 00b 1B 66 60 FD |                 getrnd  x
+00054 00c 3B 66 60 FD |                 setcfrq x
+00058 00d 3C E0 64 FD |                 setcmod #$70
+0005c 00e             | 
+0005c 00e 00 00 C0 FF 
+00060 00f 1D 00 64 FD |                 setxfrq ##$80000000             'set up the streamer to read 32 bits from fifo every 4th clock
+00064 010 01 66 60 FD |                 cogid   x
+00068 011 14 66 64 F0 |                 shl     x,#20
+0006c 012 7F 84 3F FF 
+00070 013 FF 67 44 F5 |                 or      x,##$7F08_FFFF          'RDLONG every 4th clock --> LUT --> pins/DACs
+00074 014 00 66 C4 FC |                 xcont   x,#0
+00078 015             | 
+00078 015 01 66 60 FD |                 cogid   x                       'which cog am I, 0..7?
+0007c 016 03 66 64 F0 |                 shl     x,#3                    'start pwm pins +1..+7
+00080 017 0D 66 44 F5 |                 or      x,#6<<1+1               ' Test with 2 ADC pins per IO group (of 8)
+00084 018             |                 'or      x,#6<<6+1              ' Test with 7 ADC pins per IO group (of 8)
+00084 018 C0 08 80 FF 
+00088 019 33 60 08 FC |                 wrpin   ##P_ADC_1X+P_ADC,x      'ADC SINC2
+0008c 01a 33 1A 18 FC |                 wxpin   #13,x                   '14-bit conversions
+00090 01b 41 66 60 FD |                 dirh    x
+00094 01c             | 
+00094 01c 3E 66 04 F5 |                 and     x,#%111110              'each cog toggles pin +0 manually
+00098 01d             | 
+00098 01d             | .loop           rep     #3,#0
+00098 01d 00 06 DC FC 
+0009c 01e 5F 66 60 FD |                 drvnot  x                       'toggle pin +0
+000a0 01f 1B 68 60 FD |                 getrnd  y                       'feed cordic random data
+000a4 020 34 68 40 FD |                 qrotate y,y
+000a8 021             | 
+000a8 021             | 
+000a8 021             | .cog7           mov     ptra,#0                         'fill hub and lut with random data
+000a8 021 00 F0 07 F6 
+000ac 022 00 02 00 FF 
+000b0 023 00 08 DC FC |                 rep     #4,##$10_0000/4
+000b4 024 1B 66 60 FD |                 getrnd  x
+000b8 025 00 67 64 FC |                 wrlong  x,ptra
+000bc 026 1B 66 60 FD |                 getrnd  x
+000c0 027 61 67 34 FC |                 wrlut   x,ptra++
+000c4 028             | 
+000c4 028 39 98 0C FC |                 wrpin   #%01_00110_0,#debug_pin+1       'output clkfreq/100 on debug_pin+1
+000c8 029 39 02 1C FC |                 wxpin   #1,#debug_pin+1
+000cc 02a AE 47 81 FF 
+000d0 02b 39 50 2C FC |                 wypin   ##1 frac 100,#debug_pin+1
+000d4 02c 41 72 64 FD |                 dirh    #debug_pin+1
+000d8 02d             | 
+000d8 02d 00 66 04 F6 |                 mov     x,#0                            'output incrementing counter message on debug_pin
+000dc 02e             | .debug          debug   (udec(x))
+000dc 02e 01 66 04 F1 |                 add     x,#1
+000e0 02f 4A 5D 85 FF 
+000e4 030 1F 00 66 FD |                 waitx   ##clkfreq_
+000e8 031 F0 FF 9F FD |                 jmp     #.debug
+000ec 032             | 
+000ec 032             | 
+000ec 032             | pat             long    $0002_0001
+000ec 032 01 00 02 00 
+000f0 033             | 
+000f0 033             | x               res     1
+000f0 033 
+000f0 034             | y               res     1
+000f0 034 

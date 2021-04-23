@@ -1,6 +1,6 @@
 '********************************************************************************************
 ' Nostalgic displaylisted HDMI for P2 - 1 cog version
-' Version 0.22 alpha -20210415
+' Version 0.23 alpha -20210415
 ' 1 cog,text and graphics with or without border, 8x16 selectable and redefinable font
 ' (c) 2012-2021 Piotr Kardasz pik33@o2.pl
 ' MIT license
@@ -182,7 +182,7 @@ repeat i from 0 to 10000
   y2:=getrnd()+//496
 
 
-  box(x1,y1,x2,y2,ccc)
+  line(x1,y1,x2,y2,ccc)
 
 repeat i from 0 to 10000
 
@@ -192,7 +192,35 @@ repeat i from 0 to 10000
   ccc:=getrnd()&255
   fcircle(x1,y1,r,ccc)   
 
+repeat i from 0 to 10000
+  ccc:=getrnd()&255
+  x1:=getrnd()+//896
+  x2:=getrnd()+//896
+  y1:=getrnd()+//496
+  y2:=getrnd()+//496
 
+
+  frame(x1,y1,x2,y2,ccc)
+  
+repeat i from 0 to 10000
+
+  x1:=getrnd()+//896
+  y1:=getrnd()+//496
+  r:=getrnd()+//100
+  ccc:=getrnd()&255
+  circle(x1,y1,r,ccc) 
+  
+repeat i from 0 to 10000
+  ccc:=getrnd()&255
+  x1:=getrnd()+//896
+  x2:=getrnd()+//100
+  y1:=getrnd()+//496
+  y2:=getrnd()+//100
+
+
+  box(x1,y1,x1+x2,y1+y2,ccc)  
+      
+  
 {
 repeat ntsc from 0 to 1
   repeat bbb from 0 to 3

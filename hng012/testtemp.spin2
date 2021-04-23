@@ -1,0 +1,84 @@
+_clkfreq        =       180_000_000
+debug_pin       =       56
+debug_baud      =       115_200
+
+
+dat
+                orgh    0
+'
+' Launch all cogs with test program.
+'
+                org
+
+                asmclk
+
+.loop           coginit cognum,#@pgm            'last iteration relaunches cog 0
+                djnf    cognum,#.loop
+
+cognum          long    7
+'
+' Toggle 8 pins, get long from hub, start cordic command
+'
+                org
+
+pgm             waitx   ##clkfreq_/2            'wait for all cogs to launch
+
+                cogid   x                       'cog7?
+                cmp     x,#7            wz
+        if_z    jmp     #.cog7
+
+                getrnd  x                       'set up the color converter
+                setcy   x
+                getrnd  x
+                setci   x
+                getrnd  x
+                setcq   x
+                getrnd  x
+                setcfrq x
+                setcmod #$70
+
+                setxfrq ##$80000000             'set up the streamer to read 32 bits from fifo every 4th clock
+                cogid   x
+                shl     x,#20
+                or      x,##$7F08_FFFF          'RDLONG every 4th clock --> LUT --> pins/DACs
+                xcont   x,#0
+
+                cogid   x                       'which cog am I, 0..7?
+                shl     x,#3                    'start pwm pins +1..+7
+                or      x,#6<<1+1               ' Test with 2 ADC pins per IO group (of 8)
+                'or      x,#6<<6+1              ' Test with 7 ADC pins per IO group (of 8)
+                wrpin   ##P_ADC_1X+P_ADC,x      'ADC SINC2
+                wxpin   #13,x                   '14-bit conversions
+                dirh    x
+
+                and     x,#%111110              'each cog toggles pin +0 manually
+
+.loop           rep     #3,#0
+                drvnot  x                       'toggle pin +0
+                getrnd  y                       'feed cordic random data
+                qrotate y,y
+
+
+.cog7           mov     ptra,#0                         'fill hub and lut with random data
+                rep     #4,##$10_0000/4
+                getrnd  x
+                wrlong  x,ptra
+                getrnd  x
+                wrlut   x,ptra++
+
+                wrpin   #%01_00110_0,#debug_pin+1       'output clkfreq/100 on debug_pin+1
+                wxpin   #1,#debug_pin+1
+                wypin   ##1 frac 100,#debug_pin+1
+                dirh    #debug_pin+1
+
+                mov     x,#0                            'output incrementing counter message on debug_pin
+.debug          debug   (udec(x))
+                add     x,#1
+                waitx   ##clkfreq_
+                jmp     #.debug
+
+
+pat             long    $0002_0001
+
+x               res     1
+y               res     1

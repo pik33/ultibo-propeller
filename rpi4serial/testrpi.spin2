@@ -28,7 +28,7 @@ long serialbuf[64]
 long serialtail,serialfront
 long serialstack[64]
 long rr,rr2
-long h1,l1,f1,c1,h11,h12
+long h1,l1,f1,c1,h11,h12,h21,h22
 byte charcode
 byte scancode
 byte mousewheel
@@ -56,6 +56,9 @@ cogspin(16,serialcog(),@serialstack)
 
 v.setwritecolors(154,146)
 v.writeln(string("P2 started"))
+
+pinwrite(2,1)
+pinwrite(3,1)
 
 dacinit()
 
@@ -96,17 +99,115 @@ repeat
   v.write(string(" ") )
   v.writeln(string(" "))
 
+  
+
   if (f1==$0202)
     h11:=h1
   if (f1==$0203)
     h12:=h1
-  dacset(h11,h12)    
+    
+  h21:=$8000
+  h22:=$8000  
+    
+ ' 1 joy do przodu, robot jedzie, 0203= h11=0   
+    
+  if (h12<$1000) & (h11<$F000) & (h11>$1000)
+    h21:=$2800
+    h22:=$2800
+
+' 2. joy do tyłu, robot do tyłu
+
+  elseif (h12>$F000) & (h11<$F000) & (h11>$1000)
+    h21:=$D800
+    h22:=$D800
+
+  '3,4  joy w bok
+  
+  elseif (h11>$F000) & (h12<$F000) & (h12>$1000)
+    h21:=$D800
+    h22:=$2800
+    
+  elseif (h11<$1000) & (h12<$F000) & (h12>$1000)
+    h21:=$2800
+    h22:=$d800
+    
+  elseif (h12>$F000) & (h11>$F000)    
+    h21:=$D800
+    h22:=$c000
+    
+  elseif (h12>$F000) & (h11<$1000)
+    h21:=$c000
+    h22:=$D800  
+    
+  elseif (h12<$1000) & (h11>$F000)    
+    h21:=$4000
+    h22:=$2800
+    
+  elseif (h12<$1000) & (h11<$F000)
+    h21:=$2800
+    h22:=$4000  
+ 
+{{  
+         
+  if (h12<$2000) & (h11<$E000) & (h11>$2000)
+    h21:=$2800
+    h22:=$2800
+    
+      
+    
+  if h11>$E000
+    h11:=$d000
+  elseif h11<$2000
+    h11:=$3000
+  else
+    h11:=$8000
+
+  if h12>$E000
+    h12:=$d000
+  elseif h12<$2000
+    h12:=$3000
+  else
+    h12:=$8000
+       
+
+'  if ((h11>$7000) & (h11<$9000))
+'    h11:=$8000
+'  if ((h12>$7000) & (h12<$9000))
+'    h12:=$8000
+    
+  
+  h21:=h12+(h11-32768)
+  h22:=h12-(h11-32768)
+  if h22>65535 
+    h22:=65535
+  if h22<0 
+    h22:=0
+  if h21>65535
+    h21:=65535
+  if(h21<0)
+    h21:=0
+  h21:=65535-h21
+  h22:=65536-h22
+    
+'  h21:=(h11+h12-65536) /2 ' 0..128k, -64k div 2  suma
+'  h22:=(h11-h12+65536) /2 ' 64k..-64k: +64k, div 2 róznica
+ 
+}}
+    
+  dacset(h21,h22)    
   if (f1==$0108)
     if (l1==1)
-      pinwrite(7,0)
+      pinwrite(2,0)
+      pinwrite(3,0)
     else
-      pinwrite(7,1)
+      pinwrite(2,1)
+      pinwrite(3,1)
       
+  v.write(v.inttohex(h21,4))
+  v.write(string(" ") )
+  v.write(v.inttohex(h22,4))
+  v.write(string(" ") )
+  v.writeln(string(" "))
         
 pub serialcog()|q
 
