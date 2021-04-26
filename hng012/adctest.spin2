@@ -5,42 +5,55 @@ _clkfreq        = 200000000  '  44100x8192
 
 bank            = 0   ' accessory board at pin 0,
 
-adcpinl         = bank+2   ' input on cinch 0,1
-adcpinr         = bank+3
+adcpinl         = bank+0   ' input on cinch 0,1
+adcpinr         = bank+1
 dacpinl         = bank+6   ' output on headphone jack
 dacpinr         = bank+7
 
 
 obj v: "hng023"
 
-pub start()     |ii,iii, m, n
+pub start()     |ii,iii,iiii,iiiii, m, n
 
 
 m:=0
 n:=$FFFFF
-v.start(384,8)
+v.start(512+256+192+48,8)
 v.cls(10,0)
-v.outtextxy(0,10,v.inttostr(clkfreq))
+v.setfontfamily(4)
+v.outtextxycg(0,32,v.inttostr(clkfreq),88,0)
+v.outtextxycg(0,48,v.inttostr(v.buf_ptr),104,0)
+
 v.setwritecolors(10,0)
 coginit(6,@mixer,0)
-n:=100000
-repeat ii from 0 to 120
-  iii:=long[100000]
-  v.waitvbl(0)
 repeat
-  iii:=long[100000]
-  ii:=long[100004]
-  if iii>m
-    m:=iii
-  if iii<n
-    n:=iii
-  v.waitvbl(60)
-  v.cls(10,0)  
-  v.outtextxy(0,0,v.inttohex(iii,8))  
-  v.outtextxy(10,0,v.inttohex(ii,8))  
-  v.outtextxy(0,1,v.inttostr(m))  
-  v.outtextxy(0,2,v.inttostr(n))  
+  v.waitvbl(0)
+  iii:=long[30000]
+  ii:=long[30004]
 
+  v.outtextxycg(0,0,v.inttohex(iii,8),24,0)  
+  v.outtextxycg(80,0,v.inttohex(ii,8),40,0)  
+  iiiii:=long[30008]
+  iiii:=long[30012]
+ 
+
+  
+  iiiii:=((iiiii-$20000)/10)+$20000
+  v.outtextxycg(0,16,v.inttohex(iiiii,8),56,0)  
+  v.outtextxycg(80,16,v.inttohex(iiii,8),72,0)  
+ 
+  if iiiii<>$1cccD 
+    n:=$25000+10*(iiiii-iii)
+  else
+    n:=-1
+  v.outtextxycg(160,16,v.inttohex(n,8),232,0)  
+ 
+  v.line(m+//896,128,m+//896,384,0)
+  v.putpixel(m +//896,128+iii>>10,40)
+  v.putpixel(m +//896,128+iiiii>>10,200)
+  v.putpixel(m +//896,256,15)
+  v.putpixel(m +//896,128+n>>10,232)
+  m+=1
 
 
 DAT
@@ -52,22 +65,37 @@ mixer         dirl   #adcpinl addpins 1
 
 
               wrpin dac_config,#dacpinl
-              wxpin #255,#dacpinl
+              wxpin #256,#dacpinl
               wrpin dac_config,#dacpinr
-              wxpin #255,#dacpinr
+              wxpin #256,#dacpinr
               dirh  #dacpinl addpins 1
 
               setse1  #%001<<6 + adcpinl
 
-loop          waitse1
-              nop
-              nop
-              nop
+loop          
+        
+        add p3,f3
+        qrotate ##$7FFF,p3
+        getqx amp   
 
+	add     p1,f1           'calculate right sample
+        qrotate amp,p1
+        getqx   xx
+        bitnot  xx,#15
+        wypin   xx,#dacpinl
 
-              rdpin x,#adcpinl
-              rdpin y,#adcpinr
-              
+        add     p2,f2           'calculate left sample
+        qrotate amp,p2
+        getqx   xx
+        bitnot  xx,#15
+        wypin   xx,#dacpinr
+
+         rep @p201,#9
+         waitse1
+         rdpin x,#adcpinl
+         rdpin y,#adcpinr
+
+               
      
        SUB     x,diff1                                'compute sample
        ADD     diff1,x                                'update diff1 value
@@ -80,27 +108,74 @@ loop          waitse1
        SUB     y,diff4                                'compute sample
        ADD     diff4,y                                'update diff2 value
        SHR     y,#9    
-                                                     'justify 14-bit sample
-       and x,##$0003FFFF       
-       and y,##$0003FFFF  
+         
+                                          'justify 14-bit sample
+       and x,##$3FFFF       
+       and y,##$3FFFF  
+
+
+p201         wrlong x,##30000
+	     wrlong y,##30004
+       
+       cmp x,##$1CD00
+       
+       
+          
+            wrpin adc_config2, #adcpinl addpins 1
               
+              
+              rep @p202,#9
+               waitse1
+              rdpin x,#adcpinl
+              rdpin y,#adcpinr
+       
+
+     
+       SUB     x,diff1                                'compute sample
+       ADD     diff1,x                                'update diff1 value
+       SUB     x,diff2                                'compute sample
+       ADD     diff2,x                                'update diff2 value
+       SHR     x,#9                                   'justify 14-bit sample
+       
+       SUB     y,diff3                                'compute sample
+       ADD     diff3,y                                'update diff1 value
+       SUB     y,diff4                                'compute sample
+       ADD     diff4,y                                'update diff2 value
+       SHR     y,#9    
+                                           'justify 14-bit sample
+      and x,##$0003FFFF       
+      and y,##$0003FFFF  
+
+p202         wrlong x,##30008
+	     wrlong y,##30012
+
+              wrpin adc_config, #adcpinl addpins 1
+             
            '    shl x,#2
              '  shl y,#2
 
 
 
-p101         wrlong x,##100000
-	     wrlong y,##100004
-             wypin   x,#dacpinl
-             wypin   y,#dacpinr
+'             wypin   x,#dacpinl
+'             wypin   y,#dacpinr
 
               jmp     #loop          'loop
 
 
-adc_config      long    %0000_0000_000_100011_1111111_00_11000_0
-dac_config      long    %0000_0000_000_10111_00000000_01_00011_0
+adc_config      long    %0000_0000_000_100011_0000000_00_11000_0
+adc_config2     long    %0000_0000_000_100101_0000000_00_11000_0
+dac_config      long    %0000_0000_000_10110_00000000_01_00010_0 'pwm
 x               long    0
 y               long    0
+xx long 0
+p1 long 0
+p2 long 0
+f1 long 3800
+f2 long 3800 '0.01 Hz
+f3 long 38
+p3 long 0
+amp long $0FFF
+
 diff1 res 1
 diff2 res 1
 diff3 res 1

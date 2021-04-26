@@ -1,0 +1,25 @@
+CON
+_clkfreq        = 200000000
+hdmipin         = 8
+
+obj               v: "hng023"
+
+pub demo() |x,y,px,py,d
+
+v.start(512+256+192+48,hdmipin)
+
+repeat y from -248 to 247
+  repeat x from -448 to 447
+    px,py:=xypol(x,y)            
+    v.putpixel(x+448,y+248,(py+px<<21)>>24)
+v.setfontfamily(4)
+v.outtextxycfz(264,232,string("Yet Another Spiral Demo"),40,2,2) 
+    
+repeat
+  d:=long[v.palette_ptr+4*255]
+  longmove(v.palette_ptr+4,v.palette_ptr,255)
+  long[v.palette_ptr]:=d
+  d:=long[v.dl_ptr]
+  longmove(v.dl_ptr,v.dl_ptr+4,495)
+  long[v.dl_ptr+4*495]:=d
+  v.waitvbl(1)

@@ -439,6 +439,17 @@ repeat yy from 0 to 15
     else
       putpixel(xx+x,yy+y,b)
 
+pub putcharxycfz(x,y,achar,f,xz,yz) |xx,xxx,yy,yyy,bb
+
+repeat yy from 0 to 15
+  bb:=byte[@vga_font+font_family<<10+achar<<4+yy]
+  repeat xx from 0 to 7
+    if (bb&(1<<xx))<>0
+      repeat yyy from 0 to yz-1
+        repeat xxx from 0 to xz-1
+          putpixel(xz*xx+xxx+x,yz*yy+yyy+y,f)
+
+
 pub putcharxycz(x,y,achar,f,b,xz,yz) |xx,xxx,yy,yyy,bb
 
 repeat yy from 0 to 15
@@ -467,6 +478,11 @@ pub outtextxycz(x,y,text,f,b,xz,yz) | iii,c
 
 repeat iii from 0 to strsize(text)-1
   putcharxycz(x+8*xz*iii,y,byte[text+iii],f,b,xz,yz)
+
+pub outtextxycfz(x,y,text,f,xz,yz) | iii,c
+
+repeat iii from 0 to strsize(text)-1
+  putcharxycfz(x+8*xz*iii,y,byte[text+iii],f,xz,yz)
 
 
 ''---------- putpixel - put a pixel on the screen
