@@ -169,6 +169,7 @@ pub dummy()|i,x,y,ntsc,bbb,ccc,zzx,zzy,amode,x1,x2,y1,y2,r
 '' this is not a main program.
 
 start(512+0+48,hdmi_base)
+
 cls(147,154)
 setfontfamily(0)
 waitvbl(100)
@@ -295,7 +296,7 @@ repeat amode from 512 to 1023
     outtextxycg(64,32,inttostr(buf_ptr),40,0)
     outtextxycg(64,48,inttostr(buflen*4),40,0)
     outtextxycg(64,64,inttostr(lines),40,0)
-  waitvbl(120)
+  waitvbl(300)
 
 repeat
 
@@ -1473,8 +1474,8 @@ p102            getword t1,m_border,#0
 
 
 
-p103            getword  t1,m_border,#0
-                cmp      t1, #0 wz
+p103            getword  mb2,m_border,#0
+                cmp      mb2, #0 wz
                 if_nz    xcont   m_border,border            'display a right border if exists
 
                 jmp #p302
@@ -1486,8 +1487,8 @@ p103            getword  t1,m_border,#0
 graphline       call    #hsync                          ' now call hsync to gain some time between xconts
 
 
-p202            getword t1,m_border,#0
-                cmp     t1, #0 wz
+p202            getword mb2,m_border,#0
+                cmp     mb2, #0 wz
           if_nz xcont   m_border,border                 ' display a left border if exists
 
 '----------------------------------------- display pixels
@@ -1521,28 +1522,60 @@ p202            getword t1,m_border,#0
                 if_z jmp #p251      'there is an universal loop for 1x zoom at p251, saves one long of skip pattern
 
                 cmp zoom, #%01 wz   '256 colors, zoom x2
-           if_z mov skippattern,#%101010
- '
+                if_z mov skippattern,#%101010
+                if_z jmp #p235 
+ '  
                 cmp zoom, #%10 wz   '256 colors, zoom x4
-           if_z mov skippattern,#%011001
- '
-                cmp zoom, #%11 wz   '256 colors, zoom x8
-          if_z  mov skippattern,#%010001
-          if_z  shr cpl2,#1         ' if 8x zoom, 2 xconts used in one loop, so divide loop count by 2
-              '
+                if_z mov skippattern,#%100101
+                if_z jmp #p235
+ 
+                mov skippattern,#%000101
+                shr cpl2,#1         ' if 8x zoom, 2 xconts used in one loop, so divide loop count by 2
+                jmp #p235
 
-p231               rdlong  char,framebuf2
+p231            rep #5,cpl2
+
+                rdbyte char,framebuf2
+                movbyts char,#%00000000         '1 0 0
+                xcont   m_lut2,char             '0 0 0
+                xcont   m_lut2,char             '1 1 0
+                add     framebuf2,#1            '0 1 1
+                jmp    #p203
+
+p232           rep #4,cpl2
+               rdword char,framebuf2
+               movbyts char,#%01010000
+               xcont m_lut2,char
+               add framebuf2,#2
+               jmp #p203   
+               
+p233           rep #4,cpl2
+               rdbyte char,framebuf2
+               movbyts char,#%00000000
+               xcont m_lut2,char
+               add framebuf2,#1
+               jmp #p203   
+               
+p234           rep #4,cpl2
+               rdbyte char,framebuf2
+               movbyts char,#%00000000
+               xcont m_lut2,char
+               add framebuf2,#1
+               jmp #p203                 
+                               
+p235               rdlong  char,framebuf2
                    skipf skippattern
-                   movbyts char,#%01010000         '0 1 1
-                   movbyts char,#%00000000         '1 0 0
-                   xcont   m_lut2,char             '0 0 0
-                   xcont   m_lut2,char             '1 1 0
-              '    add     framebuf2,#4            '1 1 1
-                   add     framebuf2,#2                    '0 1 1
-                   add     framebuf2,#1                '1 0 0
-                   djnz    cpl2,#p231
+                   add     framebuf2,#2             '0 1 1
+                   add     framebuf2,#1             '1 0 0
+                   movbyts char,#%01010000          '0 1 1
+                   movbyts char,#%00000000          '1 0 0
+                   xcont   m_lut2,char              '0 0 0
+                   xcont   m_lut2,char              '1 1 0
+                   djnz    cpl2,#p235
 
                jmp    #p203
+                  
+
 
 '' --- 1 bit color modes
 
@@ -1636,14 +1669,14 @@ p262               rdword  char,framebuf2
 
 ''---------- all color modes without zoom
 
-p251               rdlong  char,framebuf2
-                   xcont   m_lut2,char
+p251               rep  #3,cpl2
+                   rdlong  char,framebuf2
                    add     framebuf2,#4
-                   djnz    cpl2,#p251     ' no jmp #p203, not needed here
-
+                   xcont   m_lut2,char
+          
  ''-----------------------------------------------------------------------------------------
-p203            getword  t1,m_border,#0
-                cmp      t1, #0 wz
+p203           ' getword  mb2,m_border,#0
+                cmp      mb2, #0 wz
                 if_nz    xcont   m_border,border            'display a right border if exists
 
                 jmp #p302
@@ -1736,6 +1769,7 @@ rcnt2a long 0
 roffset long 0
 rdl long 0  'dl repeat line
 dlc long 0 'dl command
+mb2 long 0
 aend             long 0
                 fit     496                     '
 
