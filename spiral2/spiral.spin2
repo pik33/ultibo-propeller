@@ -1,7 +1,6 @@
 CON
 _clkfreq        = 200000000
-hdmipin         = 8
-
+hdmipin         = 48
 obj               v: "hng023"
 
 pub demo() |x,y,px,py,d

@@ -1,11 +1,11 @@
 
 00000                 | 
-00000                 | #line 1 "D:/Programowanie/ultibo-propeller/spiral2/spiral.p2asm"
+00000                 | #line 1 "D:/programowanie/20210307-ultibo-propeller/ultibo-propeller/spiral2/spiral.p2asm"
 00000                 | ' _clkfreq        = 200000000
 00000                 | con
 00000                 | 	_clkfreq = 200000000
-00000                 | ' hdmipin         = 8
-00000                 | 	hdmipin = 8
+00000                 | ' hdmipin         = 48
+00000                 | 	hdmipin = 48
 00000                 | dat
 00000 000 00 00 00 00 | 	nop
 00004 001 01 EC 63 FD | 	cogid	pa
@@ -204,7 +204,7 @@
 00634     79 F8 60 FC | 	wrlong	ptr__hng023_dat__, objptr
 00638                 | ' hdmibase:=base
 00638     24 F2 04 F1 | 	add	objptr, #36
-0063c     79 10 68 FC | 	wrlong	#8, objptr
+0063c     79 60 68 FC | 	wrlong	#48, objptr
 00640     28 F2 84 F1 | 	sub	objptr, #40
 00644     7D 28 01 F6 | 	mov	arg02, ptr__hng023_putpixel1_
 00648                 | ' p1:=@putpixel1

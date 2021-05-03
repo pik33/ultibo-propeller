@@ -33,17 +33,19 @@ con
 dat
 	nop
 	cogid	pa
-	coginit	pa,##$400
+	coginit	pa,##$404
 	orgh	$10
 	long	0	'reserved
 	long	0 ' clock frequency: will default to 200000000
 	long	0 ' clock mode: will default to $10009fb
 	orgh	$400
+ _ret_	mov	result1, #0
 	org	0
 entry
 	cmp	ptra, #0 wz
  if_ne	jmp	#spininit
-	mov	ptra, ptr_stackspace_
+	mov	ptra, objptr
+	add	ptra, ##12884
 	rdlong	pa, #20 wz
  if_ne	jmp	#skip_clock_set_
 	hubset	#0
@@ -177,8 +179,6 @@ ptr__dat__
 	long	@_dat_
 ptr__midicog_
 	long	@_midicog
-ptr_stackspace_
-	long	@stackspace
 result1
 	long	0
 COG_BSS_START
@@ -190,7 +190,7 @@ hubentry
 ' 
 ' pub start(mode)   |iii,caps
 _start
-	mov	COUNT_, #6
+	mov	COUNT_, #19
 	call	#pushregs_
 ' 
 ' mode :=256
@@ -208,10 +208,11 @@ _start
 	call	#_Hn007_20210302_start
 	add	objptr, ##12324
 	wrlong	result1, objptr
-' kwas:=@sinus
 	add	ptr__dat__, ##88752
+	mov	local01, ptr__dat__
+' kwas:=@sinus
 	add	objptr, ##552
-	wrlong	ptr__dat__, objptr
+	wrlong	local01, objptr
 ' audiocog:=coginit(16,@audiostart,@kwas)
 	add	ptr__dat__, ##14448
 	mov	arg02, ptr__dat__
@@ -222,9 +223,9 @@ _start
 	coginit	arg01, arg02 wc
  if_b	neg	arg01, #1
 	mov	result1, arg01
-	mov	local01, result1
+	mov	local02, result1
 	sub	objptr, #4
-	wrlong	local01, objptr
+	wrlong	local02, objptr
 	sub	objptr, ##12872
 ' 
 ' 
@@ -239,12 +240,12 @@ _start
 	call	#_midi_start
 ' 
 ' cogspin(16,midicog(),@midistack)
-	mov	local02, objptr
-	add	objptr, ##12612
 	mov	local03, objptr
-	wrlong	local02, local03
-	add	local03, #4
-	wrlong	ptr__midicog_, local03
+	add	objptr, ##12612
+	mov	local04, objptr
+	wrlong	local03, local04
+	add	local04, #4
+	wrlong	ptr__midicog_, local04
 	mov	arg03, objptr
 	mov	arg01, #16
 	setq	arg03
@@ -265,54 +266,180 @@ _start
 	wrlong	#0, objptr
 	sub	objptr, ##12172
 ' v.writeln(string("P2 started"))
-	mov	arg01, ##@LR__0090
+	mov	arg01, ##@LR__0093
 	call	#_Hn007_20210302_writeln
 ' v.write(string("sinewave pointer"))
-	mov	arg01, ##@LR__0091
+	mov	arg01, ##@LR__0094
 	call	#_Hn007_20210302_write
 ' 
 ' v.writeln(v.inttostr(@sinus))
-	add	ptr__dat__, ##88752
-	mov	arg01, ptr__dat__
-	sub	ptr__dat__, ##88752
-	call	#_Hn007_20210302_inttostr
+' 
+' ''---------- Convert a integer to dec string, return a pointer
+' 
+' j:=i
+	mov	local05, local01 wz
+' pos:=10
+	mov	local06, #10
+' k:=0
+	mov	local07, #0
+' 
+' if (j==0)
+ if_ne	jmp	#LR__0001
+'   n_string[0]:=48
+	add	objptr, ##12196
+	wrbyte	#48, objptr
+'   n_string[1]:=0
+	add	objptr, #1
+	wrbyte	#0, objptr
+	sub	objptr, ##12197
+' 
+' else
+	jmp	#LR__0008
+LR__0001
+'   if (j<0)
+	cmps	local05, #0 wcz
+'     j:=0-j
+ if_b	neg	local05, local05
+'     k:=45
+ if_b	mov	local07, #45
+' 
+'   n_string[11]:=0
+	add	objptr, ##12207
+	wrbyte	#0, objptr
+	sub	objptr, ##12207
+	loc	pa,	#(@LR__0003-@LR__0002)
+	call	#FCACHE_LOAD_
+'   repeat while (pos>-1)
+LR__0002
+	cmps	local06, ##-1 wcz
+ if_be	jmp	#LR__0004
+	mov	muldiva_, local05
+	mov	muldivb_, #10
+	call	#divide_
+	mov	local08, muldiva_
+'     q:=j//10
+'     q:=48+q
+	add	local08, #48
+	mov	local09, local06
+	add	objptr, ##12196
+	add	local09, objptr
+'     n_string[pos]:=q
+	wrbyte	local08, local09
+'     j:=j/10
+	mov	local05, muldivb_
+'     pos-=1
+	sub	local06, #1
+	sub	objptr, ##12196
+	jmp	#LR__0002
+LR__0003
+LR__0004
+'   repeat while n_string[0]==48
+LR__0005
+	add	objptr, ##12196
+	rdbyte	local10, objptr
+	sub	objptr, ##12196
+	cmp	local10, #48 wz
+ if_ne	jmp	#LR__0006
+	add	objptr, ##12196
+	mov	arg01, objptr
+	sub	objptr, ##12196
+	mov	arg02, arg01
+	add	arg02, #1
+'     bytemove(@n_string,@n_string+1,12)
+	mov	arg03, #12
+	call	#__system__bytemove
+	jmp	#LR__0005
+LR__0006
+' 
+'   if k==45
+	cmp	local07, #45 wz
+ if_ne	jmp	#LR__0007
+	add	objptr, ##12196
+	mov	arg02, objptr
+	sub	objptr, ##12196
+	mov	arg01, arg02
+	add	arg01, #1
+'      bytemove(@n_string+1,@n_string,12)
+	mov	arg03, #12
+	call	#__system__bytemove
+'      n_string[0]:=k
+	add	objptr, ##12196
+	wrbyte	local07, objptr
+	sub	objptr, ##12196
+LR__0007
+LR__0008
+	add	objptr, ##12196
+	mov	result1, objptr
+	sub	objptr, ##12196
+' 
+' q:=@n_string
+' return q
 	mov	arg01, result1
 	call	#_Hn007_20210302_writeln
-' repeat iii from 8 to 1031
-	mov	local04, #8
-LR__0001
+	mov	local11, #16
+	decod	local12, #10
+LR__0009
+	mov	local13, local01
+	add	local13, local11
 '   v.write(v.inttohex(word[@sinus+2*iii],4))
-	add	ptr__dat__, ##88752
-	mov	local02, ptr__dat__
-	mov	local05, local04
-	shl	local05, #1
-	add	local02, local05
-	rdword	arg01, local02
+	rdword	arg01, local13
 	mov	arg02, #4
-	sub	ptr__dat__, ##88752
 	call	#_Hn007_20210302_inttohex
 	mov	arg01, result1
 	call	#_Hn007_20210302_write
 '   v.write(string(" "))
-	mov	arg01, ##@LR__0092
+	mov	arg01, ##@LR__0095
 	call	#_Hn007_20210302_write
-	add	local04, #1
-	cmps	local04, ##1032 wcz
- if_b	jmp	#LR__0001
+	add	local11, #2
+	djnz	local12, #LR__0009
 ' repeat
-LR__0002
+LR__0010
+	loc	pa,	#(@LR__0014-@LR__0011)
+	call	#FCACHE_LOAD_
 '   rr:=midiblockingread()
 ' 
 ' repeat
-LR__0003
+LR__0011
 '   r:=midiread()
-	call	#_midiread
-	mov	local06, result1
-	cmp	local06, ##-1 wz
- if_e	jmp	#LR__0003
+' 
+' if midifront<>miditail
+	add	objptr, ##12608
+	rdlong	local14, objptr
+	sub	objptr, #4
+	rdlong	local15, objptr
+	sub	objptr, ##12604
+	cmp	local14, local15 wz
+ if_e	jmp	#LR__0012
+	add	objptr, ##12604
+	rdlong	local16, objptr
+	shl	local16, #2
+	sub	objptr, #256
+	add	local16, objptr
+'   r:=midibuf[miditail]
+	rdlong	local17, local16
+	add	objptr, #256
+	rdlong	local18, objptr
+	add	local18, #1
+	abs	local14, local18 wc
+	and	local14, #31
+ if_b	neg	local14, local14
+'   miditail:=(miditail+1)//32
+	wrlong	local14, objptr
+	sub	objptr, ##12604
+' else
+	jmp	#LR__0013
+LR__0012
+'   r:=-1
+	neg	local17, #1
+LR__0013
+' return r
+	mov	local19, local17
+	cmp	local19, ##-1 wz
+ if_e	jmp	#LR__0011
+LR__0014
 ' until r<>-1
 ' return r
-	mov	result1, local06
+	mov	result1, local19
 	add	objptr, ##12868
 	wrlong	result1, objptr
 '   pinwrite(15,0)
@@ -325,14 +452,11 @@ LR__0003
 	mov	arg01, result1
 	call	#_Hn007_20210302_write
 '   v.write(string(", "))
-	mov	arg01, ##@LR__0093
+	mov	arg01, ##@LR__0096
 	call	#_Hn007_20210302_write
 '   pinwrite(15,1)
-	mov	arg01, #15
-	mov	arg02, #1
-	test	arg02, #1 wc
-	drvc	#15
-	jmp	#LR__0002
+	drvh	#15
+	jmp	#LR__0010
 	mov	ptra, fp
 	call	#popregs_
 _start_ret
@@ -341,7 +465,7 @@ _start_ret
 ' 
 ' pub midicog()|q
 _midicog
-	mov	COUNT_, #5
+	mov	COUNT_, #9
 	call	#pushregs_
 ' 
 ' midifront:=0
@@ -354,7 +478,7 @@ _midicog
 	sub	objptr, ##12604
 ' 
 ' repeat
-LR__0004
+LR__0015
 '   if midifront<>((miditail-1) //32)
 	add	objptr, ##12604
 	rdlong	local01, objptr
@@ -366,74 +490,62 @@ LR__0004
 	rdlong	local03, objptr
 	sub	objptr, ##12608
 	cmp	local03, local02 wz
- if_e	jmp	#LR__0004
+ if_e	jmp	#LR__0015
 '     q:=mrxcheck()
-	call	#_mrxcheck
-	mov	local04, result1
+' 
+' '' Check for serial input
+' '' -- returns -1 if nothing available
+' 
+'   rxbyte := -1
+	neg	local04, #1
+'   check := pinr(mrxp)
+	add	objptr, ##12340
+	rdlong	arg01, objptr
+	sub	objptr, ##12340
+	test	arg01, #32 wz
+ if_ne	mov	local05, inb
+ if_e	mov	local05, ina
+	mov	result1, local05
+	shr	result1, arg01
+	shr	arg01, #6
+	zerox	result1, arg01
+	mov	local06, result1 wz
+'   if (check)
+ if_e	jmp	#LR__0016
+'     rxbyte := rdpin(mrxp) >> 24
+	add	objptr, ##12340
+	rdlong	arg01, objptr
+	sub	objptr, ##12340
+	mov	local04, #0
+	rdpin	local04, arg01
+	shr	local04, #24
+LR__0016
+	mov	local07, local04
 '     if q>=0
-	cmps	local04, #0 wcz
- if_b	jmp	#LR__0004
-'      midibuf[midifront]:=q
+	cmps	local07, #0 wcz
+ if_b	jmp	#LR__0015
 	add	objptr, ##12608
-	rdlong	local01, objptr
-	shl	local01, #2
+	rdlong	local08, objptr
+	shl	local08, #2
 	sub	objptr, #260
-	add	local01, objptr
-	wrlong	local04, local01
+	add	local08, objptr
+'      midibuf[midifront]:=q
+	wrlong	local07, local08
 '      midifront+=1
 	add	objptr, #260
-	rdlong	local05, objptr
-	add	local05, #1
-	wrlong	local05, objptr
+	rdlong	local09, objptr
+	add	local09, #1
+	wrlong	local09, objptr
 '      midifront:=midifront // 32
-	abs	local01, local05 wc
+	abs	local01, local09 wc
 	and	local01, #31
  if_b	neg	local01, local01
 	wrlong	local01, objptr
 	sub	objptr, ##12608
-	jmp	#LR__0004
+	jmp	#LR__0015
 	mov	ptra, fp
 	call	#popregs_
 _midicog_ret
-	ret
-
-' 
-' pub midiread():r
-_midiread
-' 
-' if midifront<>miditail
-	add	objptr, ##12608
-	rdlong	_var01, objptr
-	sub	objptr, #4
-	rdlong	_var02, objptr
-	sub	objptr, ##12604
-	cmp	_var01, _var02 wz
- if_e	jmp	#LR__0005
-'   r:=midibuf[miditail]
-	add	objptr, ##12604
-	rdlong	_var01, objptr
-	shl	_var01, #2
-	sub	objptr, #256
-	add	_var01, objptr
-	rdlong	_var03, _var01
-'   miditail:=(miditail+1)//32
-	add	objptr, #256
-	rdlong	_var01, objptr
-	add	_var01, #1
-	abs	_var02, _var01 wc
-	and	_var02, #31
- if_b	neg	_var02, _var02
-	wrlong	_var02, objptr
-	sub	objptr, ##12604
-' else
-	jmp	#LR__0006
-LR__0005
-'   r:=-1
-	neg	_var03, #1
-LR__0006
-' return r
-	mov	result1, _var03
-_midiread_ret
 	ret
 
 ' 
@@ -474,9 +586,9 @@ _midi_start
 	or	local05, #7
 ' 
 '   org
-	loc	pa,	#(@LR__0008-@LR__0007)
+	loc	pa,	#(@LR__0018-@LR__0017)
 	call	#FCACHE_LOAD_
-LR__0007
+LR__0017
 	fltl	local01
 	wrpin	#62, local01
 	wxpin	local05, local01
@@ -485,45 +597,10 @@ LR__0007
 	wrpin	#124, local02
 	wxpin	local05, local02
 	drvl	local02
-LR__0008
+LR__0018
 	mov	ptra, fp
 	call	#popregs_
 _midi_start_ret
-	ret
-
-'   while (mrxcheck() >= 0)
-' 
-' 
-' pub mrxcheck() : rxbyte | check
-_mrxcheck
-	mov	COUNT_, #2
-	call	#pushregs_
-' 
-' '' Check for serial input
-' '' -- returns -1 if nothing available
-' 
-'   rxbyte := -1
-	neg	local01, #1
-'   check := pinr(mrxp)
-	add	objptr, ##12340
-	rdlong	arg01, objptr
-	sub	objptr, ##12340
-	call	#__system___pinread
-	mov	local02, result1 wz
-'   if (check)
- if_e	jmp	#LR__0009
-'     rxbyte := rdpin(mrxp) >> 24
-	add	objptr, ##12340
-	rdlong	arg01, objptr
-	sub	objptr, ##12340
-	mov	local01, #0
-	rdpin	local01, arg01
-	shr	local01, #24
-LR__0009
-	mov	result1, local01
-	mov	ptra, fp
-	call	#popregs_
-_mrxcheck_ret
 	ret
 
 ' 
@@ -536,24 +613,22 @@ _mrxcheck_ret
 ' 
 ' pub outtextxy(x,y,text) | iii
 _Hn007_20210302_outtextxy
-	mov	COUNT_, #11
+	mov	COUNT_, #10
 	call	#pushregs_
-	mov	local01, arg01
-' 
-' ''--------- Output a string at position x,y - set the colors first
-' 
-' repeat iii from 0 to strsize(text)-1
+	qmul	arg02, #100
+	getqx	local01
+	add	local01, arg01
 	mov	local02, #0
 	mov	arg01, arg03
 	mov	local03, #0
-	loc	pa,	#(@LR__0011-@LR__0010)
+	loc	pa,	#(@LR__0020-@LR__0019)
 	call	#FCACHE_LOAD_
-LR__0010
+LR__0019
 	rdbyte	local04, arg01 wz
  if_ne	add	local03, #1
  if_ne	add	arg01, #1
- if_ne	jmp	#LR__0010
-LR__0011
+ if_ne	jmp	#LR__0019
+LR__0020
 	mov	result1, local03
 	mov	local05, result1
 	sub	local05, #1
@@ -561,13 +636,10 @@ LR__0011
  if_a	mov	local06, #1
  if_be	neg	local06, #1
 	add	local05, local06
-	loc	pa,	#(@LR__0013-@LR__0012)
+	loc	pa,	#(@LR__0022-@LR__0021)
 	call	#FCACHE_LOAD_
-LR__0012
-'   buf[100*y+x+iii]:=(buf[100*y+x+iii] & $FFFFFF00)  | byte[text+iii]
-	qmul	arg02, #100
-	getqx	local07
-	add	local07, local01
+LR__0021
+	mov	local07, local01
 	add	local07, local02
 	shl	local07, #2
 	add	objptr, #164
@@ -578,18 +650,13 @@ LR__0012
 	add	local09, local02
 	rdbyte	local10, local09
 	or	local08, local10
-	qmul	arg02, #100
-	getqx	local11
-	add	local11, local01
-	add	local11, local02
-	shl	local11, #2
-	add	local11, objptr
-	wrlong	local08, local11
+'   buf[100*y+x+iii]:=(buf[100*y+x+iii] & $FFFFFF00)  | byte[text+iii]
+	wrlong	local08, local07
 	add	local02, local06
 	cmp	local02, local05 wz
 	sub	objptr, #164
- if_ne	jmp	#LR__0012
-LR__0013
+ if_ne	jmp	#LR__0021
+LR__0022
 	mov	ptra, fp
 	call	#popregs_
 _Hn007_20210302_outtextxy_ret
@@ -600,13 +667,9 @@ _Hn007_20210302_outtextxy_ret
 ' 
 ' pub write(text) | iii,c,ncx,ncy
 _Hn007_20210302_write
-	mov	COUNT_, #18
+	mov	COUNT_, #14
 	call	#pushregs_
 	mov	local01, arg01
-' 
-' ''--------- Output a string at the cursor position x,y, move the cursor
-' 
-' c:=write_color<<24+write_background<<16
 	add	objptr, ##12168
 	rdlong	local02, objptr
 	shl	local02, #24
@@ -614,6 +677,10 @@ _Hn007_20210302_write
 	rdlong	local03, objptr
 	shl	local03, #16
 	add	local02, local03
+' 
+' ''--------- Output a string at the cursor position x,y, move the cursor
+' 
+' c:=write_color<<24+write_background<<16
 ' 'debug(uhex_long(write_color))
 ' ncy:=cursor_y
 	sub	objptr, #7
@@ -624,32 +691,32 @@ _Hn007_20210302_write
 	sub	objptr, ##12164
 	mov	arg01, local01
 	mov	local06, #0
-	loc	pa,	#(@LR__0015-@LR__0014)
+	loc	pa,	#(@LR__0024-@LR__0023)
 	call	#FCACHE_LOAD_
-LR__0014
+LR__0023
 	rdbyte	local07, arg01 wz
  if_ne	add	local06, #1
  if_ne	add	arg01, #1
- if_ne	jmp	#LR__0014
-LR__0015
+ if_ne	jmp	#LR__0023
+LR__0024
 	mov	result1, local06
 	add	local05, local06
 	mov	local08, local05
-	loc	pa,	#(@LR__0017-@LR__0016)
+	loc	pa,	#(@LR__0026-@LR__0025)
 	call	#FCACHE_LOAD_
 ' repeat while ncx>99
-LR__0016
+LR__0025
 	cmps	local08, #99 wcz
 '   ncx-=100
  if_a	sub	local08, #100
 '   ncy+=1
  if_a	add	local04, #1
- if_a	jmp	#LR__0016
-LR__0017
+ if_a	jmp	#LR__0025
+LR__0026
 ' repeat while ncy>29
-LR__0018
+LR__0027
 	cmps	local04, #29 wcz
- if_be	jmp	#LR__0019
+ if_be	jmp	#LR__0028
 '   ncy-=1
 	sub	local04, #1
 '   scrollup()
@@ -660,21 +727,21 @@ LR__0018
 	sub	local05, #1
 	wrbyte	local05, objptr
 	sub	objptr, ##12165
-	jmp	#LR__0018
-LR__0019
+	jmp	#LR__0027
+LR__0028
 ' 
 ' repeat iii from 0 to strsize(text)-1
 	mov	local09, #0
 	mov	arg01, local01
 	mov	local06, #0
-	loc	pa,	#(@LR__0021-@LR__0020)
+	loc	pa,	#(@LR__0030-@LR__0029)
 	call	#FCACHE_LOAD_
-LR__0020
+LR__0029
 	rdbyte	local07, arg01 wz
  if_ne	add	local06, #1
  if_ne	add	arg01, #1
- if_ne	jmp	#LR__0020
-LR__0021
+ if_ne	jmp	#LR__0029
+LR__0030
 	mov	result1, local06
 	mov	local10, result1
 	sub	local10, #1
@@ -682,42 +749,31 @@ LR__0021
  if_a	mov	local11, #1
  if_be	neg	local11, #1
 	add	local10, local11
-	loc	pa,	#(@LR__0023-@LR__0022)
+	loc	pa,	#(@LR__0032-@LR__0031)
 	call	#FCACHE_LOAD_
-LR__0022
-' 
-'   buf[100*cursor_y+cursor_x+iii]:=buf[100*cursor_y+cursor_x+iii] &$FFFF | c
+LR__0031
 	add	objptr, ##12165
 	rdbyte	local12, objptr
 	qmul	local12, #100
 	getqx	local13
 	sub	objptr, #1
-	rdbyte	local14, objptr
-	add	local13, local14
+	rdbyte	local12, objptr
+	add	local13, local12
 	add	local13, local09
 	shl	local13, #2
 	sub	objptr, ##12000
 	add	local13, objptr
-	rdlong	local15, local13
-	and	local15, ##65535
-	or	local15, local02
-	add	objptr, ##12001
-	rdbyte	local16, objptr
-	qmul	local16, #100
-	getqx	local17
-	sub	objptr, #1
-	rdbyte	local18, objptr
-	add	local17, local18
-	add	local17, local09
-	shl	local17, #2
-	sub	objptr, ##12000
-	add	local17, objptr
-	wrlong	local15, local17
+	rdlong	local14, local13
+	and	local14, ##65535
+	or	local14, local02
+' 
+'   buf[100*cursor_y+cursor_x+iii]:=buf[100*cursor_y+cursor_x+iii] &$FFFF | c
+	wrlong	local14, local13
 	add	local09, local11
 	cmp	local09, local10 wz
 	sub	objptr, #164
- if_ne	jmp	#LR__0022
-LR__0023
+ if_ne	jmp	#LR__0031
+LR__0032
 ' 
 ' outtextxy(cursor_x,cursor_y,text)
 	add	objptr, ##12164
@@ -762,14 +818,14 @@ _Hn007_20210302_writeln
 	rdbyte	local01, objptr
 	sub	objptr, ##12165
 	cmps	local01, #29 wcz
- if_be	jmp	#LR__0024
+ if_be	jmp	#LR__0033
 '   scrollup()
 	call	#_Hn007_20210302_scrollup
 '   cursor_y:=29
 	add	objptr, ##12165
 	wrbyte	#29, objptr
 	sub	objptr, ##12165
-LR__0024
+LR__0033
 	mov	ptra, fp
 	call	#popregs_
 _Hn007_20210302_writeln_ret
@@ -781,29 +837,29 @@ _Hn007_20210302_cls
 	mov	COUNT_, #3
 	call	#pushregs_
 	mov	local01, arg01
-' 
-' ''---------- Clear the screen, set its foreground/background color
-' 
-' c:=fc<<24+bc<<16+$20
 	mov	local02, local01
 	shl	local02, #24
 	mov	local03, arg02
 	shl	local03, #16
 	add	local02, local03
 	add	local02, #32
-' longfill(@buf,c,3000)
+' 
+' ''---------- Clear the screen, set its foreground/background color
+' 
+' c:=fc<<24+bc<<16+$20
 	add	objptr, #164
 	mov	arg01, objptr
 	sub	objptr, #164
-	loc	pa,	#(@LR__0027-@LR__0025)
+' longfill(@buf,c,3000)
+	loc	pa,	#(@LR__0036-@LR__0034)
 	call	#FCACHE_LOAD_
-LR__0025
-	rep	@LR__0028, ##3000
-LR__0026
+LR__0034
+	rep	@LR__0037, ##3000
+LR__0035
 	wrlong	local02, arg01
 	add	arg01, #4
-LR__0027
-LR__0028
+LR__0036
+LR__0037
 '  setwritecolors(fc,bc)
 ' 
 ' ''---------- Set colors for write and writeln
@@ -824,157 +880,38 @@ _Hn007_20210302_cls_ret
 ' 
 ' pub scrollup() | i
 _Hn007_20210302_scrollup
-	mov	COUNT_, #4
+	mov	COUNT_, #2
 	call	#pushregs_
+	add	objptr, #164
+	mov	arg01, objptr
+	sub	objptr, #164
+	mov	arg02, arg01
+	add	arg02, #400
 ' 
 ' ''-----------  Scroll the screen one line up
 ' 
 ' longmove(@buf,@buf+400,2900)
-	add	objptr, #164
-	mov	arg01, objptr
-	mov	arg02, objptr
-	sub	objptr, #164
-	add	arg02, #400
 	mov	arg03, ##2900
 	call	#__system__longmove
-' repeat i from 2900 to 2999
-	mov	local01, ##2900
-	loc	pa,	#(@LR__0030-@LR__0029)
+	add	objptr, ##11764
+	mov	local01, objptr
+	sub	objptr, ##11764
+	loc	pa,	#(@LR__0040-@LR__0038)
 	call	#FCACHE_LOAD_
-LR__0029
+LR__0038
+	rep	@LR__0041, #100
+LR__0039
+	rdlong	local02, local01
+	and	local02, ##-65536
+	or	local02, #32
 '   buf[i]:=(buf[i] & $FFFF0000) | 32
-	mov	local02, local01
-	shl	local02, #2
-	add	objptr, #164
-	add	local02, objptr
-	rdlong	local03, local02
-	and	local03, ##-65536
-	or	local03, #32
-	mov	local04, local01
-	shl	local04, #2
-	add	local04, objptr
-	wrlong	local03, local04
-	add	local01, #1
-	cmps	local01, ##3000 wcz
-	sub	objptr, #164
- if_b	jmp	#LR__0029
-LR__0030
+	wrlong	local02, local01
+	add	local01, #4
+LR__0040
+LR__0041
 	mov	ptra, fp
 	call	#popregs_
 _Hn007_20210302_scrollup_ret
-	ret
-
-' 
-' 
-' pub inttostr(i):result |q,pos,k,j
-_Hn007_20210302_inttostr
-	mov	COUNT_, #6
-	call	#pushregs_
-	mov	local01, arg01
-' 
-' ''---------- Convert a integer to dec string, return a pointer
-' 
-' j:=i
-	mov	local02, local01 wz
-' pos:=10
-	mov	local03, #10
-' k:=0
-	mov	local04, #0
-' 
-' if (j==0)
- if_ne	jmp	#LR__0031
-'   n_string[0]:=48
-	add	objptr, ##12196
-	wrbyte	#48, objptr
-'   n_string[1]:=0
-	add	objptr, #1
-	wrbyte	#0, objptr
-	sub	objptr, ##12197
-' 
-' else
-	jmp	#LR__0038
-LR__0031
-'   if (j<0)
-	cmps	local02, #0 wcz
-'     j:=0-j
- if_b	neg	local02, local02
-'     k:=45
- if_b	mov	local04, #45
-' 
-'   n_string[11]:=0
-	add	objptr, ##12207
-	wrbyte	#0, objptr
-	sub	objptr, ##12207
-	loc	pa,	#(@LR__0033-@LR__0032)
-	call	#FCACHE_LOAD_
-'   repeat while (pos>-1)
-LR__0032
-	cmps	local03, ##-1 wcz
- if_be	jmp	#LR__0034
-'     q:=j//10
-	mov	muldiva_, local02
-	mov	muldivb_, #10
-	call	#divide_
-'     q:=48+q
-	mov	local05, #48
-	add	local05, muldiva_
-'     n_string[pos]:=q
-	mov	local06, local03
-	add	objptr, ##12196
-	add	local06, objptr
-	wrbyte	local05, local06
-'     j:=j/10
-	mov	local02, muldivb_
-'     pos-=1
-	sub	local03, #1
-	sub	objptr, ##12196
-	jmp	#LR__0032
-LR__0033
-LR__0034
-'   repeat while n_string[0]==48
-LR__0035
-	add	objptr, ##12196
-	rdbyte	local06, objptr
-	sub	objptr, ##12196
-	cmp	local06, #48 wz
- if_ne	jmp	#LR__0036
-'     bytemove(@n_string,@n_string+1,12)
-	add	objptr, ##12196
-	mov	arg01, objptr
-	mov	arg02, objptr
-	sub	objptr, ##12196
-	add	arg02, #1
-	mov	arg03, #12
-	call	#__system__bytemove
-	jmp	#LR__0035
-LR__0036
-' 
-'   if k==45
-	cmp	local04, #45 wz
- if_ne	jmp	#LR__0037
-'      bytemove(@n_string+1,@n_string,12)
-	add	objptr, ##12196
-	mov	arg01, objptr
-	add	arg01, #1
-	mov	arg02, objptr
-	sub	objptr, ##12196
-	mov	arg03, #12
-	call	#__system__bytemove
-'      n_string[0]:=k
-	add	objptr, ##12196
-	wrbyte	local04, objptr
-	sub	objptr, ##12196
-LR__0037
-LR__0038
-' 
-' q:=@n_string
-	add	objptr, ##12196
-	mov	result1, objptr
-	sub	objptr, ##12196
-' return q
-	mov	ptra, fp
-	call	#popregs_
-_Hn007_20210302_inttostr_ret
 	ret
 
 ' 
@@ -985,79 +922,77 @@ _Hn007_20210302_inttohex
 ' ''----------  Convert integer to hex string with d digits, return a pointer
 ' 
 ' j:=i
-' pos:=d-1
 	mov	_var01, arg02
 	sub	_var01, #1
+' pos:=d-1
+	mov	_var02, _var01
 ' k:=0
-' n_string[d]:=0
-	mov	_var02, arg02
 	add	objptr, ##12196
-	mov	_var03, objptr
-	add	_var02, objptr
-	wrbyte	#0, _var02
+	add	arg02, objptr
+' n_string[d]:=0
+	wrbyte	#0, arg02
 ' repeat k from 0 to d-1
-	mov	_var04, #0
-	sub	arg02, #1
-	mov	_var05, arg02
-	cmps	_var05, #0 wcz
+	mov	_var03, #0
+	cmps	_var01, #0 wcz
 	sub	objptr, ##12196
- if_a	mov	_var03, #1
- if_be	neg	_var03, #1
-	add	_var05, _var03
-	loc	pa,	#(@LR__0040-@LR__0039)
+ if_a	mov	_var04, #1
+ if_be	neg	_var04, #1
+	mov	_var05, _var04
+	add	_var01, _var04
+	loc	pa,	#(@LR__0043-@LR__0042)
 	call	#FCACHE_LOAD_
-LR__0039
-'   n_string[k]:=48
-	mov	_var06, _var04
+LR__0042
+	mov	_var06, _var03
 	add	objptr, ##12196
 	add	_var06, objptr
+'   n_string[k]:=48
 	wrbyte	#48, _var06
-	add	_var04, _var03
-	cmp	_var04, _var05 wz
+	add	_var03, _var05
+	cmp	_var03, _var01 wz
 	sub	objptr, ##12196
- if_ne	jmp	#LR__0039
-LR__0040
+ if_ne	jmp	#LR__0042
+LR__0043
 ' 
 ' if (j<>0)
 	cmp	arg01, #0 wz
- if_e	jmp	#LR__0043
+ if_e	jmp	#LR__0046
 ' 
 '   repeat while (pos>-1)
-LR__0041
-	cmps	_var01, ##-1 wcz
- if_be	jmp	#LR__0042
+LR__0044
+	cmps	_var02, ##-1 wcz
+ if_be	jmp	#LR__0045
+	abs	_var04, arg01 wc
+	and	_var04, #15
+ if_b	neg	_var04, _var04
+	mov	_var07, _var04
 '     q:=j//16
-	abs	arg02, arg01 wc
-	and	arg02, #15
- if_b	neg	arg02, arg02
-	mov	_var07, arg02
 '     if (q>9)
 	cmps	_var07, #9 wcz
 '       q:=q+7
  if_a	add	_var07, #7
 '     q:=48+q
 	add	_var07, #48
-'     n_string[pos]:=q
-	mov	arg02, _var01
+	mov	_var08, _var02
 	add	objptr, ##12196
-	add	arg02, objptr
-	wrbyte	_var07, arg02
+	add	_var08, objptr
+'     n_string[pos]:=q
+	wrbyte	_var07, _var08
 '     j:=j/16
-	abs	arg02, arg01 wc
-	shr	arg02, #4
+	abs	_var04, arg01 wc
+	shr	_var04, #4
 	sub	objptr, ##12196
- if_b	neg	arg02, arg02
-	mov	arg01, arg02
+ if_b	neg	_var04, _var04
+	mov	arg01, _var04
 '     pos-=1
-	sub	_var01, #1
-	jmp	#LR__0041
-LR__0042
-LR__0043
-' 
-' q:=@n_string
+	sub	_var02, #1
+	jmp	#LR__0044
+LR__0045
+LR__0046
 	add	objptr, ##12196
 	mov	result1, objptr
 	sub	objptr, ##12196
+' 
+' q:=@n_string
 ' return q
 _Hn007_20210302_inttohex_ret
 	ret
@@ -1066,9 +1001,11 @@ _Hn007_20210302_inttohex_ret
 ' 
 ' pub start(mode):result | c1
 _Hn007_20210302_start
-	mov	COUNT_, #3
+	mov	COUNT_, #8
 	call	#pushregs_
 	mov	local01, arg01 wz
+	add	objptr, #36
+	mov	local02, objptr
 ' 
 ' ' mode=0 - start at PAL timings, 624 lines
 ' ' mode=256 - start at NTSC timings, 524 lines
@@ -1082,42 +1019,40 @@ _Hn007_20210302_start
 ' ' initialize pointers
 ' 
 ' border_ptr:=@bordercolor
-	add	objptr, #36
-	mov	local02, objptr
 	sub	objptr, #28
 	wrlong	local02, objptr
 ' font_ptr:=@st_font
 	sub	objptr, #4
 	wrlong	ptr__Hn007_20210302_dat__, objptr
-' buf_ptr:=@buf
 	add	objptr, #160
-	mov	local02, objptr
+	mov	local03, objptr
+' buf_ptr:=@buf
 	sub	objptr, #164
-	wrlong	local02, objptr
+	wrlong	local03, objptr
+	add	objptr, ##12192
+	mov	local04, objptr
 ' vblank_ptr:=@vblank
-	add	objptr, ##12192
-	mov	local02, objptr
 	sub	objptr, ##12180
-	wrlong	local02, objptr
-' cursor_ptr:=@cursor_x
+	wrlong	local04, objptr
 	add	objptr, ##12152
-	mov	local02, objptr
+	mov	local05, objptr
+' cursor_ptr:=@cursor_x
 	sub	objptr, ##12148
-	wrlong	local02, objptr
-' mode_ptr:=@timings
+	wrlong	local05, objptr
 	add	objptr, ##12192
-	mov	local02, objptr
+	mov	local06, objptr
+' mode_ptr:=@timings
 	sub	objptr, ##12188
-	wrlong	local02, objptr
-' palette_ptr:=@ataripalette
+	wrlong	local06, objptr
 	add	ptr__Hn007_20210302_dat__, ##4096
+' palette_ptr:=@ataripalette
 	add	objptr, #4
 	wrlong	ptr__Hn007_20210302_dat__, objptr
-' command_ptr:=@cmd1
 	add	objptr, ##12224
-	mov	local02, objptr
+	mov	local07, objptr
+' command_ptr:=@cmd1
 	sub	objptr, ##12220
-	wrlong	local02, objptr
+	wrlong	local07, objptr
 ' 
 ' ' initialize a cursor
 ' 
@@ -1188,7 +1123,7 @@ _Hn007_20210302_start
 ' 
 ' if (mode==0)
 	sub	ptr__Hn007_20210302_dat__, ##4096
- if_ne	jmp	#LR__0046
+ if_ne	jmp	#LR__0049
 ' 
 '   timings[0]:= $70810000 + hdmi_base<<17 + 16          'before sync
 	add	objptr, ##12208
@@ -1225,17 +1160,17 @@ _Hn007_20210302_start
 '   clkfreq:=354693878
 	wrlong	##354693878, #20
 '   org
-	loc	pa,	#(@LR__0045-@LR__0044)
+	loc	pa,	#(@LR__0048-@LR__0047)
 	call	#FCACHE_LOAD_
-LR__0044
+LR__0047
 	hubset	##29584635
-LR__0045
-LR__0046
+LR__0048
+LR__0049
 ' 
 ' 
 ' if (mode==1)   ' 1026 px per line
 	cmp	local01, #1 wz
- if_ne	jmp	#LR__0049
+ if_ne	jmp	#LR__0052
 ' 
 '   timings[0]:= $70810000 + hdmi_base<<17 + 30          'before sync
 	add	objptr, ##12208
@@ -1272,17 +1207,17 @@ LR__0046
 '   clkfreq:=319215686
 	wrlong	##319215686, #20
 '   org
-	loc	pa,	#(@LR__0048-@LR__0047)
+	loc	pa,	#(@LR__0051-@LR__0050)
 	call	#FCACHE_LOAD_
-LR__0047
+LR__0050
 	hubset	##30092795
-LR__0048
-LR__0049
+LR__0051
+LR__0052
 ' 
 ' 
 ' if (mode==2) ' 912 pixes per line     ' 283_751_600 80x PAL  - real settings: 64 908 283750000 - 0.9999944
 	cmp	local01, #2 wz
- if_ne	jmp	#LR__0052
+ if_ne	jmp	#LR__0055
 ' 
 '   timings[0]:= $70810000 + hdmi_base<<17 + 16           'before sync
 	add	objptr, ##12208
@@ -1320,16 +1255,16 @@ LR__0049
 '   clkfreq:=283750000
 	wrlong	##283750000, #20
 '   org
-	loc	pa,	#(@LR__0051-@LR__0050)
+	loc	pa,	#(@LR__0054-@LR__0053)
 	call	#FCACHE_LOAD_
-LR__0050
+LR__0053
 	hubset	##33524731
-LR__0051
-LR__0052
+LR__0054
+LR__0055
 ' 
 ' if (mode==256)
 	cmp	local01, #256 wz
- if_ne	jmp	#LR__0055
+ if_ne	jmp	#LR__0058
 ' 
 '   timings[0]:= $70810000 + hdmi_base<<17 + 80          'before sync
 	add	objptr, ##12208
@@ -1366,16 +1301,16 @@ LR__0052
 '   clkfreq:=357959184 
 	wrlong	##357959184, #20
 '   org
-	loc	pa,	#(@LR__0054-@LR__0053)
+	loc	pa,	#(@LR__0057-@LR__0056)
 	call	#FCACHE_LOAD_
-LR__0053
+LR__0056
 	hubset	##29584635
-LR__0054
-LR__0055
+LR__0057
+LR__0058
 ' 
 ' if (mode==257)  '1026 px
 	cmp	local01, #257 wz
- if_ne	jmp	#LR__0058
+ if_ne	jmp	#LR__0061
 ' 
 '   timings[0]:= $70810000 + hdmi_base<<17 + 80          'before sync
 	add	objptr, ##12208
@@ -1412,16 +1347,16 @@ LR__0055
 '   clkfreq:=322162162
 	wrlong	##322162162, #20
 '   org
-	loc	pa,	#(@LR__0057-@LR__0056)
+	loc	pa,	#(@LR__0060-@LR__0059)
 	call	#FCACHE_LOAD_
-LR__0056
+LR__0059
 	hubset	##26366971
-LR__0057
-LR__0058
+LR__0060
+LR__0061
 ' 
 ' if (mode==258)  '912 px
 	cmp	local01, #258 wz
- if_ne	jmp	#LR__0061
+ if_ne	jmp	#LR__0064
 ' 
 '   timings[0]:= $70810000 + hdmi_base<<17 + 24          'before sync
 	add	objptr, ##12208
@@ -1458,12 +1393,12 @@ LR__0058
 '   clkfreq:=286363636
 	wrlong	##286363636, #20
 '   org
-	loc	pa,	#(@LR__0060-@LR__0059)
+	loc	pa,	#(@LR__0063-@LR__0062)
 	call	#FCACHE_LOAD_
-LR__0059
+LR__0062
 	hubset	##22362875
-LR__0060
-LR__0061
+LR__0063
+LR__0064
 ' 
 ' 
 '   {{
@@ -1483,9 +1418,9 @@ LR__0061
 	coginit	arg01, arg02 wc
  if_b	neg	arg01, #1
 	mov	result1, arg01
-	mov	local03, result1
+	mov	local08, result1
 	add	objptr, #32
-	wrlong	local03, objptr
+	wrlong	local08, objptr
 	sub	objptr, #32
 ' waitms(20)
 	mov	arg01, #20
@@ -1519,52 +1454,52 @@ hubexit
 __system__bytemove
 	mov	_var01, arg01
 	cmps	arg01, arg02 wcz
- if_ae	jmp	#LR__0069
-	loc	pa,	#(@LR__0063-@LR__0062)
+ if_ae	jmp	#LR__0072
+	loc	pa,	#(@LR__0066-@LR__0065)
 	call	#FCACHE_LOAD_
-LR__0062
+LR__0065
 	cmps	arg03, #3 wcz
- if_be	jmp	#LR__0064
+ if_be	jmp	#LR__0067
 	rdlong	_var02, arg02
 	wrlong	_var02, arg01
 	add	arg01, #4
 	add	arg02, #4
 	sub	arg03, #4
-	jmp	#LR__0062
-LR__0063
-LR__0064
-	mov	_var03, arg03 wz
- if_e	jmp	#LR__0075
-	loc	pa,	#(@LR__0067-@LR__0065)
-	call	#FCACHE_LOAD_
-LR__0065
-	rep	@LR__0068, _var03
+	jmp	#LR__0065
 LR__0066
+LR__0067
+	mov	_var03, arg03 wz
+ if_e	jmp	#LR__0078
+	loc	pa,	#(@LR__0070-@LR__0068)
+	call	#FCACHE_LOAD_
+LR__0068
+	rep	@LR__0071, _var03
+LR__0069
 	rdbyte	_var02, arg02
 	wrbyte	_var02, arg01
 	add	arg01, #1
 	add	arg02, #1
-LR__0067
-LR__0068
-	jmp	#LR__0075
-LR__0069
+LR__0070
+LR__0071
+	jmp	#LR__0078
+LR__0072
 	add	arg01, arg03
 	add	arg02, arg03
 	mov	_var04, arg03 wz
- if_e	jmp	#LR__0074
-	loc	pa,	#(@LR__0072-@LR__0070)
+ if_e	jmp	#LR__0077
+	loc	pa,	#(@LR__0075-@LR__0073)
 	call	#FCACHE_LOAD_
-LR__0070
-	rep	@LR__0073, _var04
-LR__0071
+LR__0073
+	rep	@LR__0076, _var04
+LR__0074
 	sub	arg01, #1
 	sub	arg02, #1
 	rdbyte	_var02, arg02
 	wrbyte	_var02, arg01
-LR__0072
-LR__0073
-LR__0074
 LR__0075
+LR__0076
+LR__0077
+LR__0078
 	mov	result1, _var01
 __system__bytemove_ret
 	ret
@@ -1572,56 +1507,43 @@ __system__bytemove_ret
 __system__longmove
 	mov	_var01, arg01
 	cmps	arg01, arg02 wcz
- if_ae	jmp	#LR__0080
+ if_ae	jmp	#LR__0083
 	mov	_var02, arg03 wz
- if_e	jmp	#LR__0086
-	loc	pa,	#(@LR__0078-@LR__0076)
+ if_e	jmp	#LR__0089
+	loc	pa,	#(@LR__0081-@LR__0079)
 	call	#FCACHE_LOAD_
-LR__0076
-	rep	@LR__0079, _var02
-LR__0077
+LR__0079
+	rep	@LR__0082, _var02
+LR__0080
 	rdlong	_var03, arg02
 	wrlong	_var03, arg01
 	add	arg01, #4
 	add	arg02, #4
-LR__0078
-LR__0079
-	jmp	#LR__0086
-LR__0080
+LR__0081
+LR__0082
+	jmp	#LR__0089
+LR__0083
 	mov	_var04, arg03
 	shl	_var04, #2
 	add	arg01, _var04
-	mov	_var04, arg03
-	shl	_var04, #2
 	add	arg02, _var04
 	mov	_var05, arg03 wz
- if_e	jmp	#LR__0085
-	loc	pa,	#(@LR__0083-@LR__0081)
+ if_e	jmp	#LR__0088
+	loc	pa,	#(@LR__0086-@LR__0084)
 	call	#FCACHE_LOAD_
-LR__0081
-	rep	@LR__0084, _var05
-LR__0082
+LR__0084
+	rep	@LR__0087, _var05
+LR__0085
 	sub	arg01, #4
 	sub	arg02, #4
 	rdlong	_var03, arg02
 	wrlong	_var03, arg01
-LR__0083
-LR__0084
-LR__0085
 LR__0086
+LR__0087
+LR__0088
+LR__0089
 	mov	result1, _var01
 __system__longmove_ret
-	ret
-
-__system___pinread
-	test	arg01, #32 wz
- if_ne	mov	_var01, inb
- if_e	mov	_var01, ina
-	shr	_var01, arg01
-	shr	arg01, #6
-	zerox	_var01, arg01
-	mov	result1, _var01
-__system___pinread_ret
 	ret
 
 __system___waitms
@@ -1629,38 +1551,38 @@ __system___waitms
 	call	#pushregs_
 	mov	local01, arg01
 	rdlong	local02, #20
-	loc	pa,	#(@LR__0088-@LR__0087)
+	loc	pa,	#(@LR__0091-@LR__0090)
 	call	#FCACHE_LOAD_
-LR__0087
+LR__0090
 	cmps	local01, ##1000 wcz
  if_a	waitx	local02
  if_a	sub	local01, ##1000
- if_a	jmp	#LR__0087
-LR__0088
+ if_a	jmp	#LR__0090
+LR__0091
 	cmps	local01, #0 wcz
- if_be	jmp	#LR__0089
+ if_be	jmp	#LR__0092
 	mov	muldiva_, local02
 	mov	muldivb_, ##1000
 	call	#divide_
 	qmul	local01, muldivb_
 	getqx	arg01
 	waitx	arg01
-LR__0089
+LR__0092
 	mov	ptra, fp
 	call	#popregs_
 __system___waitms_ret
 	ret
 
-LR__0090
+LR__0093
 	byte	"P2 started"
 	byte	0
-LR__0091
+LR__0094
 	byte	"sinewave pointer"
 	byte	0
-LR__0092
+LR__0095
 	byte	" "
 	byte	0
-LR__0093
+LR__0096
 	byte	", "
 	byte	0
 	alignl
@@ -8693,8 +8615,6 @@ _Hn007_20210302_dat_
 '-' cursorpos2      long    0
 	byte	$00, $00, $00, $00
 objmem
-	long	0[3221]
-stackspace
 	long	0[1]
 	org	COG_BSS_START
 _var01
@@ -8710,6 +8630,8 @@ _var05
 _var06
 	res	1
 _var07
+	res	1
+_var08
 	res	1
 arg01
 	res	1
@@ -8754,6 +8676,8 @@ local16
 local17
 	res	1
 local18
+	res	1
+local19
 	res	1
 muldiva_
 	res	1
