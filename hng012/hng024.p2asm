@@ -422,6 +422,13 @@ _dummy
 ' waitvbl(300)
 	mov	arg01, #300
 	call	#_waitvbl
+' outtextxycg(100,100,string("kwas"),40,0)
+	mov	arg03, ##@LR__0214
+	mov	arg01, #100
+	mov	arg02, #100
+	mov	arg04, #40
+	mov	arg05, #0
+	call	#_outtextxycg
 ' maketestdl(512+48)
 	mov	arg01, ##560
 ' 
@@ -523,8 +530,8 @@ LR__0006
 	rdlong	local26, objptr
 	sub	objptr, #28
 	add	local26, local25
-'       long[dl_ptr+4*i]:=%0001_1110_0000_0010_0011_0010_0000_0111  
-	wrlong	##503460359, local26
+'       long[dl_ptr+4*i]:=%0001_1110_0000_0000_0011_0010_0000_0111  
+	wrlong	##503329287, local26
 	rdlong	local27, objptr
 	shl	local27, #12
 	add	local27, #2
@@ -799,35 +806,35 @@ LR__0015
 	mov	arg02, #1
 	call	#_cls
 '     outtextxycg(0,0,string("mode"),0,1)
-	mov	arg03, ##@LR__0214
+	mov	arg03, ##@LR__0215
 	mov	arg01, #0
 	mov	arg02, #0
 	mov	arg04, #0
 	mov	arg05, #1
 	call	#_outtextxycg
 '     outtextxycg(0,16,string("cpl"),0,1)
-	mov	arg03, ##@LR__0215
+	mov	arg03, ##@LR__0216
 	mov	arg01, #0
 	mov	arg02, #16
 	mov	arg04, #0
 	mov	arg05, #1
 	call	#_outtextxycg
 '     outtextxycg(0,32,string("bufptr"),0,1)
-	mov	arg03, ##@LR__0216
+	mov	arg03, ##@LR__0217
 	mov	arg01, #0
 	mov	arg02, #32
 	mov	arg04, #0
 	mov	arg05, #1
 	call	#_outtextxycg
 '     outtextxycg(0,48,string("buflen"),0,1)
-	mov	arg03, ##@LR__0217
+	mov	arg03, ##@LR__0218
 	mov	arg01, #0
 	mov	arg02, #48
 	mov	arg04, #0
 	mov	arg05, #1
 	call	#_outtextxycg
 '     outtextxycg(0,64,string("lines"),0,1)
-	mov	arg03, ##@LR__0218
+	mov	arg03, ##@LR__0219
 	mov	arg01, #0
 	mov	arg02, #64
 	mov	arg04, #0
@@ -905,35 +912,35 @@ LR__0016
 	mov	arg02, #0
 	call	#_cls
 '     outtextxycg(0,0,string("mode"),3,0)
-	mov	arg03, ##@LR__0219
+	mov	arg03, ##@LR__0220
 	mov	arg01, #0
 	mov	arg02, #0
 	mov	arg04, #3
 	mov	arg05, #0
 	call	#_outtextxycg
 '     outtextxycg(0,16,string("cpl"),3,0)'
-	mov	arg03, ##@LR__0220
+	mov	arg03, ##@LR__0221
 	mov	arg01, #0
 	mov	arg02, #16
 	mov	arg04, #3
 	mov	arg05, #0
 	call	#_outtextxycg
 '     outtextxycg(0,32,string("buf_ptr"),3,0)
-	mov	arg03, ##@LR__0221
+	mov	arg03, ##@LR__0222
 	mov	arg01, #0
 	mov	arg02, #32
 	mov	arg04, #3
 	mov	arg05, #0
 	call	#_outtextxycg
 '     outtextxycg(0,48,string("buflen"),3,0)
-	mov	arg03, ##@LR__0222
+	mov	arg03, ##@LR__0223
 	mov	arg01, #0
 	mov	arg02, #48
 	mov	arg04, #3
 	mov	arg05, #0
 	call	#_outtextxycg
 '     outtextxycg(0,64,string("lines"),3,0)
-	mov	arg03, ##@LR__0223
+	mov	arg03, ##@LR__0224
 	mov	arg01, #0
 	mov	arg02, #64
 	mov	arg04, #3
@@ -1011,35 +1018,35 @@ LR__0017
 	mov	arg02, #0
 	call	#_cls
 '     outtextxycg(0,0,string("mode"),9,0)
-	mov	arg03, ##@LR__0224
+	mov	arg03, ##@LR__0225
 	mov	arg01, #0
 	mov	arg02, #0
 	mov	arg04, #9
 	mov	arg05, #0
 	call	#_outtextxycg
 '     outtextxycg(0,16,string("cpl"),9,0)'
-	mov	arg03, ##@LR__0225
+	mov	arg03, ##@LR__0226
 	mov	arg01, #0
 	mov	arg02, #16
 	mov	arg04, #9
 	mov	arg05, #0
 	call	#_outtextxycg
 '     outtextxycg(0,32,string("buf_ptr"),9,0)
-	mov	arg03, ##@LR__0226
+	mov	arg03, ##@LR__0227
 	mov	arg01, #0
 	mov	arg02, #32
 	mov	arg04, #9
 	mov	arg05, #0
 	call	#_outtextxycg
 '     outtextxycg(0,48,string("buflen"),9,0)
-	mov	arg03, ##@LR__0227
+	mov	arg03, ##@LR__0228
 	mov	arg01, #0
 	mov	arg02, #48
 	mov	arg04, #9
 	mov	arg05, #0
 	call	#_outtextxycg
 '     outtextxycg(0,64,string("lines"),9,0)
-	mov	arg03, ##@LR__0228
+	mov	arg03, ##@LR__0229
 	mov	arg01, #0
 	mov	arg02, #64
 	mov	arg04, #9
@@ -1117,35 +1124,35 @@ LR__0018
 	mov	arg02, #0
 	call	#_cls
 '     outtextxycg(0,0,string("mode"),120,0)
-	mov	arg03, ##@LR__0229
+	mov	arg03, ##@LR__0230
 	mov	arg01, #0
 	mov	arg02, #0
 	mov	arg04, #120
 	mov	arg05, #0
 	call	#_outtextxycg
 '     outtextxycg(0,16,string("cpl"),120,0)'
-	mov	arg03, ##@LR__0230
+	mov	arg03, ##@LR__0231
 	mov	arg01, #0
 	mov	arg02, #16
 	mov	arg04, #120
 	mov	arg05, #0
 	call	#_outtextxycg
 '     outtextxycg(0,32,string("buf_ptr"),120,0)
-	mov	arg03, ##@LR__0231
+	mov	arg03, ##@LR__0232
 	mov	arg01, #0
 	mov	arg02, #32
 	mov	arg04, #120
 	mov	arg05, #0
 	call	#_outtextxycg
 '     outtextxycg(0,48,string("buflen"),120,0)
-	mov	arg03, ##@LR__0232
+	mov	arg03, ##@LR__0233
 	mov	arg01, #0
 	mov	arg02, #48
 	mov	arg04, #120
 	mov	arg05, #0
 	call	#_outtextxycg
 '     outtextxycg(0,64,string("lines"),120,0)
-	mov	arg03, ##@LR__0233
+	mov	arg03, ##@LR__0234
 	mov	arg01, #0
 	mov	arg02, #64
 	mov	arg04, #120
@@ -4097,63 +4104,66 @@ LR__0213
 	byte	" !!! corrupted heap !!! "
 	byte	0
 LR__0214
-	byte	"mode"
+	byte	"kwas"
 	byte	0
 LR__0215
-	byte	"cpl"
+	byte	"mode"
 	byte	0
 LR__0216
-	byte	"bufptr"
+	byte	"cpl"
 	byte	0
 LR__0217
-	byte	"buflen"
+	byte	"bufptr"
 	byte	0
 LR__0218
-	byte	"lines"
+	byte	"buflen"
 	byte	0
 LR__0219
-	byte	"mode"
+	byte	"lines"
 	byte	0
 LR__0220
-	byte	"cpl"
+	byte	"mode"
 	byte	0
 LR__0221
-	byte	"buf_ptr"
+	byte	"cpl"
 	byte	0
 LR__0222
-	byte	"buflen"
+	byte	"buf_ptr"
 	byte	0
 LR__0223
-	byte	"lines"
+	byte	"buflen"
 	byte	0
 LR__0224
-	byte	"mode"
-	byte	0
-LR__0225
-	byte	"cpl"
-	byte	0
-LR__0226
-	byte	"buf_ptr"
-	byte	0
-LR__0227
-	byte	"buflen"
-	byte	0
-LR__0228
 	byte	"lines"
 	byte	0
-LR__0229
+LR__0225
 	byte	"mode"
 	byte	0
-LR__0230
+LR__0226
 	byte	"cpl"
 	byte	0
-LR__0231
+LR__0227
 	byte	"buf_ptr"
 	byte	0
-LR__0232
+LR__0228
 	byte	"buflen"
 	byte	0
+LR__0229
+	byte	"lines"
+	byte	0
+LR__0230
+	byte	"mode"
+	byte	0
+LR__0231
+	byte	"cpl"
+	byte	0
+LR__0232
+	byte	"buf_ptr"
+	byte	0
 LR__0233
+	byte	"buflen"
+	byte	0
+LR__0234
 	byte	"lines"
 	byte	0
 	alignl
