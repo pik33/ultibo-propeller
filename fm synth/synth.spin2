@@ -1,0 +1,49 @@
+con
+
+_clkfreq	=	200000000
+hdmipin		=	8
+audiopin	=	6
+
+obj
+v		:	"hng025"
+
+pub dummy()
+v.start(512+256+192+48+0,hdmipin)		'borderless 60 Hz, 357 MHz
+v.cls(154,147)
+v.setfontfamily(0)
+v.outtextxycg(0,0,string("P2 started"),154,147)
+
+
+
+
+pub start(audiopin)
+
+
+
+
+
+dat		sinus	file "sinus.dat"
+
+dat
+
+		org
+synth		setq    #9
+                rdlong  vars,  ptra 
+		setq2 #256
+		rdlong #0,sinus		
+		
+		
+		
+		
+		wrpin   dac,#left
+        	wxpin   #50,#left
+
+       		wrpin   dac,#right
+       		wxpin   #50,#right
+
+            	dirh    #left addpins 1
+	
+dac     	long    %10111_00000000_01_00010_0      'random dither (noisier, needs no period)
+'dac     	long    %10111_00000000_01_00011_0      'pwm (quieter, needs 256N period)
+freq 		long 0	
+vars  		long 0

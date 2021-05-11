@@ -7,9 +7,9 @@ con
 hdmi_base       = 8            'must be a multiple of 8
 '_clkfreq        = 354_689_500   '200x Atari 8-bit PAL,  50x Amiga PAL
 _clkfreq       = 357_954_500   '200x Atari 8-bit NTSC, 50x Amiga NTSC
-rxpin           = 56
-txpin           = 57
-baudrate        = 115200
+rxpin           = 0
+txpin           = 1
+baudrate        = 9600
 
 
 obj
@@ -57,15 +57,28 @@ cogspin(16,serialcog(),@serialstack)
 v.setwritecolors(154,146)
 v.writeln(string("P2 started"))
 
-pinwrite(2,1)
-pinwrite(3,1)
+'pinwrite(2,1)
+'pinwrite(3,1)
 
-dacinit()
+'dacinit()
 
 h11:=$8000
 h12:=$8000
 
-dacset(h11,h12) 
+'dacset(h11,h12) 
+
+repeat
+  repeat
+    tx("r")
+    tx("3")
+    tx("#")
+    waitms(1)
+    rr:=serialblockingread()
+    v.write(v.inttohex(rr,2))
+    v.write(string(" "))
+    rr2:=(rr2<<8)+rr
+
+
 
 repeat
   repeat
