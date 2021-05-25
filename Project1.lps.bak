@@ -2,22 +2,21 @@
 <CONFIG>
   <ProjectSession>
     <PathDelim Value="\"/>
-    <Version Value="9"/>
+    <Version Value="11"/>
     <BuildModes Active="Default"/>
-    <Units Count="4">
+    <Units Count="5">
       <Unit0>
         <Filename Value="Project1.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="SerialConnection"/>
-        <IsVisibleTab Value="True"/>
-        <TopLine Value="345"/>
-        <CursorPos X="18" Y="358"/>
+        <TopLine Value="334"/>
+        <CursorPos X="24" Y="362"/>
         <UsageCount Value="27"/>
         <Loaded Value="True"/>
       </Unit0>
       <Unit1>
         <Filename Value="retrokeyboard.pas"/>
-        <EditorIndex Value="3"/>
+        <EditorIndex Value="4"/>
         <TopLine Value="4643"/>
         <CursorPos X="37" Y="4655"/>
         <UsageCount Value="14"/>
@@ -25,7 +24,7 @@
       </Unit1>
       <Unit2>
         <Filename Value="retromouse.pas"/>
-        <EditorIndex Value="2"/>
+        <EditorIndex Value="3"/>
         <TopLine Value="966"/>
         <CursorPos X="9" Y="986"/>
         <UsageCount Value="14"/>
@@ -34,12 +33,19 @@
       <Unit3>
         <Filename Value="C:\Ultibo\Core\fpc\3.1.1\source\rtl\ultibo\core\platform.pas"/>
         <UnitName Value="Platform"/>
-        <EditorIndex Value="1"/>
+        <EditorIndex Value="2"/>
         <TopLine Value="2131"/>
         <CursorPos X="10" Y="2146"/>
         <UsageCount Value="14"/>
         <Loaded Value="True"/>
       </Unit3>
+      <Unit4>
+        <Filename Value="C:\Users\Piotr\Downloads\RPI_UART(1)\RPI_UART\PReg.pas"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="1"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit4>
     </Units>
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
@@ -163,5 +169,9 @@
         <Caret Line="359" Column="22" TopLine="338"/>
       </Position30>
     </JumpHistory>
+    <RunParams>
+      <FormatVersion Value="2"/>
+      <Modes Count="0" ActiveMode="default"/>
+    </RunParams>
   </ProjectSession>
 </CONFIG>

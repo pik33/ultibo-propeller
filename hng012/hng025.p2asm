@@ -1,8 +1,8 @@
 ' 
 ' 
-' hdmi_base       = 48             'must be a multiple of 8
+' hdmi_base       = 8             'must be a multiple of 8
 con
-	hdmi_base = 48
+	hdmi_base = 8
 ' _clkfreq        = 345_000_000    'start safe, hubset will do the rest. The clock will be changed to:
 	_clkfreq = 345000000
 ' 
@@ -78,7 +78,7 @@ entry
 	wrlong	pa, #24
 	wrlong	##345000000, #20
 	jmp	#skip_clock_set_
-	orgf	128
+	orgf	32
 skip_clock_set_
 	locknew	__lockreg
 	wrlong	__lockreg, ptr___lockreg_
@@ -108,14 +108,17 @@ FCACHE_LOAD_
     push	fcache_tmpb_
     sub	fcache_tmpb_, pa
     shr	pa, #2
-    altd	pa
-    mov	 0-0, ret_instr_
+    mov	fcache_tmpa_, pa
+    add	fcache_tmpa_, #$100
+    wrlut ret_instr_, fcache_tmpa_
     sub	pa, #1
-    setq	pa
-    rdlong	$0, fcache_tmpb_
-    jmp	#\$0 ' jmp to cache
+    setq2	pa
+    rdlong	$100-0, fcache_tmpb_
+    jmp	#\$300 ' jmp to cache
 ret_instr_
     ret
+fcache_tmpa_
+    long 0
 fcache_tmpb_
     long 0
 COUNT_
@@ -261,7 +264,7 @@ _dummy
 	wrlong	ptr__dat__, objptr
 ' hdmibase:=base
 	add	objptr, #32
-	wrlong	#48, objptr
+	wrlong	#8, objptr
 	sub	objptr, #36
 	mov	arg02, ptr__putpixel1_
 ' p1:=@putpixel1
@@ -332,7 +335,7 @@ _dummy
 	sub	ptr__dat__, ##7768
 ' bytemove(@colors,@vgacolors,16)
 	mov	arg03, #16
-	call	#__system____builtin_memmove
+	call	#__system__bytemove
 ' 
 ' ' initialize a cursor
 ' 
@@ -2223,7 +2226,7 @@ LR__0070
 '   bytefill(buf_ptr,c,buflen*4)
 	rdlong	arg01, objptr
 	mov	arg02, local04
-	call	#__system____builtin_memset
+	call	#__system__bytefill
 LR__0071
 ' setwritecolors(fc,bc)
 ' 
@@ -2334,7 +2337,7 @@ LR__0076
 	add	arg02, #1
 '     bytemove(@n_string,@n_string+1,12)
 	mov	arg03, #12
-	call	#__system____builtin_memmove
+	call	#__system__bytemove
 	jmp	#LR__0076
 LR__0077
 ' 
@@ -2348,7 +2351,7 @@ LR__0077
 	add	arg01, #1
 '      bytemove(@n_string+1,@n_string,12)
 	mov	arg03, #12
-	call	#__system____builtin_memmove
+	call	#__system__bytemove
 '      n_string[0]:=k
 	add	objptr, #68
 	wrbyte	local04, objptr
@@ -3212,20 +3215,19 @@ LR__0122
 __system___txraw_ret
 	ret
 
-__system____builtin_memset
-	mov	_var01, arg01
-	mov	_var02, arg02
-	shl	_var02, #8
-	or	_var02, arg02
-	mov	_var03, _var02
-	shl	_var03, #16
-	or	_var03, _var02
+__system__bytefill
+	mov	_var01, arg02
+	shl	_var01, #8
+	or	_var01, arg02
+	mov	_var02, _var01
+	shl	_var02, #16
+	or	_var02, _var01
 	loc	pa,	#(@LR__0124-@LR__0123)
 	call	#FCACHE_LOAD_
 LR__0123
 	cmps	arg03, #3 wcz
  if_be	jmp	#LR__0125
-	wrlong	_var03, arg01
+	wrlong	_var02, arg01
 	add	arg01, #4
 	sub	arg03, #4
 	jmp	#LR__0123
@@ -3243,11 +3245,10 @@ LR__0127
 LR__0128
 LR__0129
 LR__0130
-	mov	result1, _var01
-__system____builtin_memset_ret
+__system__bytefill_ret
 	ret
 
-__system____builtin_memmove
+__system__bytemove
 	mov	_var01, arg01
 	cmps	arg01, arg02 wcz
  if_ae	jmp	#LR__0138
@@ -3297,7 +3298,7 @@ LR__0142
 LR__0143
 LR__0144
 	mov	result1, _var01
-__system____builtin_memmove_ret
+__system__bytemove_ret
 	ret
 
 __system__longmove

@@ -65,7 +65,7 @@
 CON
 
 
-hdmi_base       = 48             'must be a multiple of 8
+hdmi_base       = 8             'must be a multiple of 8
 _clkfreq        = 345_000_000    'start safe, hubset will do the rest. The clock will be changed to:
 
 ' 354_689_500   200x Atari 8-bit PAL,  50x Amiga PAL  - real settings: 49,869-> 354_693_878  - 1.0000123 - mode 0 and 192

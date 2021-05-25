@@ -3,9 +3,9 @@
 00000                 | #line 1 "D:/Programowanie/ultibo-propeller/fm synth/hng025.p2asm"
 00000                 | ' 
 00000                 | ' 
-00000                 | ' hdmi_base       = 8             'must be a multiple of 8
+00000                 | ' hdmi_base       = 48             'must be a multiple of 8
 00000                 | con
-00000                 | 	hdmi_base = 8
+00000                 | 	hdmi_base = 48
 00000                 | ' _clkfreq        = 345_000_000    'start safe, hubset will do the rest. The clock will be changed to:
 00000                 | 	_clkfreq = 345000000
 00000                 | ' 
@@ -281,7 +281,7 @@
 0063c     79 F8 60 FC | 	wrlong	ptr__dat__, objptr
 00640                 | ' hdmibase:=base
 00640     20 F2 04 F1 | 	add	objptr, #32
-00644     79 10 68 FC | 	wrlong	#8, objptr
+00644     79 60 68 FC | 	wrlong	#48, objptr
 00648     24 F2 84 F1 | 	sub	objptr, #36
 0064c     7D 66 01 F6 | 	mov	arg02, ptr__putpixel1_
 00650                 | ' p1:=@putpixel1

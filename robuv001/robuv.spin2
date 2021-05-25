@@ -1,0 +1,318 @@
+'' v. 0.01 - initial                                                            '
+'' pik33@o2.pl                                                                  '
+''------------------------------------------------------------------------------'
+
+con
+
+hdmi_base       = 8            'must be a multiple of 8
+'_clkfreq        = 354_689_500   '200x Atari 8-bit PAL,  50x Amiga PAL
+_clkfreq       = 357_954_500   '200x Atari 8-bit NTSC, 50x Amiga NTSC
+ rxpin           = 56
+ txpin           = 57
+baudrate        = 9600
+
+
+obj
+
+v:    "hn007-20210302"
+
+var
+
+long vgacog
+long sdcog
+long rxp
+long txp
+long mrxp
+long mtxp
+long serialbuf[64]
+long serialtail,serialfront
+long serialstack[64]
+long rr,rr2
+long h1,l1,f1,c1,h11,h12,h21,h22
+byte charcode
+byte scancode
+byte mousewheel
+byte mousekey
+word mousex
+word mousey
+byte dummy
+
+pub start(mode)   |iii,caps
+
+mode :=256
+caps:=0
+
+waitms(100)
+iii:=0
+vgacog:=v.start(mode)
+
+v.cls(154,146)
+v.setbordercolors(0,0,128)
+
+serial_start(rxpin, txpin, baudrate)
+rxflush()
+
+cogspin(16,serialcog(),@serialstack)
+
+v.setwritecolors(154,146)
+v.writeln(string("P2 started"))
+
+'pinwrite(2,1)
+'pinwrite(3,1)
+
+'dacinit()
+
+h11:=$8000
+h12:=$8000
+
+'dacset(h11,h12) 
+
+repeat
+  repeat
+    tx("r")
+    tx("3")
+    tx("#")
+    waitms(1)
+    rr:=serialblockingread()
+    v.write(v.inttohex(rr,2))
+    v.write(string(" "))
+    rr2:=(rr2<<8)+rr
+
+
+
+repeat
+  repeat
+    rr:=serialblockingread()
+    v.write(v.inttohex(rr,2))
+    v.write(string(" "))
+    rr2:=(rr2<<8)+rr
+  until rr2==$01FF02FE  
+  repeat iii from 0 to 3
+    rr:=serialblockingread()    
+  l1:=serialblockingread()
+  v.write(v.inttohex(l1,2))
+  v.write(string(" "))
+  
+      
+  h1:=serialblockingread()
+  v.write(v.inttohex(h1,2))
+  v.write(string(" "))
+
+  h1:=($8000+(h1<<8+l1)) & $FFFF
+  f1:=serialblockingread()  
+  v.write(v.inttohex(f1,2))
+  v.write(string(" "))  
+  c1:=serialblockingread()
+  v.write(v.inttohex(c1,2))
+  v.write(string(" "))  
+  f1:=(f1<<8+c1)
+  v.write(v.inttohex(h1,4))
+  v.write(string(" ") )
+  v.write(v.inttohex(f1,4))
+  v.write(string(" ") )
+  v.writeln(string(" "))
+
+  
+
+  if (f1==$0202)
+    h11:=h1
+  if (f1==$0203)
+    h12:=h1
+    
+  h21:=$8000
+  h22:=$8000  
+    
+ ' 1 joy do przodu, robot jedzie, 0203= h11=0   
+    
+  if (h12<$1000) & (h11<$F000) & (h11>$1000)
+    h21:=$2800
+    h22:=$2800
+
+' 2. joy do tyłu, robot do tyłu
+
+  elseif (h12>$F000) & (h11<$F000) & (h11>$1000)
+    h21:=$D800
+    h22:=$D800
+
+  '3,4  joy w bok
+  
+  elseif (h11>$F000) & (h12<$F000) & (h12>$1000)
+    h21:=$D800
+    h22:=$2800
+    
+  elseif (h11<$1000) & (h12<$F000) & (h12>$1000)
+    h21:=$2800
+    h22:=$d800
+    
+  elseif (h12>$F000) & (h11>$F000)    
+    h21:=$D800
+    h22:=$c000
+    
+  elseif (h12>$F000) & (h11<$1000)
+    h21:=$c000
+    h22:=$D800  
+    
+  elseif (h12<$1000) & (h11>$F000)    
+    h21:=$4000
+    h22:=$2800
+    
+  elseif (h12<$1000) & (h11<$F000)
+    h21:=$2800
+    h22:=$4000  
+ 
+    
+  dacset(h21,h22)    
+  if (f1==$0108)
+    if (l1==1)
+      pinwrite(2,0)
+      pinwrite(3,0)
+    else
+      pinwrite(2,1)
+      pinwrite(3,1)
+      
+  v.write(v.inttohex(h21,4))
+  v.write(string(" ") )
+  v.write(v.inttohex(h22,4))
+  v.write(string(" ") )
+  v.writeln(string(" "))
+        
+pub serialcog()|q
+
+serialfront:=0
+serialtail:=0
+
+repeat
+  if serialfront<>((serialtail-1) //32)
+    q:=rxcheck()
+    if q>=0
+     serialbuf[serialfront]:=q
+     serialfront+=1
+     serialfront:=serialfront // 32
+
+pub serialread():r
+
+if serialfront<>serialtail
+  r:=serialbuf[serialtail]
+  serialtail:=(serialtail+1)//32
+else
+  r:=-1
+return r
+
+pub serialblockingread(): r
+
+repeat
+  r:=serialread()
+until r<>-1
+return r
+
+
+
+''---------------------- Serial functions from jm_serial.spin2
+
+pub serial_start(rxpin2, txpin2, baud) | bitmode
+
+'' Start simple serial coms on rxpin and txpin at baud
+
+'  longmove(@rxp, @rxpin2, 2)                                     ' save pins
+
+  rxp:=rxpin2
+  txp:=txpin2
+
+  bitmode := muldiv64(clkfreq, $1_0000, baud) & $FFFFFC00       ' set bit timing
+  bitmode |= 7                                                  ' set bits (8)
+
+  org
+                fltl      rxpin2                                 ' configure rx smart pin
+                wrpin     ##P_ASYNC_RX, rxpin2
+                wxpin     bitmode, rxpin2
+                drvl      rxpin2
+                fltl      txpin2                                ' configure tx smart pin
+                wrpin     ##(P_ASYNC_TX | P_OE), txpin2
+                wxpin     bitmode, txpin2
+                drvl      txpin2
+  end
+
+
+
+pub rxflush()
+
+'' Clear serial input
+
+  repeat
+  while (rxcheck() >= 0)
+
+
+pub rxcheck() : rxbyte | check
+
+'' Check for serial input
+'' -- returns -1 if nothing available
+
+  rxbyte := -1
+  check := pinr(rxp)
+  if (check)
+    rxbyte := rdpin(rxp) >> 24
+
+
+pub rxtime(ms) : b | mstix, t
+
+'' Wait ms milliseconds for a byte to be received
+'' -- returns -1 if no byte received, $00..$FF if byte
+
+  mstix := clkfreq / 1000
+
+  t := getct()
+  repeat
+  until ((b := rxcheck()) >= 0) or (((getct() - t) / mstix) > ms)
+
+
+pub rx() : rxbyte
+
+'' Wait for serial input
+'' -- blocks!
+
+  repeat
+    rxbyte := rxcheck()
+  until (rxbyte >= 0)
+
+
+pub tx(b)
+
+'' Emit byte
+
+  wypin(txp, b)
+  txflush()
+
+pub txflush() | check
+
+'' Wait until last byte has finished
+
+  repeat
+    check := pinr(txp)
+  while (check == 0)
+
+  
+  
+pub dacinit() | dac
+
+dac:=%10110_00000000_01_00011_0  
+
+
+org
+
+        wrpin   dac,#0
+        wxpin   #256,#0
+
+        wrpin   dac,#1
+        wxpin   #256,#1
+
+        dirh    #0 addpins 1
+        
+end    
+
+   
+pub dacset(lll,rrr)
+   
+org   
+        wypin   lll,#0
+        wypin   rrr,#1
+end

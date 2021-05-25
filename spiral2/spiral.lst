@@ -1,6 +1,6 @@
 
 00000                 | 
-00000                 | #line 1 "D:/programowanie/20210307-ultibo-propeller/ultibo-propeller/spiral2/spiral.p2asm"
+00000                 | #line 1 "D:/Programowanie/ultibo-propeller/spiral2/spiral.p2asm"
 00000                 | ' _clkfreq        = 200000000
 00000                 | con
 00000                 | 	_clkfreq = 200000000
