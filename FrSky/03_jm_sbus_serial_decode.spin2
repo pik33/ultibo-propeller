@@ -17,7 +17,7 @@
 con
 
   CLK_FREQ = 322_159_050                                        ' system freq as a constant
-                          ' ticks in 1us
+
 '  _clkfreq = CLK_FREQ                                           ' set system clock
 
 

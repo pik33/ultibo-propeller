@@ -1,6 +1,6 @@
 
 00000                 | 
-00000                 | #line 1 "D:/Programowanie/ultibo-propeller/hng012/hng025.p2asm"
+00000                 | #line 1 "D:/Programowanie/ultibo-propeller/adctest/hng025.p2asm"
 00000                 | ' 
 00000                 | ' 
 00000                 | ' hdmi_base       = 48             'must be a multiple of 8

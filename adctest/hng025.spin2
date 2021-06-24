@@ -1523,7 +1523,7 @@ p202            getword mb2,m_border,#0
 
                 cmp zoom, #%01 wz   '256 colors, zoom x2
                 if_z mov skippattern,#%101010
-       
+                if_z jmp #p235
  '  
                 cmp zoom, #%10 wz   '256 colors, zoom x4
                 if_z mov skippattern,#%100101

@@ -1,0 +1,71 @@
+{{ ADC example}}
+
+CON
+_clkfreq        = 361_267_200  '  44100x8192
+'_clkfreq       = 393_216_000  '  48000x8192, too high for a P2
+
+bank            = 32    ' accessory board at pin 0,
+
+adcpinl         = bank+0   ' input on cinch 0,1
+adcpinr         = bank+1
+hdmi_pin        = 48
+
+
+obj v : "hng025"
+
+
+pub start()     |iii, m, n
+
+
+v .start(561,hdmi_pin)
+'coginit(0,@mixer,0)
+v.setbordercolor(0,0,0)
+v.cls(154,147)
+v.setfontfamily(4)
+v.waitvbl(100)
+v.outtextxycg(16,16,string("READY"),154,147)
+v.outtextxycg(16,32,string(" "),147,154)
+
+
+
+DAT
+              org
+mixer         wrpin adc_config, #adcpinl
+              wxpin  #%00_1011, #adcpinl
+              dirh   #adcpinl
+              wrpin  adc_config, #adcpinr
+              wxpin  #%00_1011,  #adcpinr
+              dirh   #adcpinr
+
+              wrpin dac_config,#dacpinl
+              wxpin #1,#dacpinl
+              wrpin dac_config,#dacpinr
+              wxpin #1,#dacpinr
+              dirh  #dacpinl addpins 1
+
+              setse1  #%001<<6 + adcpinr
+
+
+
+loop          waitse1
+
+              rdpin x,#adcpinl
+              rdpin y,#adcpinr
+
+              shl x,#2
+              shl y,#2
+
+          '       wrlong xxx,a400000
+
+              wypin   x,#dacpinl
+              wypin   y,#dacpinr
+
+                       'wait for new period
+
+              jmp     #loop          'loop
+
+
+adc_config      long    %0000_0000_000_100011_0000000_00_11000_0
+dac_config      long    %0000_0000_000_10111_00000000_01_00010_0
+x               long    0
+y               long    0
