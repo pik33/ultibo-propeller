@@ -66,7 +66,7 @@ CON
 
 
 hdmi_base       = 48             'must be a multiple of 8
-_clkfreq        = 345_000_000    'start safe, hubset will do the rest. The clock will be changed to:
+_clkfreq        = 245_000_000    'start safe, hubset will do the rest. The clock will be changed to:
 
 ' 354_689_500   200x Atari 8-bit PAL,  50x Amiga PAL  - real settings: 49,869-> 354_693_878  - 1.0000123 - mode 0 and 192
 ' 357_954_500   200x Atari 8-bit NTSC, 50x Amiga NTSC - real settings: 49,877-> 357_959_184  - 1.0000131 - mode 256
@@ -171,18 +171,12 @@ pub dummy()|i,x,y,ntsc,bbb,ccc,zzx,zzy,amode,x1,x2,y1,y2,r
 start(512+0+48,hdmi_base)
 
 cls(147,154)
-setfontfamily(4)
+setfontfamily(0)
 waitvbl(100)
 outtextxycg(0,0,inttostr(long[0]),154,147)
 waitvbl(300)
 maketestdl(512+48)
-waitvbl(300)
-setmode(0)
-cls(40,34)
-writeln(string("Kwas!!!"))
 waitvbl(1200)
-setmode(512+48)
-cls(147,154)
 repeat i from 0 to 10000
   ccc:=getrnd()&255
   x1:=getrnd()+//896
@@ -1214,18 +1208,12 @@ p101
                 mov rcnt2a,#0
 
 
-
-p302            add     linenum,#1
-                add     dlptr2,#4
-                cmp     linenum,i_totalvis  wz
-         if_z   jmp     #p112
-
 p301            cmp rcnt,#0 wz
         if_z    jmp #p306
                 sub rcnt,#1
                 mov dl,rdl
-                incmod rcnt2a,rcnt2 wz
-   if_z         add dl,roffset  
+               incmod rcnt2a,rcnt2 wz
+   if_z        add dl,roffset  
                 mov rdl,dl
                 jmp #p307          
           
@@ -1247,7 +1235,7 @@ p307            mov     framebuf2,dl wcz                  'read a line start in 
                 cmp dlc,#%100 wz
   
                 
-                 add dlptr2,#4
+                add dlptr2,#4
                              if_nz  jmp #p301  '' now ignore unknown instruction 
                  rdlong rdl,dlptr2
                  getword rcnt,framebuf2,#1 
@@ -1274,10 +1262,10 @@ p303           ' mov     framebuf2,dl                    ' read a line start in 
           if_c   jmp     #textline
           if_nc  jmp     #graphline
 '
-'p302            add     linenum,#1
-'                add     dlptr2,#4
-'                cmp     linenum,i_totalvis  wz
-'         if_nz  jmp     #p301
+p302            add     linenum,#1
+                add     dlptr2,#4
+                cmp     linenum,i_totalvis  wz
+         if_nz  jmp     #p301
 
 p112            wrlong  #1,vblankptr
                 callpa  i_downporch ,#blank             'bottom blanks
@@ -1290,16 +1278,14 @@ p112            wrlong  #1,vblankptr
 '' ---------------  END of frame rendering loop -------------------------------------------
 
 
-borderline     ' call    #hsync                      ' make a border
+borderline      call    #hsync                      ' make a border
                 xcont   m_vi,border
-                call #hsync
                 jmp     #p302
 
 
-blank          ' call    #hsync                          'blank lines
+blank           call    #hsync                          'blank lines
                 xcont   m_vi,hsync0
-		call #hsync
-         _ret_   djnz    pa,#blank
+        _ret_   djnz    pa,#blank
 
 hsync           xcont   m_bs,hsync0                     'horizontal sync
                 xzero   m_sn,hsync1
@@ -1327,7 +1313,7 @@ textline        mov     cursorpos2,cursorx              ' we need another var fo
                 cmp     linestart,cursory wz            ' if the cursor is not here
           if_nz mov     cursorpos2,#129                 ' move it out of the screen
 
-          '     call    #hsync                          ' now call hsync to gain some time between xconts
+                call    #hsync                          ' now call hsync to gain some time between xconts
 
                        ' if fontline =0, get a border color
 
@@ -1491,14 +1477,14 @@ p102            getword t1,m_border,#0
 p103            getword  mb2,m_border,#0
                 cmp      mb2, #0 wz
                 if_nz    xcont   m_border,border            'display a right border if exists
-  call #hsync
+
                 jmp #p302
 
 '' -------------------------------------- END of text line ---------------------------------
 
   '' aaaa_aaaa_aaaa_aaaa_aazz_rrrr_rrrr_cc_10 - graph - display a graphics line
 
-graphline   '    call    #hsync                          ' now call hsync to gain some time between xconts
+graphline       call    #hsync                          ' now call hsync to gain some time between xconts
 
 
 p202            getword mb2,m_border,#0
@@ -1541,7 +1527,8 @@ p202            getword mb2,m_border,#0
  '  
                 cmp zoom, #%10 wz   '256 colors, zoom x4
                 if_z mov skippattern,#%100101
-  
+    
+ 
                 if_nz mov skippattern,#%000101
                 if_nz shr cpl2,#1         ' if 8x zoom, 2 xconts used in one loop, so divide loop count by 2
         
@@ -1662,7 +1649,7 @@ p251               rep  #3,cpl2
 p203           ' getword  mb2,m_border,#0
                 cmp      mb2, #0 wz
                 if_nz    xcont   m_border,border            'display a right border if exists
-  call #hsync
+
                 jmp #p302
 
 '' -------------------------------------- END of graph  line ---------------------------------

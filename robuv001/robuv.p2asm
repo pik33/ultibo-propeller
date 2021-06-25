@@ -9,8 +9,8 @@ con
 	rxpin = 56
 '  txpin           = 57
 	txpin = 57
-' baudrate        = 9600
-	baudrate = 9600
+' baudrate        = 460800
+	baudrate = 460800
 dat
 	nop
 	cogid	pa
@@ -25,7 +25,8 @@ dat
 entry
 	cmp	ptra, #0 wz
  if_ne	jmp	#spininit
-	mov	ptra, ptr_stackspace_
+	mov	ptra, objptr
+	add	ptra, ##12964
 	rdlong	pa, #20 wz
  if_ne	jmp	#skip_clock_set_
 	hubset	#0
@@ -36,10 +37,8 @@ entry
 	wrlong	pa, #24
 	wrlong	##357958951, #20
 	jmp	#skip_clock_set_
-	orgf	32
+	orgf	128
 skip_clock_set_
-	locknew	__lockreg
-	wrlong	__lockreg, ptr___lockreg_
 	call	#_start
 cogexit
 	waitx	##160000
@@ -66,17 +65,14 @@ FCACHE_LOAD_
     push	fcache_tmpb_
     sub	fcache_tmpb_, pa
     shr	pa, #2
-    mov	fcache_tmpa_, pa
-    add	fcache_tmpa_, #$100
-    wrlut ret_instr_, fcache_tmpa_
+    altd	pa
+    mov	 0-0, ret_instr_
     sub	pa, #1
-    setq2	pa
-    rdlong	$100-0, fcache_tmpb_
-    jmp	#\$300 ' jmp to cache
+    setq	pa
+    rdlong	$0, fcache_tmpb_
+    jmp	#\$0 ' jmp to cache
 ret_instr_
     ret
-fcache_tmpa_
-    long 0
 fcache_tmpb_
     long 0
 COUNT_
@@ -85,11 +81,6 @@ RETADDR_
     long 0
 fp
     long 0
-gosub_
-    mov  COUNT_, #0
-    mov  pa, arg01
-    pop  RETADDR_
-    jmp  #pushregs_done_
 pushregs_
     pop  pa
     pop  RETADDR_
@@ -141,8 +132,6 @@ divide_
        test    itmp2_,#%10      wc       'restore sign, division result
  _ret_ negc    muldivb_,muldivb_
 
-__lockreg
-	long	0
 entryptr__
 	long	@entry
 itmp1_
@@ -153,12 +142,8 @@ objptr
 	long	@objmem
 ptr__Hn007_20210302_dat__
 	long	@_Hn007_20210302_dat_
-ptr___lockreg_
-	long	@__lockreg
 ptr__serialcog_
 	long	@_serialcog
-ptr_stackspace_
-	long	@stackspace
 result1
 	long	0
 COG_BSS_START
@@ -169,7 +154,7 @@ hubentry
 ' 
 ' pub start(mode)   |iii,caps
 _start
-	mov	COUNT_, #11
+	mov	COUNT_, #29
 	call	#pushregs_
 ' 
 ' mode :=256
@@ -181,1667 +166,8 @@ _start
 ' iii:=0
 ' vgacog:=v.start(mode)
 	mov	arg01, #256
-	call	#_Hn007_20210302_start
-	add	objptr, ##12368
-	wrlong	result1, objptr
-	sub	objptr, ##12368
-' 
-' v.cls(154,146)
-	mov	arg01, #154
-	mov	arg02, #146
-	call	#_Hn007_20210302_cls
-' v.setbordercolors(0,0,128)
-	mov	arg01, #0
-	mov	arg02, #0
-	mov	arg03, #128
-	call	#_Hn007_20210302_setbordercolors
-' 
-' serial_start(rxpin, txpin, baudrate)
-	mov	arg01, #56
-	mov	arg02, #57
-	mov	arg03, ##9600
-	call	#_serial_start
-' rxflush()
-' 
-' '' Clear serial input
-' 
-'   repeat
-LR__0001
-	call	#_rxcheck
-	cmps	result1, #0 wcz
- if_ae	jmp	#LR__0001
-' 
-' cogspin(16,serialcog(),@serialstack)
+	add	objptr, ##636
 	mov	local01, objptr
-	add	objptr, ##12656
-	mov	local02, objptr
-	wrlong	local01, local02
-	add	local02, #4
-	wrlong	ptr__serialcog_, local02
-	mov	arg03, objptr
-	mov	arg01, #16
-	setq	arg03
-	coginit	arg01, entryptr__ wc
- if_b	neg	arg01, #1
-	mov	result1, arg01
-' 
-' v.setwritecolors(154,146)
-	mov	arg02, #146
-' 
-' ''---------- Set colors for write and writeln
-' 
-' write_color:=ff
-	sub	objptr, #484
-	wrlong	#154, objptr
-' write_background:=bb
-	add	objptr, #4
-	wrlong	#146, objptr
-	sub	objptr, ##12176
-' v.writeln(string("P2 started"))
-	mov	arg01, ##@LR__0102
-	call	#_Hn007_20210302_writeln
-' 
-' 'pinwrite(2,1)
-' 'pinwrite(3,1)
-' 
-' 'dacinit()
-' 
-' h11:=$8000
-	decod	local01, #15
-	add	objptr, ##12936
-	wrlong	##32768, objptr
-' h12:=$8000
-	add	objptr, #4
-	wrlong	local01, objptr
-	sub	objptr, ##12940
-' 
-' 'dacset(h11,h12) 
-' 
-' repeat
-'   repeat
-LR__0002
-'     tx("r")
-	mov	arg01, #114
-	call	#_tx
-'     tx("3")
-	mov	arg01, #51
-	call	#_tx
-'     tx("#")
-	mov	arg01, #35
-	call	#_tx
-'     waitms(1)
-	mov	arg01, #1
-	call	#__system___waitms
-'     rr:=serialblockingread()
-' 
-' repeat
-LR__0003
-'   r:=serialread()
-	call	#_serialread
-	mov	local03, result1
-	cmp	local03, ##-1 wz
- if_e	jmp	#LR__0003
-' until r<>-1
-' return r
-	mov	result1, local03
-	add	objptr, ##12912
-	wrlong	result1, objptr
-'     v.write(v.inttohex(rr,2))
-	mov	arg01, result1
-	sub	objptr, ##12912
-	mov	arg02, #2
-	call	#_Hn007_20210302_inttohex
-	mov	arg01, result1
-	call	#_Hn007_20210302_write
-'     v.write(string(" "))
-	mov	arg01, ##@LR__0103
-	call	#_Hn007_20210302_write
-'     rr2:=(rr2<<8)+rr
-	add	objptr, ##12916
-	rdlong	local01, objptr
-	shl	local01, #8
-	sub	objptr, #4
-	rdlong	local04, objptr
-	add	local01, local04
-	add	objptr, #4
-	wrlong	local01, objptr
-	sub	objptr, ##12916
-	jmp	#LR__0002
-' 
-' 
-' 
-' repeat
-LR__0004
-'   repeat
-LR__0005
-'     rr:=serialblockingread()
-' 
-' repeat
-LR__0006
-'   r:=serialread()
-	call	#_serialread
-	mov	local03, result1
-	cmp	local03, ##-1 wz
- if_e	jmp	#LR__0006
-' until r<>-1
-' return r
-	mov	result1, local03
-	add	objptr, ##12912
-	wrlong	result1, objptr
-'     v.write(v.inttohex(rr,2))
-	mov	arg01, result1
-	sub	objptr, ##12912
-	mov	arg02, #2
-	call	#_Hn007_20210302_inttohex
-	mov	arg01, result1
-	call	#_Hn007_20210302_write
-'     v.write(string(" "))
-	mov	arg01, ##@LR__0104
-	call	#_Hn007_20210302_write
-'     rr2:=(rr2<<8)+rr
-	add	objptr, ##12916
-	rdlong	local01, objptr
-	shl	local01, #8
-	sub	objptr, #4
-	rdlong	local04, objptr
-	add	local01, local04
-	add	objptr, #4
-	wrlong	local01, objptr
-	sub	objptr, ##12916
-	cmp	local01, ##33489662 wz
- if_ne	jmp	#LR__0005
-'   until rr2==$01FF02FE  
-'   repeat iii from 0 to 3
-	mov	local05, #0
-LR__0007
-'     rr:=serialblockingread()    
-' 
-' repeat
-LR__0008
-'   r:=serialread()
-	call	#_serialread
-	mov	local03, result1
-	cmp	local03, ##-1 wz
- if_e	jmp	#LR__0008
-' until r<>-1
-' return r
-	mov	result1, local03
-	mov	local01, result1
-	add	objptr, ##12912
-	wrlong	local01, objptr
-	sub	objptr, ##12912
-	add	local05, #1
-	cmps	local05, #4 wcz
- if_b	jmp	#LR__0007
-'   l1:=serialblockingread()
-' 
-' repeat
-LR__0009
-'   r:=serialread()
-	call	#_serialread
-	mov	local03, result1
-	cmp	local03, ##-1 wz
- if_e	jmp	#LR__0009
-' until r<>-1
-' return r
-	mov	result1, local03
-	add	objptr, ##12924
-	wrlong	result1, objptr
-'   v.write(v.inttohex(l1,2))
-	mov	arg01, result1
-	sub	objptr, ##12924
-	mov	arg02, #2
-	call	#_Hn007_20210302_inttohex
-	mov	arg01, result1
-	call	#_Hn007_20210302_write
-'   v.write(string(" "))
-	mov	arg01, ##@LR__0105
-	call	#_Hn007_20210302_write
-'   
-'       
-'   h1:=serialblockingread()
-' 
-' repeat
-LR__0010
-'   r:=serialread()
-	call	#_serialread
-	mov	local03, result1
-	cmp	local03, ##-1 wz
- if_e	jmp	#LR__0010
-' until r<>-1
-' return r
-	mov	result1, local03
-	add	objptr, ##12920
-	wrlong	result1, objptr
-'   v.write(v.inttohex(h1,2))
-	mov	arg01, result1
-	sub	objptr, ##12920
-	mov	arg02, #2
-	call	#_Hn007_20210302_inttohex
-	mov	arg01, result1
-	call	#_Hn007_20210302_write
-'   v.write(string(" "))
-	mov	arg01, ##@LR__0106
-	call	#_Hn007_20210302_write
-' 
-'   h1:=($8000+(h1<<8+l1)) & $FFFF
-	add	objptr, ##12920
-	rdlong	local02, objptr
-	shl	local02, #8
-	add	objptr, #4
-	rdlong	local06, objptr
-	add	local02, local06
-	decod	local01, #15
-	add	local01, local02
-	and	local01, ##65535
-	sub	objptr, #4
-	wrlong	local01, objptr
-	sub	objptr, ##12920
-'   f1:=serialblockingread()  
-' 
-' repeat
-LR__0011
-'   r:=serialread()
-	call	#_serialread
-	mov	local03, result1
-	cmp	local03, ##-1 wz
- if_e	jmp	#LR__0011
-' until r<>-1
-' return r
-	mov	result1, local03
-	add	objptr, ##12928
-	wrlong	result1, objptr
-'   v.write(v.inttohex(f1,2))
-	mov	arg01, result1
-	sub	objptr, ##12928
-	mov	arg02, #2
-	call	#_Hn007_20210302_inttohex
-	mov	arg01, result1
-	call	#_Hn007_20210302_write
-'   v.write(string(" "))  
-	mov	arg01, ##@LR__0107
-	call	#_Hn007_20210302_write
-'   c1:=serialblockingread()
-' 
-' repeat
-LR__0012
-'   r:=serialread()
-	call	#_serialread
-	mov	local03, result1
-	cmp	local03, ##-1 wz
- if_e	jmp	#LR__0012
-' until r<>-1
-' return r
-	mov	result1, local03
-	add	objptr, ##12932
-	wrlong	result1, objptr
-'   v.write(v.inttohex(c1,2))
-	mov	arg01, result1
-	sub	objptr, ##12932
-	mov	arg02, #2
-	call	#_Hn007_20210302_inttohex
-	mov	arg01, result1
-	call	#_Hn007_20210302_write
-'   v.write(string(" "))  
-	mov	arg01, ##@LR__0108
-	call	#_Hn007_20210302_write
-'   f1:=(f1<<8+c1)
-	add	objptr, ##12928
-	rdlong	local01, objptr
-	shl	local01, #8
-	add	objptr, #4
-	rdlong	local04, objptr
-	add	local01, local04
-	sub	objptr, #4
-	wrlong	local01, objptr
-'   v.write(v.inttohex(h1,4))
-	sub	objptr, #8
-	rdlong	arg01, objptr
-	sub	objptr, ##12920
-	mov	arg02, #4
-	call	#_Hn007_20210302_inttohex
-	mov	arg01, result1
-	call	#_Hn007_20210302_write
-'   v.write(string(" ") )
-	mov	arg01, ##@LR__0109
-	call	#_Hn007_20210302_write
-'   v.write(v.inttohex(f1,4))
-	add	objptr, ##12928
-	rdlong	arg01, objptr
-	sub	objptr, ##12928
-	mov	arg02, #4
-	call	#_Hn007_20210302_inttohex
-	mov	arg01, result1
-	call	#_Hn007_20210302_write
-'   v.write(string(" ") )
-	mov	arg01, ##@LR__0110
-	call	#_Hn007_20210302_write
-'   v.writeln(string(" "))
-	mov	arg01, ##@LR__0111
-	call	#_Hn007_20210302_writeln
-' 
-'   
-' 
-'   if (f1==$0202)
-	add	objptr, ##12928
-	rdlong	local01, objptr
-	sub	objptr, ##12928
-	cmp	local01, ##514 wz
- if_ne	jmp	#LR__0013
-'     h11:=h1
-	add	objptr, ##12920
-	rdlong	local01, objptr
-	add	objptr, #16
-	wrlong	local01, objptr
-	sub	objptr, ##12936
-LR__0013
-'   if (f1==$0203)
-	add	objptr, ##12928
-	rdlong	local01, objptr
-	sub	objptr, ##12928
-	cmp	local01, ##515 wz
- if_ne	jmp	#LR__0014
-'     h12:=h1
-	add	objptr, ##12920
-	rdlong	local01, objptr
-	add	objptr, #20
-	wrlong	local01, objptr
-	sub	objptr, ##12940
-LR__0014
-'     
-'   h21:=$8000
-	decod	local01, #15
-	add	objptr, ##12944
-	wrlong	##32768, objptr
-'   h22:=$8000  
-	add	objptr, #4
-	wrlong	local01, objptr
-'     
-'  ' 1 joy do przodu, robot jedzie, 0203= h11=0   
-'     
-'   if (h12<$1000) & (h11<$F000) & (h11>$1000)
-	mov	local01, #0
-	sub	objptr, #8
-	rdlong	local02, objptr
-	cmps	local02, ##4096 wcz
- if_b	neg	local01, #1
-	mov	local06, #0
-	sub	objptr, #4
-	rdlong	local07, objptr
-	cmps	local07, ##61440 wcz
- if_b	neg	local06, #1
-	and	local01, local06
-	mov	local08, #0
-	rdlong	local09, objptr
-	sub	objptr, ##12936
-	cmps	local09, ##4096 wcz
- if_a	neg	local08, #1
-	test	local01, local08 wz
- if_e	jmp	#LR__0015
-'     h21:=$2800
-	add	objptr, ##12944
-	wrlong	##10240, objptr
-'     h22:=$2800
-	add	objptr, #4
-	wrlong	##10240, objptr
-	sub	objptr, ##12948
-	jmp	#LR__0029
-LR__0015
-' 
-' ' 2. joy do tyłu, robot do tyłu
-' 
-'   elseif (h12>$F000) & (h11<$F000) & (h11>$1000)
-	mov	local01, #0
-	add	objptr, ##12940
-	rdlong	local02, objptr
-	cmps	local02, ##61440 wcz
- if_a	neg	local01, #1
-	mov	local06, #0
-	sub	objptr, #4
-	rdlong	local10, objptr
-	cmps	local10, ##61440 wcz
- if_b	neg	local06, #1
-	and	local01, local06
-	mov	local08, #0
-	rdlong	local11, objptr
-	sub	objptr, ##12936
-	cmps	local11, ##4096 wcz
- if_a	neg	local08, #1
-	test	local01, local08 wz
- if_e	jmp	#LR__0016
-'     h21:=$D800
-	add	objptr, ##12944
-	wrlong	##55296, objptr
-'     h22:=$D800
-	add	objptr, #4
-	wrlong	##55296, objptr
-	sub	objptr, ##12948
-	jmp	#LR__0028
-LR__0016
-' 
-'   '3,4  joy w bok
-'   
-'   elseif (h11>$F000) & (h12<$F000) & (h12>$1000)
-	mov	local01, #0
-	add	objptr, ##12936
-	rdlong	local02, objptr
-	cmps	local02, ##61440 wcz
- if_a	neg	local01, #1
-	mov	local06, #0
-	add	objptr, #4
-	rdlong	local10, objptr
-	cmps	local10, ##61440 wcz
- if_b	neg	local06, #1
-	and	local01, local06
-	mov	local08, #0
-	rdlong	local11, objptr
-	sub	objptr, ##12940
-	cmps	local11, ##4096 wcz
- if_a	neg	local08, #1
-	test	local01, local08 wz
- if_e	jmp	#LR__0017
-'     h21:=$D800
-	add	objptr, ##12944
-	wrlong	##55296, objptr
-'     h22:=$2800
-	add	objptr, #4
-	wrlong	##10240, objptr
-	sub	objptr, ##12948
-	jmp	#LR__0027
-LR__0017
-'     
-'   elseif (h11<$1000) & (h12<$F000) & (h12>$1000)
-	mov	local01, #0
-	add	objptr, ##12936
-	rdlong	local02, objptr
-	cmps	local02, ##4096 wcz
- if_b	neg	local01, #1
-	mov	local06, #0
-	add	objptr, #4
-	rdlong	local10, objptr
-	cmps	local10, ##61440 wcz
- if_b	neg	local06, #1
-	and	local01, local06
-	mov	local08, #0
-	rdlong	local11, objptr
-	sub	objptr, ##12940
-	mov	local09, local11
-	cmps	local09, ##4096 wcz
- if_a	neg	local08, #1
-	test	local01, local08 wz
- if_e	jmp	#LR__0018
-'     h21:=$2800
-	add	objptr, ##12944
-	wrlong	##10240, objptr
-'     h22:=$d800
-	add	objptr, #4
-	wrlong	##55296, objptr
-	sub	objptr, ##12948
-	jmp	#LR__0026
-LR__0018
-'     
-'   elseif (h12>$F000) & (h11>$F000)    
-	mov	local01, #0
-	add	objptr, ##12940
-	rdlong	local02, objptr
-	cmps	local02, ##61440 wcz
- if_a	neg	local01, #1
-	mov	local06, #0
-	sub	objptr, #4
-	rdlong	local10, objptr
-	sub	objptr, ##12936
-	cmps	local10, ##61440 wcz
- if_a	neg	local06, #1
-	test	local01, local06 wz
- if_e	jmp	#LR__0019
-'     h21:=$D800
-	add	objptr, ##12944
-	wrlong	##55296, objptr
-'     h22:=$c000
-	add	objptr, #4
-	wrlong	##49152, objptr
-	sub	objptr, ##12948
-	jmp	#LR__0025
-LR__0019
-'     
-'   elseif (h12>$F000) & (h11<$1000)
-	mov	local01, #0
-	add	objptr, ##12940
-	rdlong	local02, objptr
-	cmps	local02, ##61440 wcz
- if_a	neg	local01, #1
-	mov	local06, #0
-	sub	objptr, #4
-	rdlong	local10, objptr
-	sub	objptr, ##12936
-	cmps	local10, ##4096 wcz
- if_b	neg	local06, #1
-	test	local01, local06 wz
- if_e	jmp	#LR__0020
-'     h21:=$c000
-	add	objptr, ##12944
-	wrlong	##49152, objptr
-'     h22:=$D800  
-	add	objptr, #4
-	wrlong	##55296, objptr
-	sub	objptr, ##12948
-	jmp	#LR__0024
-LR__0020
-'     
-'   elseif (h12<$1000) & (h11>$F000)    
-	mov	local01, #0
-	add	objptr, ##12940
-	rdlong	local02, objptr
-	cmps	local02, ##4096 wcz
- if_b	neg	local01, #1
-	mov	local06, #0
-	sub	objptr, #4
-	rdlong	local10, objptr
-	sub	objptr, ##12936
-	cmps	local10, ##61440 wcz
- if_a	neg	local06, #1
-	test	local01, local06 wz
- if_e	jmp	#LR__0021
-'     h21:=$4000
-	add	objptr, ##12944
-	wrlong	##16384, objptr
-'     h22:=$2800
-	add	objptr, #4
-	wrlong	##10240, objptr
-	sub	objptr, ##12948
-	jmp	#LR__0023
-LR__0021
-'     
-'   elseif (h12<$1000) & (h11<$F000)
-	mov	local01, #0
-	add	objptr, ##12940
-	rdlong	local02, objptr
-	cmps	local02, ##4096 wcz
- if_b	neg	local01, #1
-	mov	local06, #0
-	sub	objptr, #4
-	rdlong	local10, objptr
-	sub	objptr, ##12936
-	cmps	local10, ##61440 wcz
- if_b	neg	local06, #1
-	test	local01, local06 wz
- if_e	jmp	#LR__0022
-'     h21:=$2800
-	add	objptr, ##12944
-	wrlong	##10240, objptr
-'     h22:=$4000  
-	add	objptr, #4
-	wrlong	##16384, objptr
-	sub	objptr, ##12948
-LR__0022
-LR__0023
-LR__0024
-LR__0025
-LR__0026
-LR__0027
-LR__0028
-LR__0029
-'  
-'     
-'   dacset(h21,h22)    
-	add	objptr, ##12944
-	rdlong	arg01, objptr
-	add	objptr, #4
-	rdlong	arg02, objptr
-	sub	objptr, ##12948
-	call	#_dacset
-'   if (f1==$0108)
-	add	objptr, ##12928
-	rdlong	local01, objptr
-	sub	objptr, ##12928
-	cmp	local01, #264 wz
- if_ne	jmp	#LR__0032
-'     if (l1==1)
-	add	objptr, ##12924
-	rdlong	local01, objptr
-	sub	objptr, ##12924
-	cmp	local01, #1 wz
- if_ne	jmp	#LR__0030
-'       pinwrite(2,0)
-	mov	arg02, #0
-	test	arg02, #1 wc
-	drvc	#2
-'       pinwrite(3,0)
-	test	arg02, #1 wc
-	drvc	#3
-'     else
-	jmp	#LR__0031
-LR__0030
-'       pinwrite(2,1)
-	mov	arg02, #1
-	test	arg02, #1 wc
-	drvc	#2
-'       pinwrite(3,1)
-	test	arg02, #1 wc
-	drvc	#3
-LR__0031
-LR__0032
-'       
-'   v.write(v.inttohex(h21,4))
-	add	objptr, ##12944
-	rdlong	arg01, objptr
-	sub	objptr, ##12944
-	mov	arg02, #4
-	call	#_Hn007_20210302_inttohex
-	mov	arg01, result1
-	call	#_Hn007_20210302_write
-'   v.write(string(" ") )
-	mov	arg01, ##@LR__0112
-	call	#_Hn007_20210302_write
-'   v.write(v.inttohex(h22,4))
-	add	objptr, ##12948
-	rdlong	arg01, objptr
-	sub	objptr, ##12948
-	mov	arg02, #4
-	call	#_Hn007_20210302_inttohex
-	mov	arg01, result1
-	call	#_Hn007_20210302_write
-'   v.write(string(" ") )
-	mov	arg01, ##@LR__0113
-	call	#_Hn007_20210302_write
-'   v.writeln(string(" "))
-	mov	arg01, ##@LR__0114
-	call	#_Hn007_20210302_writeln
-	jmp	#LR__0004
-	mov	ptra, fp
-	call	#popregs_
-_start_ret
-	ret
-
-'         
-' pub serialcog()|q
-_serialcog
-	mov	COUNT_, #5
-	call	#pushregs_
-' 
-' serialfront:=0
-	mov	local01, #0
-	add	objptr, ##12652
-	wrlong	#0, objptr
-' serialtail:=0
-	sub	objptr, #4
-	wrlong	#0, objptr
-	sub	objptr, ##12648
-' 
-' repeat
-LR__0033
-'   if serialfront<>((serialtail-1) //32)
-	add	objptr, ##12648
-	rdlong	local01, objptr
-	sub	local01, #1
-	abs	local02, local01 wc
-	and	local02, #31
- if_b	neg	local02, local02
-	add	objptr, #4
-	rdlong	local03, objptr
-	sub	objptr, ##12652
-	cmp	local03, local02 wz
- if_e	jmp	#LR__0033
-'     q:=rxcheck()
-	call	#_rxcheck
-	mov	local04, result1
-'     if q>=0
-	cmps	local04, #0 wcz
- if_b	jmp	#LR__0033
-'      serialbuf[serialfront]:=q
-	add	objptr, ##12652
-	rdlong	local01, objptr
-	shl	local01, #2
-	sub	objptr, #260
-	add	local01, objptr
-	wrlong	local04, local01
-'      serialfront+=1
-	add	objptr, #260
-	rdlong	local05, objptr
-	add	local05, #1
-	wrlong	local05, objptr
-'      serialfront:=serialfront // 32
-	abs	local01, local05 wc
-	and	local01, #31
- if_b	neg	local01, local01
-	wrlong	local01, objptr
-	sub	objptr, ##12652
-	jmp	#LR__0033
-	mov	ptra, fp
-	call	#popregs_
-_serialcog_ret
-	ret
-
-' 
-' pub serialread():r
-_serialread
-' 
-' if serialfront<>serialtail
-	add	objptr, ##12652
-	rdlong	_var01, objptr
-	sub	objptr, #4
-	rdlong	_var02, objptr
-	sub	objptr, ##12648
-	cmp	_var01, _var02 wz
- if_e	jmp	#LR__0034
-'   r:=serialbuf[serialtail]
-	add	objptr, ##12648
-	rdlong	_var01, objptr
-	shl	_var01, #2
-	sub	objptr, #256
-	add	_var01, objptr
-	rdlong	_var03, _var01
-'   serialtail:=(serialtail+1)//32
-	add	objptr, #256
-	rdlong	_var01, objptr
-	add	_var01, #1
-	abs	_var02, _var01 wc
-	and	_var02, #31
- if_b	neg	_var02, _var02
-	wrlong	_var02, objptr
-	sub	objptr, ##12648
-' else
-	jmp	#LR__0035
-LR__0034
-'   r:=-1
-	neg	_var03, #1
-LR__0035
-' return r
-	mov	result1, _var03
-_serialread_ret
-	ret
-
-' 
-' 
-' 
-' ''---------------------- Serial functions from jm_serial.spin2
-' 
-' pub serial_start(rxpin2, txpin2, baud) | bitmode
-_serial_start
-	mov	COUNT_, #5
-	call	#pushregs_
-	mov	local01, arg01
-	mov	local02, arg02
-' 
-' '' Start simple serial coms on rxpin and txpin at baud
-' 
-' '  longmove(@rxp, @rxpin2, 2)                                     ' save pins
-' 
-'   rxp:=rxpin2
-	add	objptr, ##12376
-	wrlong	local01, objptr
-'   txp:=txpin2
-	add	objptr, #4
-	wrlong	local02, objptr
-	sub	objptr, ##12380
-' 
-'   bitmode := muldiv64(clkfreq, $1_0000, baud) & $FFFFFC00       ' set bit timing
-	rdlong	arg01, #20
-	decod	arg02, #16
-	qmul	arg01, arg02
-	getqy	local03
-	getqx	local04
-	setq	local03
-	qdiv	local04, arg03
-	getqx	result1
-	mov	local05, result1
-	and	local05, ##-1024
-'   bitmode |= 7                                                  ' set bits (8)
-	or	local05, #7
-' 
-'   org
-	loc	pa,	#(@LR__0037-@LR__0036)
-	call	#FCACHE_LOAD_
-LR__0036
-	fltl	local01
-	wrpin	#62, local01
-	wxpin	local05, local01
-	drvl	local01
-	fltl	local02
-	wrpin	#124, local02
-	wxpin	local05, local02
-	drvl	local02
-LR__0037
-	mov	ptra, fp
-	call	#popregs_
-_serial_start_ret
-	ret
-
-'   while (rxcheck() >= 0)
-' 
-' 
-' pub rxcheck() : rxbyte | check
-_rxcheck
-	mov	COUNT_, #2
-	call	#pushregs_
-' 
-' '' Check for serial input
-' '' -- returns -1 if nothing available
-' 
-'   rxbyte := -1
-	neg	local01, #1
-'   check := pinr(rxp)
-	add	objptr, ##12376
-	rdlong	arg01, objptr
-	sub	objptr, ##12376
-	call	#__system___pinread
-	mov	local02, result1 wz
-'   if (check)
- if_e	jmp	#LR__0038
-'     rxbyte := rdpin(rxp) >> 24
-	add	objptr, ##12376
-	rdlong	arg01, objptr
-	sub	objptr, ##12376
-	mov	local01, #0
-	rdpin	local01, arg01
-	shr	local01, #24
-LR__0038
-	mov	result1, local01
-	mov	ptra, fp
-	call	#popregs_
-_rxcheck_ret
-	ret
-
-'   until (rxbyte >= 0)
-' 
-' 
-' pub tx(b)
-_tx
-	mov	COUNT_, #1
-	call	#pushregs_
-' 
-' '' Emit byte
-' 
-'   wypin(txp, b)
-	add	objptr, ##12380
-	rdlong	local01, objptr
-	sub	objptr, ##12380
-	mov	arg02, arg01
-	wypin	arg02, local01
-'   txflush()
-' 
-' '' Wait until last byte has finished
-' 
-'   repeat
-LR__0039
-'     check := pinr(txp)
-	add	objptr, ##12380
-	rdlong	arg01, objptr
-	sub	objptr, ##12380
-	call	#__system___pinread
-	cmp	result1, #0 wz
- if_e	jmp	#LR__0039
-	mov	ptra, fp
-	call	#popregs_
-_tx_ret
-	ret
-
-' 
-'    
-' pub dacset(lll,rrr)
-_dacset
-'    
-' org   
-	loc	pa,	#(@LR__0041-@LR__0040)
-	call	#FCACHE_LOAD_
-LR__0040
-	wypin	arg01, #0
-	wypin	arg02, #1
-LR__0041
-_dacset_ret
-	ret
-
-' 
-' 
-' pub setbordercolors(r,g,b) |color, i
-_Hn007_20210302_setbordercolors
-' 
-' ''---------- Set border color for all screen - rgb
-' 
-' color:=r<<16+g<<8+b
-	shl	arg01, #16
-	shl	arg02, #8
-	add	arg01, arg02
-	add	arg01, arg03
-	mov	_var01, arg01
-' 
-' repeat i from 0 to 31
-	mov	_var02, #0
-	loc	pa,	#(@LR__0043-@LR__0042)
-	call	#FCACHE_LOAD_
-LR__0042
-'   bordercolor[i]:=color
-	mov	arg01, _var02
-	shl	arg01, #2
-	add	objptr, #40
-	mov	arg02, objptr
-	sub	objptr, #40
-	add	arg01, arg02
-	wrlong	_var01, arg01
-	add	_var02, #1
-	cmps	_var02, #32 wcz
- if_b	jmp	#LR__0042
-LR__0043
-_Hn007_20210302_setbordercolors_ret
-	ret
-
-' 
-' 
-' '*************************************************************************
-' '                                                                        *
-' '  Text functions                                                        *
-' '                                                                        *
-' '*************************************************************************
-' 
-' pub outtextxy(x,y,text) | iii
-_Hn007_20210302_outtextxy
-	mov	COUNT_, #11
-	call	#pushregs_
-	mov	local01, arg01
-' 
-' ''--------- Output a string at position x,y - set the colors first
-' 
-' repeat iii from 0 to strsize(text)-1
-	mov	local02, #0
-	mov	arg01, arg03
-	mov	local03, #0
-	loc	pa,	#(@LR__0045-@LR__0044)
-	call	#FCACHE_LOAD_
-LR__0044
-	rdbyte	local04, arg01 wz
- if_ne	add	local03, #1
- if_ne	add	arg01, #1
- if_ne	jmp	#LR__0044
-LR__0045
-	mov	result1, local03
-	mov	local05, result1
-	sub	local05, #1
-	cmps	local05, #0 wcz
- if_a	mov	local06, #1
- if_be	neg	local06, #1
-	add	local05, local06
-	loc	pa,	#(@LR__0047-@LR__0046)
-	call	#FCACHE_LOAD_
-LR__0046
-'   buf[100*y+x+iii]:=(buf[100*y+x+iii] & $FFFFFF00)  | byte[text+iii]
-	qmul	arg02, #100
-	getqx	local07
-	add	local07, local01
-	add	local07, local02
-	shl	local07, #2
-	add	objptr, #168
-	add	local07, objptr
-	rdlong	local08, local07
-	andn	local08, #255
-	mov	local09, arg03
-	add	local09, local02
-	rdbyte	local10, local09
-	or	local08, local10
-	qmul	arg02, #100
-	getqx	local11
-	add	local11, local01
-	add	local11, local02
-	shl	local11, #2
-	add	local11, objptr
-	wrlong	local08, local11
-	add	local02, local06
-	cmp	local02, local05 wz
-	sub	objptr, #168
- if_ne	jmp	#LR__0046
-LR__0047
-	mov	ptra, fp
-	call	#popregs_
-_Hn007_20210302_outtextxy_ret
-	ret
-
-' 
-' 
-' 
-' pub write(text) | iii,c,ncx,ncy
-_Hn007_20210302_write
-	mov	COUNT_, #18
-	call	#pushregs_
-	mov	local01, arg01
-' 
-' ''--------- Output a string at the cursor position x,y, move the cursor
-' 
-' c:=write_color<<24+write_background<<16
-	add	objptr, ##12172
-	rdlong	local02, objptr
-	shl	local02, #24
-	add	objptr, #4
-	rdlong	local03, objptr
-	shl	local03, #16
-	add	local02, local03
-' 'debug(uhex_long(write_color))
-' ncy:=cursor_y
-	sub	objptr, #7
-	rdbyte	local04, objptr
-' ncx:=cursor_x+strsize(text)
-	sub	objptr, #1
-	rdbyte	local05, objptr
-	sub	objptr, ##12168
-	mov	arg01, local01
-	mov	local06, #0
-	loc	pa,	#(@LR__0049-@LR__0048)
-	call	#FCACHE_LOAD_
-LR__0048
-	rdbyte	local07, arg01 wz
- if_ne	add	local06, #1
- if_ne	add	arg01, #1
- if_ne	jmp	#LR__0048
-LR__0049
-	mov	result1, local06
-	add	local05, local06
-	mov	local08, local05
-	loc	pa,	#(@LR__0051-@LR__0050)
-	call	#FCACHE_LOAD_
-' repeat while ncx>99
-LR__0050
-	cmps	local08, #99 wcz
-'   ncx-=100
- if_a	sub	local08, #100
-'   ncy+=1
- if_a	add	local04, #1
- if_a	jmp	#LR__0050
-LR__0051
-' repeat while ncy>29
-LR__0052
-	cmps	local04, #29 wcz
- if_be	jmp	#LR__0053
-'   ncy-=1
-	sub	local04, #1
-'   scrollup()
-	call	#_Hn007_20210302_scrollup
-'   cursor_y-=1
-	add	objptr, ##12169
-	rdbyte	local05, objptr
-	sub	local05, #1
-	wrbyte	local05, objptr
-	sub	objptr, ##12169
-	jmp	#LR__0052
-LR__0053
-' 
-' repeat iii from 0 to strsize(text)-1
-	mov	local09, #0
-	mov	arg01, local01
-	mov	local06, #0
-	loc	pa,	#(@LR__0055-@LR__0054)
-	call	#FCACHE_LOAD_
-LR__0054
-	rdbyte	local07, arg01 wz
- if_ne	add	local06, #1
- if_ne	add	arg01, #1
- if_ne	jmp	#LR__0054
-LR__0055
-	mov	result1, local06
-	mov	local10, result1
-	sub	local10, #1
-	cmps	local10, #0 wcz
- if_a	mov	local11, #1
- if_be	neg	local11, #1
-	add	local10, local11
-	loc	pa,	#(@LR__0057-@LR__0056)
-	call	#FCACHE_LOAD_
-LR__0056
-' 
-'   buf[100*cursor_y+cursor_x+iii]:=buf[100*cursor_y+cursor_x+iii] &$FFFF | c
-	add	objptr, ##12169
-	rdbyte	local12, objptr
-	qmul	local12, #100
-	getqx	local13
-	sub	objptr, #1
-	rdbyte	local14, objptr
-	add	local13, local14
-	add	local13, local09
-	shl	local13, #2
-	sub	objptr, ##12000
-	add	local13, objptr
-	rdlong	local15, local13
-	and	local15, ##65535
-	or	local15, local02
-	add	objptr, ##12001
-	rdbyte	local16, objptr
-	qmul	local16, #100
-	getqx	local17
-	sub	objptr, #1
-	rdbyte	local18, objptr
-	add	local17, local18
-	add	local17, local09
-	shl	local17, #2
-	sub	objptr, ##12000
-	add	local17, objptr
-	wrlong	local15, local17
-	add	local09, local11
-	cmp	local09, local10 wz
-	sub	objptr, #168
- if_ne	jmp	#LR__0056
-LR__0057
-' 
-' outtextxy(cursor_x,cursor_y,text)
-	add	objptr, ##12168
-	rdbyte	arg01, objptr
-	add	objptr, #1
-	rdbyte	arg02, objptr
-	sub	objptr, ##12169
-	mov	arg03, local01
-	call	#_Hn007_20210302_outtextxy
-' 
-' cursor_x:=ncx
-	add	objptr, ##12168
-	wrbyte	local08, objptr
-' cursor_y:=ncy
-	add	objptr, #1
-	wrbyte	local04, objptr
-	sub	objptr, ##12169
-	mov	ptra, fp
-	call	#popregs_
-_Hn007_20210302_write_ret
-	ret
-
-' 
-' pub writeln(text)
-_Hn007_20210302_writeln
-	mov	COUNT_, #1
-	call	#pushregs_
-' 
-' '--------- Output a string at the cursor position x,y, move the cursor to the next line
-' 
-' write(text)
-	call	#_Hn007_20210302_write
-' cursor_x:=0
-	add	objptr, ##12168
-	wrbyte	#0, objptr
-' cursor_y+=1
-	add	objptr, #1
-	rdbyte	local01, objptr
-	add	local01, #1
-	wrbyte	local01, objptr
-' if (cursor_y>29)
-	rdbyte	local01, objptr
-	sub	objptr, ##12169
-	cmps	local01, #29 wcz
- if_be	jmp	#LR__0058
-'   scrollup()
-	call	#_Hn007_20210302_scrollup
-'   cursor_y:=29
-	add	objptr, ##12169
-	wrbyte	#29, objptr
-	sub	objptr, ##12169
-LR__0058
-	mov	ptra, fp
-	call	#popregs_
-_Hn007_20210302_writeln_ret
-	ret
-
-' 
-' pub cls(fc,bc)   :c
-_Hn007_20210302_cls
-	mov	COUNT_, #3
-	call	#pushregs_
-	mov	local01, arg01
-' 
-' ''---------- Clear the screen, set its foreground/background color
-' 
-' c:=fc<<24+bc<<16+$20
-	mov	local02, local01
-	shl	local02, #24
-	mov	local03, arg02
-	shl	local03, #16
-	add	local02, local03
-	add	local02, #32
-' longfill(@buf,c,3000)
-	add	objptr, #168
-	mov	arg01, objptr
-	sub	objptr, #168
-	loc	pa,	#(@LR__0061-@LR__0059)
-	call	#FCACHE_LOAD_
-LR__0059
-	rep	@LR__0062, ##3000
-LR__0060
-	wrlong	local02, arg01
-	add	arg01, #4
-LR__0061
-LR__0062
-'  setwritecolors(fc,bc)
-' 
-' ''---------- Set colors for write and writeln
-' 
-' write_color:=ff
-	add	objptr, ##12172
-	wrlong	local01, objptr
-' write_background:=bb
-	add	objptr, #4
-	wrlong	arg02, objptr
-	sub	objptr, ##12176
-	mov	result1, local02
-	mov	ptra, fp
-	call	#popregs_
-_Hn007_20210302_cls_ret
-	ret
-
-' 
-' pub scrollup() | i
-_Hn007_20210302_scrollup
-	mov	COUNT_, #4
-	call	#pushregs_
-' 
-' ''-----------  Scroll the screen one line up
-' 
-' longmove(@buf,@buf+400,2900)
-	add	objptr, #168
-	mov	arg01, objptr
-	mov	arg02, objptr
-	sub	objptr, #168
-	add	arg02, #400
-	mov	arg03, ##2900
-	call	#__system__longmove
-' repeat i from 2900 to 2999
-	mov	local01, ##2900
-	loc	pa,	#(@LR__0064-@LR__0063)
-	call	#FCACHE_LOAD_
-LR__0063
-'   buf[i]:=(buf[i] & $FFFF0000) | 32
-	mov	local02, local01
-	shl	local02, #2
-	add	objptr, #168
-	add	local02, objptr
-	rdlong	local03, local02
-	and	local03, ##-65536
-	or	local03, #32
-	mov	local04, local01
-	shl	local04, #2
-	add	local04, objptr
-	wrlong	local03, local04
-	add	local01, #1
-	cmps	local01, ##3000 wcz
-	sub	objptr, #168
- if_b	jmp	#LR__0063
-LR__0064
-	mov	ptra, fp
-	call	#popregs_
-_Hn007_20210302_scrollup_ret
-	ret
-
-' 
-' 
-' pub inttohex(i,d):result |q,pos,k,j
-_Hn007_20210302_inttohex
-' 
-' ''----------  Convert integer to hex string with d digits, return a pointer
-' 
-' j:=i
-' pos:=d-1
-	mov	_var01, arg02
-	sub	_var01, #1
-' k:=0
-' n_string[d]:=0
-	mov	_var02, arg02
-	add	objptr, ##12200
-	mov	_var03, objptr
-	add	_var02, objptr
-	wrbyte	#0, _var02
-' repeat k from 0 to d-1
-	mov	_var04, #0
-	sub	arg02, #1
-	mov	_var05, arg02
-	cmps	_var05, #0 wcz
-	sub	objptr, ##12200
- if_a	mov	_var03, #1
- if_be	neg	_var03, #1
-	add	_var05, _var03
-	loc	pa,	#(@LR__0066-@LR__0065)
-	call	#FCACHE_LOAD_
-LR__0065
-'   n_string[k]:=48
-	mov	_var06, _var04
-	add	objptr, ##12200
-	add	_var06, objptr
-	wrbyte	#48, _var06
-	add	_var04, _var03
-	cmp	_var04, _var05 wz
-	sub	objptr, ##12200
- if_ne	jmp	#LR__0065
-LR__0066
-' 
-' if (j<>0)
-	cmp	arg01, #0 wz
- if_e	jmp	#LR__0069
-' 
-'   repeat while (pos>-1)
-LR__0067
-	cmps	_var01, ##-1 wcz
- if_be	jmp	#LR__0068
-'     q:=j//16
-	abs	arg02, arg01 wc
-	and	arg02, #15
- if_b	neg	arg02, arg02
-	mov	_var07, arg02
-'     if (q>9)
-	cmps	_var07, #9 wcz
-'       q:=q+7
- if_a	add	_var07, #7
-'     q:=48+q
-	add	_var07, #48
-'     n_string[pos]:=q
-	mov	arg02, _var01
-	add	objptr, ##12200
-	add	arg02, objptr
-	wrbyte	_var07, arg02
-'     j:=j/16
-	abs	arg02, arg01 wc
-	shr	arg02, #4
-	sub	objptr, ##12200
- if_b	neg	arg02, arg02
-	mov	arg01, arg02
-'     pos-=1
-	sub	_var01, #1
-	jmp	#LR__0067
-LR__0068
-LR__0069
-' 
-' q:=@n_string
-	add	objptr, ##12200
-	mov	result1, objptr
-	sub	objptr, ##12200
-' return q
-_Hn007_20210302_inttohex_ret
-	ret
-
-' 
-' 
-' pub setmode(mode)
-_Hn007_20210302_setmode
-' 
-' if (mode==0)
-	cmp	arg01, #0 wz
- if_ne	jmp	#LR__0072
-' 
-'   timings[0]:= $70810000 + hdmi_base<<17 + 16          'before sync
-	add	objptr, ##12212
-	wrlong	##1888550928, objptr
-'   timings[1]:= $70810000 + hdmi_base<<17 + 80          'sync
-	add	objptr, #4
-	wrlong	##1888550992, objptr
-'   timings[2]:= $70810000 + hdmi_base<<17 + 20          'before visible
-	add	objptr, #4
-	wrlong	##1888550932, objptr
-'   timings[3]:= $70810000 + hdmi_base<<17 + 1024        'visible 1024
-	add	objptr, #4
-	wrlong	##1888551936, objptr
-'   timings[4]:= $70810000 + hdmi_base<<17 + 112         'immediate 112
-	add	objptr, #4
-	wrlong	##1888551024, objptr
-'   timings[5]:= $20880000 + hdmi_base<<17 + 8           'imm+lut, 1 char
-	add	objptr, #4
-	wrlong	##546832392, objptr
-'   timings[6]:= 48
-	add	objptr, #4
-	wrlong	#48, objptr
-'   timings[7]:= 16
-	add	objptr, #4
-	wrlong	#16, objptr
-'   timings[8]:= 16
-	add	objptr, #4
-	wrlong	#16, objptr
-'   timings[9]:= 16
-	add	objptr, #4
-	wrlong	#16, objptr
-	sub	objptr, ##12248
-' 
-'   clkfreq:=354693878
-	wrlong	##354693878, #20
-'   org
-	loc	pa,	#(@LR__0071-@LR__0070)
-	call	#FCACHE_LOAD_
-LR__0070
-	hubset	##29584635
-LR__0071
-LR__0072
-' 
-' 
-' if (mode==1)   ' 1026 px per line
-	cmp	arg01, #1 wz
- if_ne	jmp	#LR__0075
-' 
-'   timings[0]:= $70810000 + hdmi_base<<17 + 30          'before sync
-	add	objptr, ##12212
-	wrlong	##1888550942, objptr
-'   timings[1]:= $70810000 + hdmi_base<<17 + 80          'sync
-	add	objptr, #4
-	wrlong	##1888550992, objptr
-'   timings[2]:= $70810000 + hdmi_base<<17 + 20          'before visible
-	add	objptr, #4
-	wrlong	##1888550932, objptr
-'   timings[3]:= $70810000 + hdmi_base<<17 + 896         'visible 896
-	add	objptr, #4
-	wrlong	##1888551808, objptr
-'   timings[4]:= $70810000 + hdmi_base<<17 + 48          'immediate 48
-	add	objptr, #4
-	wrlong	##1888550960, objptr
-'   timings[5]:= $20880000 + hdmi_base<<17 + 8           'imm+lut, 1 char
-	add	objptr, #4
-	wrlong	##546832392, objptr
-'   timings[6]:= 24
-	add	objptr, #4
-	wrlong	#24, objptr
-'   timings[7]:= 32
-	add	objptr, #4
-	wrlong	#32, objptr
-'   timings[8]:= 32
-	add	objptr, #4
-	wrlong	#32, objptr
-'   timings[9]:= 32
-	add	objptr, #4
-	wrlong	#32, objptr
-	sub	objptr, ##12248
-' 
-'   clkfreq:=319215686
-	wrlong	##319215686, #20
-'   org
-	loc	pa,	#(@LR__0074-@LR__0073)
-	call	#FCACHE_LOAD_
-LR__0073
-	hubset	##30092795
-LR__0074
-LR__0075
-' 
-' 
-' if (mode==2) ' 912 pixes per line     ' 283_751_600 80x PAL  - real settings: 64 908 283750000 - 0.9999944
-	cmp	arg01, #2 wz
- if_ne	jmp	#LR__0078
-' 
-'   timings[0]:= $70810000 + hdmi_base<<17 + 16           'before sync
-	add	objptr, ##12212
-	wrlong	##1888550928, objptr
-'   timings[1]:= $70810000 + hdmi_base<<17 + 64           'sync
-	add	objptr, #4
-	wrlong	##1888550976, objptr
-'   timings[2]:= $70810000 + hdmi_base<<17 + 16           'before visible
-	add	objptr, #4
-	wrlong	##1888550928, objptr
-'   timings[3]:= $70810000 + hdmi_base<<17 + 816          'visible 1024
-	add	objptr, #4
-	wrlong	##1888551728, objptr
-'   timings[4]:= $70810000 + hdmi_base<<17 + 8            'immediate 112
-	add	objptr, #4
-	wrlong	##1888550920, objptr
-'   timings[5]:= $20880000 + hdmi_base<<17 + 8            'imm+lut, 1 char
-	add	objptr, #4
-	wrlong	##546832392, objptr
-'   timings[6]:= 8
-	add	objptr, #4
-	wrlong	#8, objptr
-'   timings[7]:= 32
-	add	objptr, #4
-	wrlong	#32, objptr
-'   timings[8]:= 64
-	add	objptr, #4
-	wrlong	#64, objptr
-' 
-'   timings[9]:= 32
-	add	objptr, #4
-	wrlong	#32, objptr
-	sub	objptr, ##12248
-' 
-'   clkfreq:=283750000
-	wrlong	##283750000, #20
-'   org
-	loc	pa,	#(@LR__0077-@LR__0076)
-	call	#FCACHE_LOAD_
-LR__0076
-	hubset	##33524731
-LR__0077
-LR__0078
-' 
-' if (mode==256)
-	cmp	arg01, #256 wz
- if_ne	jmp	#LR__0081
-' 
-'   timings[0]:= $70810000 + hdmi_base<<17 + 80          'before sync
-	add	objptr, ##12212
-	wrlong	##1888550992, objptr
-'   timings[1]:= $70810000 + hdmi_base<<17 + 160         'sync
-	add	objptr, #4
-	wrlong	##1888551072, objptr
-'   timings[2]:= $70810000 + hdmi_base<<17 + 84          'before visible
-	add	objptr, #4
-	wrlong	##1888550996, objptr
-'   timings[3]:= $70810000 + hdmi_base<<17 + 816         'visible 816
-	add	objptr, #4
-	wrlong	##1888551728, objptr
-'   timings[4]:= $70810000 + hdmi_base<<17 + 8           'immediate 8
-	add	objptr, #4
-	wrlong	##1888550920, objptr
-'   timings[5]:= $20880000 + hdmi_base<<17 + 8           'imm+lut, 1 char
-	add	objptr, #4
-	wrlong	##546832392, objptr
-'   timings[6]:= 8
-	add	objptr, #4
-	wrlong	#8, objptr
-'   timings[7]:= 8
-	add	objptr, #4
-	wrlong	#8, objptr
-'   timings[8]:= 12
-	add	objptr, #4
-	wrlong	#12, objptr
-'   timings[9]:= 8
-	add	objptr, #4
-	wrlong	#8, objptr
-	sub	objptr, ##12248
-' 
-'   clkfreq:=357959184
-	wrlong	##357959184, #20
-'   org
-	loc	pa,	#(@LR__0080-@LR__0079)
-	call	#FCACHE_LOAD_
-LR__0079
-	hubset	##29582587
-LR__0080
-LR__0081
-' 
-' if (mode==257)  '1026 px
-	cmp	arg01, #257 wz
- if_ne	jmp	#LR__0084
-' 
-'   timings[0]:= $70810000 + hdmi_base<<17 + 80          'before sync
-	add	objptr, ##12212
-	wrlong	##1888550992, objptr
-'   timings[1]:= $70810000 + hdmi_base<<17 + 50          'sync
-	add	objptr, #4
-	wrlong	##1888550962, objptr
-'   timings[2]:= $70810000 + hdmi_base<<17 + 80          'before visible
-	add	objptr, #4
-	wrlong	##1888550992, objptr
-'   timings[3]:= $70810000 + hdmi_base<<17 + 816         'visible 816
-	add	objptr, #4
-	wrlong	##1888551728, objptr
-'   timings[4]:= $70810000 + hdmi_base<<17 + 8           'immediate 8
-	add	objptr, #4
-	wrlong	##1888550920, objptr
-'   timings[5]:= $20880000 + hdmi_base<<17 + 8           'imm+lut, 1 char
-	add	objptr, #4
-	wrlong	##546832392, objptr
-'   timings[6]:= 8
-	add	objptr, #4
-	wrlong	#8, objptr
-'   timings[7]:= 8
-	add	objptr, #4
-	wrlong	#8, objptr
-'   timings[8]:= 12
-	add	objptr, #4
-	wrlong	#12, objptr
-'   timings[9]:= 8
-	add	objptr, #4
-	wrlong	#8, objptr
-	sub	objptr, ##12248
-' 
-'   clkfreq:=322162162
-	wrlong	##322162162, #20
-'   org
-	loc	pa,	#(@LR__0083-@LR__0082)
-	call	#FCACHE_LOAD_
-LR__0082
-	hubset	##26366971
-LR__0083
-LR__0084
-' 
-' if (mode==258)  '912 px
-	cmp	arg01, #258 wz
- if_ne	jmp	#LR__0087
-' 
-'   timings[0]:= $70810000 + hdmi_base<<17 + 24          'before sync
-	add	objptr, ##12212
-	wrlong	##1888550936, objptr
-'   timings[1]:= $70810000 + hdmi_base<<17 + 48         'sync
-	add	objptr, #4
-	wrlong	##1888550960, objptr
-'   timings[2]:= $70810000 + hdmi_base<<17 + 24          'before visible
-	add	objptr, #4
-	wrlong	##1888550936, objptr
-'   timings[3]:= $70810000 + hdmi_base<<17 + 816         'visible 816
-	add	objptr, #4
-	wrlong	##1888551728, objptr
-'   timings[4]:= $70810000 + hdmi_base<<17 + 8           'immediate 8
-	add	objptr, #4
-	wrlong	##1888550920, objptr
-'   timings[5]:= $20880000 + hdmi_base<<17 + 8           'imm+lut, 1 char
-	add	objptr, #4
-	wrlong	##546832392, objptr
-'   timings[6]:= 8
-	add	objptr, #4
-	wrlong	#8, objptr
-'   timings[7]:= 8
-	add	objptr, #4
-	wrlong	#8, objptr
-'   timings[8]:= 12
-	add	objptr, #4
-	wrlong	#12, objptr
-'   timings[9]:= 8
-	add	objptr, #4
-	wrlong	#8, objptr
-	sub	objptr, ##12248
-' 
-'   clkfreq:=286363636
-	wrlong	##286363636, #20
-'   org
-	loc	pa,	#(@LR__0086-@LR__0085)
-	call	#FCACHE_LOAD_
-LR__0085
-	hubset	##22362875
-LR__0086
-LR__0087
-_Hn007_20210302_setmode_ret
-	ret
-
-' 
-' 
-' 
-' 
-' pub start(mode):result | c1
-_Hn007_20210302_start
-	mov	COUNT_, #2
-	call	#pushregs_
 ' 
 ' ' mode=0 - start at PAL timings, 624 lines
 ' ' mode=256 - start at NTSC timings, 524 lines
@@ -1855,47 +181,45 @@ _Hn007_20210302_start
 ' ' initialize pointers
 ' 
 ' border_ptr:=@bordercolor
-	add	objptr, #40
-	mov	local01, objptr
 	sub	objptr, #32
 	wrlong	local01, objptr
 ' font_ptr:=@st_font
 	sub	objptr, #4
 	wrlong	ptr__Hn007_20210302_dat__, objptr
-' buf_ptr:=@buf
 	add	objptr, #164
-	mov	local01, objptr
+	mov	local02, objptr
+' buf_ptr:=@buf
 	sub	objptr, #168
-	wrlong	local01, objptr
+	wrlong	local02, objptr
+	add	objptr, ##12196
+	mov	local03, objptr
 ' vblank_ptr:=@vblank
-	add	objptr, ##12196
-	mov	local01, objptr
 	sub	objptr, ##12184
-	wrlong	local01, objptr
-' cursor_ptr:=@cursor_x
+	wrlong	local03, objptr
 	add	objptr, ##12156
-	mov	local01, objptr
+	mov	local04, objptr
+' cursor_ptr:=@cursor_x
 	sub	objptr, ##12152
-	wrlong	local01, objptr
-' mode_ptr:=@timings
+	wrlong	local04, objptr
 	add	objptr, ##12196
-	mov	local01, objptr
+	mov	local05, objptr
+' mode_ptr:=@timings
 	sub	objptr, ##12192
-	wrlong	local01, objptr
-' palette_ptr:=@ataripalette
+	wrlong	local05, objptr
 	add	ptr__Hn007_20210302_dat__, ##6144
+' palette_ptr:=@ataripalette
 	add	objptr, #4
 	wrlong	ptr__Hn007_20210302_dat__, objptr
-' command_ptr:=@cmd1
 	add	objptr, ##12228
-	mov	local01, objptr
+	mov	local06, objptr
+' command_ptr:=@cmd1
 	sub	objptr, ##12224
-	wrlong	local01, objptr
-' fontnum_ptr:=@fontnum
+	wrlong	local06, objptr
 	add	objptr, ##12232
-	mov	local01, objptr
+	mov	local07, objptr
+' fontnum_ptr:=@fontnum
 	sub	objptr, ##12228
-	wrlong	local01, objptr
+	wrlong	local07, objptr
 ' 
 ' fontnum:=0  ' ST type font
 	add	objptr, ##12228
@@ -1991,9 +315,9 @@ _Hn007_20210302_start
 	coginit	arg01, arg02 wc
  if_b	neg	arg01, #1
 	mov	result1, arg01
-	mov	local02, result1
+	mov	local08, result1
 	add	objptr, #36
-	wrlong	local02, objptr
+	wrlong	local08, objptr
 	sub	objptr, #36
 ' waitms(20)
 	mov	arg01, #20
@@ -2016,10 +340,1636 @@ _Hn007_20210302_start
 ' return cog
 	sub	objptr, ##12140
 	rdlong	result1, objptr
+	sub	objptr, ##632
+	wrlong	result1, objptr
+' 
+' v.cls(154,146)
+	mov	arg01, #154
+	mov	arg02, #146
+	add	objptr, ##596
+	call	#_Hn007_20210302_cls
+' v.setbordercolors(0,0,128)
+	mov	arg01, #128
+' 
+' ''---------- Set border color for all screen - rgb
+' 
+' color:=r<<16+g<<8+b
+	add	objptr, #40
+	mov	local09, objptr
+	sub	objptr, #40
+	loc	pa,	#(@LR__0003-@LR__0001)
+	call	#FCACHE_LOAD_
+LR__0001
+	rep	@LR__0004, #32
+LR__0002
+'   bordercolor[i]:=color
+	wrlong	arg01, local09
+	add	local09, #4
+LR__0003
+LR__0004
+	sub	objptr, ##596
+' 
+' serial_start(rxpin, txpin, baudrate)
+	mov	arg01, #56
+	mov	arg02, #57
+	mov	arg03, ##460800
+	call	#_serial_start
+' rxflush()
+' 
+' '' Clear serial input
+' 
+'   repeat
+LR__0005
+	call	#_rxcheck
+	cmps	result1, #0 wcz
+ if_ae	jmp	#LR__0005
+' 
+' cogspin(16,serialcog(),@serialstack)
+	mov	local10, objptr
+	add	objptr, #288
+	mov	local11, objptr
+	wrlong	local10, local11
+	add	local11, #4
+	wrlong	ptr__serialcog_, local11
+	mov	arg03, objptr
+	mov	arg01, #16
+	setq	arg03
+	coginit	arg01, entryptr__ wc
+ if_b	neg	arg01, #1
+	mov	result1, arg01
+' 
+' v.setwritecolors(154,146)
+	mov	arg02, #146
+' 
+' ''---------- Set colors for write and writeln
+' 
+' write_color:=ff
+	add	objptr, ##12480
+	wrlong	#154, objptr
+' write_background:=bb
+	add	objptr, #4
+	wrlong	#146, objptr
+	sub	objptr, ##12176
+' v.writeln(string("P2 started"))
+	mov	arg01, ##@LR__0106
+	call	#_Hn007_20210302_writeln
+' 
+' 'pinwrite(2,1)
+' 'pinwrite(3,1)
+' 
+' 'dacinit()
+' 
+' h11:=$8000
+	decod	local10, #15
+	sub	objptr, #28
+	wrlong	##32768, objptr
+' h12:=$8000
+	add	objptr, #4
+	wrlong	local10, objptr
+	sub	objptr, ##572
+' 
+' 'dacset(h11,h12) 
+' 
+' repeat
+'   repeat
+LR__0006
+'     tx("r")
+	mov	arg01, #114
+	call	#_tx
+'     tx("3")
+	mov	arg01, #51
+	call	#_tx
+'     tx("#")
+	mov	arg01, #35
+	call	#_tx
+'     waitms(1)
+	mov	arg01, #1
+	call	#__system___waitms
+'     rr:=serialblockingread()
+' 
+' repeat
+LR__0007
+'   r:=serialread()
+	call	#_serialread
+	mov	local12, result1
+	cmp	local12, ##-1 wz
+ if_e	jmp	#LR__0007
+' until r<>-1
+' return r
+	mov	result1, local12
+	add	objptr, ##544
+	wrlong	result1, objptr
+'     v.write(v.inttohex(rr,2))
+	mov	arg01, result1
+	mov	arg02, #2
+	add	objptr, #52
+	call	#_Hn007_20210302_inttohex
+	mov	arg01, result1
+	call	#_Hn007_20210302_write
+'     v.write(string(" "))
+	mov	arg01, ##@LR__0107
+	call	#_Hn007_20210302_write
+	sub	objptr, #48
+	rdlong	local13, objptr
+	shl	local13, #8
+	sub	objptr, #4
+	rdlong	local11, objptr
+	add	local13, local11
+'     rr2:=(rr2<<8)+rr
+	add	objptr, #4
+	wrlong	local13, objptr
+	sub	objptr, ##548
+	jmp	#LR__0006
+' 
+' 
+' 
+' repeat
+LR__0008
+'   repeat
+LR__0009
+'     rr:=serialblockingread()
+' 
+' repeat
+LR__0010
+'   r:=serialread()
+	call	#_serialread
+	mov	local12, result1
+	cmp	local12, ##-1 wz
+ if_e	jmp	#LR__0010
+' until r<>-1
+' return r
+	mov	result1, local12
+	add	objptr, ##544
+	wrlong	result1, objptr
+'     v.write(v.inttohex(rr,2))
+	mov	arg01, result1
+	mov	arg02, #2
+	add	objptr, #52
+	call	#_Hn007_20210302_inttohex
+	mov	arg01, result1
+	call	#_Hn007_20210302_write
+'     v.write(string(" "))
+	mov	arg01, ##@LR__0108
+	call	#_Hn007_20210302_write
+	sub	objptr, #48
+	rdlong	local14, objptr
+	shl	local14, #8
+	mov	local15, local14
+	sub	objptr, #4
+	rdlong	local11, objptr
+	add	local15, local11
+'     rr2:=(rr2<<8)+rr
+	add	objptr, #4
+	wrlong	local15, objptr
+	mov	local10, local15
+	sub	objptr, ##548
+	cmp	local10, ##33489662 wz
+ if_ne	jmp	#LR__0009
+'   until rr2==$01FF02FE  
+'   repeat iii from 0 to 3
+	mov	local16, #4
+LR__0011
+'     rr:=serialblockingread()    
+' 
+' repeat
+LR__0012
+'   r:=serialread()
+	call	#_serialread
+	mov	local12, result1
+	cmp	local12, ##-1 wz
+ if_e	jmp	#LR__0012
+' until r<>-1
+' return r
+	mov	result1, local12
+	mov	local10, result1
+	add	objptr, ##544
+	wrlong	local10, objptr
+	sub	objptr, ##544
+	djnz	local16, #LR__0011
+'   l1:=serialblockingread()
+' 
+' repeat
+LR__0013
+'   r:=serialread()
+	call	#_serialread
+	mov	local12, result1
+	cmp	local12, ##-1 wz
+ if_e	jmp	#LR__0013
+' until r<>-1
+' return r
+	mov	result1, local12
+	add	objptr, ##556
+	wrlong	result1, objptr
+'   v.write(v.inttohex(l1,2))
+	mov	arg01, result1
+	mov	arg02, #2
+	add	objptr, #40
+	call	#_Hn007_20210302_inttohex
+	mov	arg01, result1
+	call	#_Hn007_20210302_write
+'   v.write(string(" "))
+	mov	arg01, ##@LR__0109
+	call	#_Hn007_20210302_write
+	sub	objptr, ##596
+'   
+'       
+'   h1:=serialblockingread()
+' 
+' repeat
+LR__0014
+'   r:=serialread()
+	call	#_serialread
+	mov	local12, result1
+	cmp	local12, ##-1 wz
+ if_e	jmp	#LR__0014
+' until r<>-1
+' return r
+	mov	result1, local12
+	add	objptr, ##552
+	wrlong	result1, objptr
+'   v.write(v.inttohex(h1,2))
+	mov	arg01, result1
+	mov	arg02, #2
+	add	objptr, #44
+	call	#_Hn007_20210302_inttohex
+	mov	arg01, result1
+	call	#_Hn007_20210302_write
+'   v.write(string(" "))
+	mov	arg01, ##@LR__0110
+	call	#_Hn007_20210302_write
+	sub	objptr, #44
+	rdlong	local17, objptr
+	shl	local17, #8
+	mov	local18, local17
+	add	objptr, #4
+	rdlong	local11, objptr
+	add	local18, local11
+	decod	local19, #15
+	add	local19, local18
+	mov	local20, local19
+	and	local20, ##65535
+' 
+'   h1:=($8000+(h1<<8+l1)) & $FFFF
+	sub	objptr, #4
+	wrlong	local20, objptr
+	sub	objptr, ##552
+'   f1:=serialblockingread()  
+' 
+' repeat
+LR__0015
+'   r:=serialread()
+	call	#_serialread
+	mov	local12, result1
+	cmp	local12, ##-1 wz
+ if_e	jmp	#LR__0015
+' until r<>-1
+' return r
+	mov	result1, local12
+	add	objptr, ##560
+	wrlong	result1, objptr
+'   v.write(v.inttohex(f1,2))
+	mov	arg01, result1
+	mov	arg02, #2
+	add	objptr, #36
+	call	#_Hn007_20210302_inttohex
+	mov	arg01, result1
+	call	#_Hn007_20210302_write
+'   v.write(string(" "))  
+	mov	arg01, ##@LR__0111
+	call	#_Hn007_20210302_write
+	sub	objptr, ##596
+'   c1:=serialblockingread()
+' 
+' repeat
+LR__0016
+'   r:=serialread()
+	call	#_serialread
+	mov	local12, result1
+	cmp	local12, ##-1 wz
+ if_e	jmp	#LR__0016
+' until r<>-1
+' return r
+	mov	result1, local12
+	add	objptr, ##564
+	wrlong	result1, objptr
+'   v.write(v.inttohex(c1,2))
+	mov	arg01, result1
+	mov	arg02, #2
+	add	objptr, #32
+	call	#_Hn007_20210302_inttohex
+	mov	arg01, result1
+	call	#_Hn007_20210302_write
+'   v.write(string(" "))  
+	mov	arg01, ##@LR__0112
+	call	#_Hn007_20210302_write
 	sub	objptr, #36
+	rdlong	local21, objptr
+	shl	local21, #8
+	mov	local22, local21
+	add	objptr, #4
+	rdlong	local11, objptr
+	add	local22, local11
+'   f1:=(f1<<8+c1)
+	sub	objptr, #4
+	wrlong	local22, objptr
+'   v.write(v.inttohex(h1,4))
+	sub	objptr, #8
+	rdlong	arg01, objptr
+	mov	arg02, #4
+	add	objptr, #44
+	call	#_Hn007_20210302_inttohex
+	mov	arg01, result1
+	call	#_Hn007_20210302_write
+'   v.write(string(" ") )
+	mov	arg01, ##@LR__0113
+	call	#_Hn007_20210302_write
+'   v.write(v.inttohex(f1,4))
+	sub	objptr, #36
+	rdlong	arg01, objptr
+	mov	arg02, #4
+	add	objptr, #36
+	call	#_Hn007_20210302_inttohex
+	mov	arg01, result1
+	call	#_Hn007_20210302_write
+'   v.write(string(" ") )
+	mov	arg01, ##@LR__0114
+	call	#_Hn007_20210302_write
+'   v.writeln(string(" "))
+	mov	arg01, ##@LR__0115
+	call	#_Hn007_20210302_writeln
+' 
+'   
+' 
+'   if (f1==$0202)
+	sub	objptr, #36
+	rdlong	local10, objptr
+	sub	objptr, ##560
+	cmp	local10, ##514 wz
+ if_ne	jmp	#LR__0017
+'     h11:=h1
+	add	objptr, ##552
+	rdlong	local10, objptr
+	add	objptr, #16
+	wrlong	local10, objptr
+	sub	objptr, ##568
+LR__0017
+'   if (f1==$0203)
+	add	objptr, ##560
+	rdlong	local10, objptr
+	sub	objptr, ##560
+	cmp	local10, ##515 wz
+ if_ne	jmp	#LR__0018
+'     h12:=h1
+	add	objptr, ##552
+	rdlong	local10, objptr
+	add	objptr, #20
+	wrlong	local10, objptr
+	sub	objptr, ##572
+LR__0018
+'     
+'   h21:=$8000
+	decod	local10, #15
+	add	objptr, ##576
+	wrlong	##32768, objptr
+'   h22:=$8000  
+	add	objptr, #4
+	wrlong	local10, objptr
+'     
+'  ' 1 joy do przodu, robot jedzie, 0203= h11=0   
+'     
+'   if (h12<$1000) & (h11<$F000) & (h11>$1000)
+	mov	local10, #0
+	sub	objptr, #8
+	rdlong	local11, objptr
+	cmps	local11, ##4096 wcz
+ if_b	neg	local10, #1
+	mov	local23, #0
+	sub	objptr, #4
+	rdlong	local24, objptr
+	cmps	local24, ##61440 wcz
+ if_b	neg	local23, #1
+	and	local10, local23
+	mov	local25, #0
+	rdlong	local26, objptr
+	sub	objptr, ##568
+	cmps	local26, ##4096 wcz
+ if_a	neg	local25, #1
+	test	local10, local25 wz
+ if_e	jmp	#LR__0019
+'     h21:=$2800
+	add	objptr, ##576
+	wrlong	##10240, objptr
+'     h22:=$2800
+	add	objptr, #4
+	wrlong	##10240, objptr
+	sub	objptr, ##580
+	jmp	#LR__0033
+LR__0019
+' 
+' ' 2. joy do tyłu, robot do tyłu
+' 
+'   elseif (h12>$F000) & (h11<$F000) & (h11>$1000)
+	mov	local10, #0
+	add	objptr, ##572
+	rdlong	local11, objptr
+	cmps	local11, ##61440 wcz
+ if_a	neg	local10, #1
+	mov	local23, #0
+	sub	objptr, #4
+	rdlong	local27, objptr
+	cmps	local27, ##61440 wcz
+ if_b	neg	local23, #1
+	and	local10, local23
+	mov	local25, #0
+	rdlong	local28, objptr
+	sub	objptr, ##568
+	cmps	local28, ##4096 wcz
+ if_a	neg	local25, #1
+	test	local10, local25 wz
+ if_e	jmp	#LR__0020
+'     h21:=$D800
+	add	objptr, ##576
+	wrlong	##55296, objptr
+'     h22:=$D800
+	add	objptr, #4
+	wrlong	##55296, objptr
+	sub	objptr, ##580
+	jmp	#LR__0032
+LR__0020
+' 
+'   '3,4  joy w bok
+'   
+'   elseif (h11>$F000) & (h12<$F000) & (h12>$1000)
+	mov	local10, #0
+	add	objptr, ##568
+	rdlong	local11, objptr
+	cmps	local11, ##61440 wcz
+ if_a	neg	local10, #1
+	mov	local23, #0
+	add	objptr, #4
+	rdlong	local27, objptr
+	cmps	local27, ##61440 wcz
+ if_b	neg	local23, #1
+	and	local10, local23
+	mov	local25, #0
+	rdlong	local28, objptr
+	sub	objptr, ##572
+	cmps	local28, ##4096 wcz
+ if_a	neg	local25, #1
+	test	local10, local25 wz
+ if_e	jmp	#LR__0021
+'     h21:=$D800
+	add	objptr, ##576
+	wrlong	##55296, objptr
+'     h22:=$2800
+	add	objptr, #4
+	wrlong	##10240, objptr
+	sub	objptr, ##580
+	jmp	#LR__0031
+LR__0021
+'     
+'   elseif (h11<$1000) & (h12<$F000) & (h12>$1000)
+	mov	local10, #0
+	add	objptr, ##568
+	rdlong	local11, objptr
+	cmps	local11, ##4096 wcz
+ if_b	neg	local10, #1
+	mov	local23, #0
+	add	objptr, #4
+	rdlong	local27, objptr
+	cmps	local27, ##61440 wcz
+ if_b	neg	local23, #1
+	and	local10, local23
+	mov	local25, #0
+	rdlong	local28, objptr
+	sub	objptr, ##572
+	mov	local26, local28
+	cmps	local26, ##4096 wcz
+ if_a	neg	local25, #1
+	test	local10, local25 wz
+ if_e	jmp	#LR__0022
+'     h21:=$2800
+	add	objptr, ##576
+	wrlong	##10240, objptr
+'     h22:=$d800
+	add	objptr, #4
+	wrlong	##55296, objptr
+	sub	objptr, ##580
+	jmp	#LR__0030
+LR__0022
+'     
+'   elseif (h12>$F000) & (h11>$F000)    
+	mov	local10, #0
+	add	objptr, ##572
+	rdlong	local11, objptr
+	cmps	local11, ##61440 wcz
+ if_a	neg	local10, #1
+	mov	local23, #0
+	sub	objptr, #4
+	rdlong	local27, objptr
+	sub	objptr, ##568
+	cmps	local27, ##61440 wcz
+ if_a	neg	local23, #1
+	test	local10, local23 wz
+ if_e	jmp	#LR__0023
+'     h21:=$D800
+	add	objptr, ##576
+	wrlong	##55296, objptr
+'     h22:=$c000
+	add	objptr, #4
+	wrlong	##49152, objptr
+	sub	objptr, ##580
+	jmp	#LR__0029
+LR__0023
+'     
+'   elseif (h12>$F000) & (h11<$1000)
+	mov	local10, #0
+	add	objptr, ##572
+	rdlong	local11, objptr
+	cmps	local11, ##61440 wcz
+ if_a	neg	local10, #1
+	mov	local23, #0
+	sub	objptr, #4
+	rdlong	local27, objptr
+	sub	objptr, ##568
+	cmps	local27, ##4096 wcz
+ if_b	neg	local23, #1
+	test	local10, local23 wz
+ if_e	jmp	#LR__0024
+'     h21:=$c000
+	add	objptr, ##576
+	wrlong	##49152, objptr
+'     h22:=$D800  
+	add	objptr, #4
+	wrlong	##55296, objptr
+	sub	objptr, ##580
+	jmp	#LR__0028
+LR__0024
+'     
+'   elseif (h12<$1000) & (h11>$F000)    
+	mov	local10, #0
+	add	objptr, ##572
+	rdlong	local11, objptr
+	cmps	local11, ##4096 wcz
+ if_b	neg	local10, #1
+	mov	local23, #0
+	sub	objptr, #4
+	rdlong	local27, objptr
+	sub	objptr, ##568
+	cmps	local27, ##61440 wcz
+ if_a	neg	local23, #1
+	test	local10, local23 wz
+ if_e	jmp	#LR__0025
+'     h21:=$4000
+	add	objptr, ##576
+	wrlong	##16384, objptr
+'     h22:=$2800
+	add	objptr, #4
+	wrlong	##10240, objptr
+	sub	objptr, ##580
+	jmp	#LR__0027
+LR__0025
+'     
+'   elseif (h12<$1000) & (h11<$F000)
+	mov	local10, #0
+	add	objptr, ##572
+	rdlong	local11, objptr
+	cmps	local11, ##4096 wcz
+ if_b	neg	local10, #1
+	mov	local23, #0
+	sub	objptr, #4
+	rdlong	local27, objptr
+	sub	objptr, ##568
+	cmps	local27, ##61440 wcz
+ if_b	neg	local23, #1
+	test	local10, local23 wz
+ if_e	jmp	#LR__0026
+'     h21:=$2800
+	add	objptr, ##576
+	wrlong	##10240, objptr
+'     h22:=$4000  
+	add	objptr, #4
+	wrlong	##16384, objptr
+	sub	objptr, ##580
+LR__0026
+LR__0027
+LR__0028
+LR__0029
+LR__0030
+LR__0031
+LR__0032
+LR__0033
+'  
+'     
+'   dacset(h21,h22)    
+	add	objptr, ##576
+	rdlong	arg01, objptr
+	add	objptr, #4
+	rdlong	arg02, objptr
+	sub	objptr, ##580
+	call	#_dacset
+'   if (f1==$0108)
+	add	objptr, ##560
+	rdlong	local10, objptr
+	sub	objptr, ##560
+	cmp	local10, #264 wz
+ if_ne	jmp	#LR__0036
+'     if (l1==1)
+	add	objptr, ##556
+	rdlong	local10, objptr
+	sub	objptr, ##556
+	cmp	local10, #1 wz
+ if_ne	jmp	#LR__0034
+'       pinwrite(2,0)
+	mov	arg02, #0
+	test	arg02, #1 wc
+	drvc	#2
+'       pinwrite(3,0)
+	test	arg02, #1 wc
+	drvc	#3
+'     else
+	jmp	#LR__0035
+LR__0034
+'       pinwrite(2,1)
+	mov	arg02, #1
+	test	arg02, #1 wc
+	drvc	#2
+'       pinwrite(3,1)
+	test	arg02, #1 wc
+	drvc	#3
+LR__0035
+LR__0036
+'       
+'   v.write(v.inttohex(h21,4))
+	add	objptr, ##576
+	rdlong	arg01, objptr
+	mov	arg02, #4
+	add	objptr, #20
+	call	#_Hn007_20210302_inttohex
+	mov	arg01, result1
+	call	#_Hn007_20210302_write
+'   v.write(string(" ") )
+	mov	arg01, ##@LR__0116
+	call	#_Hn007_20210302_write
+'   v.write(v.inttohex(h22,4))
+	sub	objptr, #16
+	rdlong	arg01, objptr
+	mov	local29, #4
+	mov	arg02, #4
+	add	objptr, #16
+	call	#_Hn007_20210302_inttohex
+	mov	arg01, result1
+	call	#_Hn007_20210302_write
+'   v.write(string(" ") )
+	mov	arg01, ##@LR__0117
+	call	#_Hn007_20210302_write
+'   v.writeln(string(" "))
+	mov	arg01, ##@LR__0118
+	call	#_Hn007_20210302_writeln
+	sub	objptr, ##596
+	jmp	#LR__0008
 	mov	ptra, fp
 	call	#popregs_
-_Hn007_20210302_start_ret
+_start_ret
+	ret
+
+'         
+' pub serialcog()|q
+_serialcog
+	mov	COUNT_, #6
+	call	#pushregs_
+' 
+' serialfront:=0
+	mov	local01, #0
+	add	objptr, #284
+	wrlong	#0, objptr
+' serialtail:=0
+	sub	objptr, #4
+	wrlong	#0, objptr
+	sub	objptr, #280
+' 
+' repeat
+LR__0037
+'   if serialfront<>((serialtail-1) //32)
+	add	objptr, #280
+	rdlong	local01, objptr
+	sub	local01, #1
+	abs	local02, local01 wc
+	and	local02, #31
+ if_b	neg	local02, local02
+	add	objptr, #4
+	rdlong	local03, objptr
+	sub	objptr, #284
+	cmp	local03, local02 wz
+ if_e	jmp	#LR__0037
+'     q:=rxcheck()
+	call	#_rxcheck
+	mov	local04, result1
+'     if q>=0
+	cmps	local04, #0 wcz
+ if_b	jmp	#LR__0037
+	add	objptr, #284
+	rdlong	local05, objptr
+	shl	local05, #2
+	sub	objptr, #260
+	add	local05, objptr
+'      serialbuf[serialfront]:=q
+	wrlong	local04, local05
+'      serialfront+=1
+	add	objptr, #260
+	rdlong	local06, objptr
+	add	local06, #1
+	wrlong	local06, objptr
+'      serialfront:=serialfront // 32
+	abs	local01, local06 wc
+	and	local01, #31
+ if_b	neg	local01, local01
+	wrlong	local01, objptr
+	sub	objptr, #284
+	jmp	#LR__0037
+	mov	ptra, fp
+	call	#popregs_
+_serialcog_ret
+	ret
+
+' 
+' pub serialread():r
+_serialread
+' 
+' if serialfront<>serialtail
+	add	objptr, #284
+	rdlong	_var01, objptr
+	sub	objptr, #4
+	rdlong	_var02, objptr
+	sub	objptr, #280
+	cmp	_var01, _var02 wz
+ if_e	jmp	#LR__0038
+	add	objptr, #280
+	rdlong	_var03, objptr
+	shl	_var03, #2
+	sub	objptr, #256
+	add	_var03, objptr
+'   r:=serialbuf[serialtail]
+	rdlong	_var04, _var03
+	add	objptr, #256
+	rdlong	_var05, objptr
+	add	_var05, #1
+	abs	_var01, _var05 wc
+	and	_var01, #31
+ if_b	neg	_var01, _var01
+'   serialtail:=(serialtail+1)//32
+	wrlong	_var01, objptr
+	sub	objptr, #280
+' else
+	jmp	#LR__0039
+LR__0038
+'   r:=-1
+	neg	_var04, #1
+LR__0039
+' return r
+	mov	result1, _var04
+_serialread_ret
+	ret
+
+' 
+' 
+' 
+' ''---------------------- Serial functions from jm_serial.spin2
+' 
+' pub serial_start(rxpin2, txpin2, baud) | bitmode
+_serial_start
+	mov	COUNT_, #5
+	call	#pushregs_
+	mov	local01, arg01
+	mov	local02, arg02
+' 
+' '' Start simple serial coms on rxpin and txpin at baud
+' 
+' '  longmove(@rxp, @rxpin2, 2)                                     ' save pins
+' 
+'   rxp:=rxpin2
+	add	objptr, #8
+	wrlong	local01, objptr
+'   txp:=txpin2
+	add	objptr, #4
+	wrlong	local02, objptr
+	sub	objptr, #12
+' 
+'   bitmode := muldiv64(clkfreq, $1_0000, baud) & $FFFFFC00       ' set bit timing
+	rdlong	arg01, #20
+	decod	arg02, #16
+	qmul	arg01, arg02
+	getqy	local03
+	getqx	local04
+	setq	local03
+	qdiv	local04, arg03
+	getqx	result1
+	mov	local05, result1
+	and	local05, ##-1024
+'   bitmode |= 7                                                  ' set bits (8)
+	or	local05, #7
+' 
+'   org
+	loc	pa,	#(@LR__0041-@LR__0040)
+	call	#FCACHE_LOAD_
+LR__0040
+	org	0
+	fltl	local01
+	wrpin	#62, local01
+	wxpin	local05, local01
+	drvl	local01
+	fltl	local02
+	wrpin	#124, local02
+	wxpin	local05, local02
+	drvl	local02
+LR__0041
+	orgh
+	mov	ptra, fp
+	call	#popregs_
+_serial_start_ret
+	ret
+
+'   while (rxcheck() >= 0)
+' 
+' 
+' pub rxcheck() : rxbyte | check
+_rxcheck
+	mov	COUNT_, #2
+	call	#pushregs_
+' 
+' '' Check for serial input
+' '' -- returns -1 if nothing available
+' 
+'   rxbyte := -1
+	neg	local01, #1
+'   check := pinr(rxp)
+	add	objptr, #8
+	rdlong	arg01, objptr
+	sub	objptr, #8
+	call	#__system___pinread
+	mov	local02, result1 wz
+'   if (check)
+ if_e	jmp	#LR__0042
+'     rxbyte := rdpin(rxp) >> 24
+	add	objptr, #8
+	rdlong	arg01, objptr
+	sub	objptr, #8
+	mov	local01, #0
+	rdpin	local01, arg01
+	shr	local01, #24
+LR__0042
+	mov	result1, local01
+	mov	ptra, fp
+	call	#popregs_
+_rxcheck_ret
+	ret
+
+'   until (rxbyte >= 0)
+' 
+' 
+' pub tx(b)
+_tx
+	mov	COUNT_, #1
+	call	#pushregs_
+' 
+' '' Emit byte
+' 
+'   wypin(txp, b)
+	add	objptr, #12
+	rdlong	local01, objptr
+	sub	objptr, #12
+	mov	arg02, arg01
+	wypin	arg02, local01
+'   txflush()
+' 
+' '' Wait until last byte has finished
+' 
+'   repeat
+LR__0043
+'     check := pinr(txp)
+	add	objptr, #12
+	rdlong	arg01, objptr
+	sub	objptr, #12
+	call	#__system___pinread
+	cmp	result1, #0 wz
+ if_e	jmp	#LR__0043
+	mov	ptra, fp
+	call	#popregs_
+_tx_ret
+	ret
+
+' 
+'    
+' pub dacset(lll,rrr)
+_dacset
+'    
+' org   
+	loc	pa,	#(@LR__0045-@LR__0044)
+	call	#FCACHE_LOAD_
+LR__0044
+	org	0
+	wypin	arg01, #0
+	wypin	arg02, #1
+LR__0045
+	orgh
+_dacset_ret
+	ret
+
+' 
+' 
+' '*************************************************************************
+' '                                                                        *
+' '  Text functions                                                        *
+' '                                                                        *
+' '*************************************************************************
+' 
+' pub outtextxy(x,y,text) | iii
+_Hn007_20210302_outtextxy
+	mov	COUNT_, #11
+	call	#pushregs_
+	mov	local01, arg01
+' 
+' ''--------- Output a string at position x,y - set the colors first
+' 
+' repeat iii from 0 to strsize(text)-1
+	mov	local02, #0
+	mov	arg01, arg03
+	mov	local03, #0
+	loc	pa,	#(@LR__0047-@LR__0046)
+	call	#FCACHE_LOAD_
+LR__0046
+	rdbyte	local04, arg01 wz
+ if_ne	add	local03, #1
+ if_ne	add	arg01, #1
+ if_ne	jmp	#LR__0046
+LR__0047
+	mov	result1, local03
+	mov	local05, result1
+	sub	local05, #1
+	cmps	local05, #0 wcz
+ if_a	mov	local06, #1
+ if_be	neg	local06, #1
+	add	local05, local06
+	qmul	arg02, #100
+	getqx	local07
+	add	local07, local01
+	loc	pa,	#(@LR__0049-@LR__0048)
+	call	#FCACHE_LOAD_
+LR__0048
+	mov	local08, local07
+	add	local08, local02
+	shl	local08, #2
+	add	objptr, #168
+	add	local08, objptr
+	rdlong	local09, local08
+	andn	local09, #255
+	mov	local10, arg03
+	add	local10, local02
+	rdbyte	local11, local10
+	or	local09, local11
+'   buf[100*y+x+iii]:=(buf[100*y+x+iii] & $FFFFFF00)  | byte[text+iii]
+	wrlong	local09, local08
+	add	local02, local06
+	cmp	local02, local05 wz
+	sub	objptr, #168
+ if_ne	jmp	#LR__0048
+LR__0049
+	mov	ptra, fp
+	call	#popregs_
+_Hn007_20210302_outtextxy_ret
+	ret
+
+' 
+' 
+' 
+' pub write(text) | iii,c,ncx,ncy
+_Hn007_20210302_write
+	mov	COUNT_, #14
+	call	#pushregs_
+	mov	local01, arg01
+	add	objptr, ##12172
+	rdlong	local02, objptr
+	shl	local02, #24
+	add	objptr, #4
+	rdlong	local03, objptr
+	shl	local03, #16
+	add	local02, local03
+' 
+' ''--------- Output a string at the cursor position x,y, move the cursor
+' 
+' c:=write_color<<24+write_background<<16
+' 'debug(uhex_long(write_color))
+' ncy:=cursor_y
+	sub	objptr, #7
+	rdbyte	local04, objptr
+' ncx:=cursor_x+strsize(text)
+	sub	objptr, #1
+	rdbyte	local05, objptr
+	sub	objptr, ##12168
+	mov	arg01, local01
+	mov	local06, #0
+	loc	pa,	#(@LR__0051-@LR__0050)
+	call	#FCACHE_LOAD_
+LR__0050
+	rdbyte	local07, arg01 wz
+ if_ne	add	local06, #1
+ if_ne	add	arg01, #1
+ if_ne	jmp	#LR__0050
+LR__0051
+	mov	result1, local06
+	add	local05, local06
+	mov	local08, local05
+	loc	pa,	#(@LR__0053-@LR__0052)
+	call	#FCACHE_LOAD_
+' repeat while ncx>99
+LR__0052
+	cmps	local08, #99 wcz
+'   ncx-=100
+ if_a	sub	local08, #100
+'   ncy+=1
+ if_a	add	local04, #1
+ if_a	jmp	#LR__0052
+LR__0053
+' repeat while ncy>29
+LR__0054
+	cmps	local04, #29 wcz
+ if_be	jmp	#LR__0055
+'   ncy-=1
+	sub	local04, #1
+'   scrollup()
+	call	#_Hn007_20210302_scrollup
+'   cursor_y-=1
+	add	objptr, ##12169
+	rdbyte	local05, objptr
+	sub	local05, #1
+	wrbyte	local05, objptr
+	sub	objptr, ##12169
+	jmp	#LR__0054
+LR__0055
+' 
+' repeat iii from 0 to strsize(text)-1
+	mov	local09, #0
+	mov	arg01, local01
+	mov	local06, #0
+	loc	pa,	#(@LR__0057-@LR__0056)
+	call	#FCACHE_LOAD_
+LR__0056
+	rdbyte	local07, arg01 wz
+ if_ne	add	local06, #1
+ if_ne	add	arg01, #1
+ if_ne	jmp	#LR__0056
+LR__0057
+	mov	result1, local06
+	mov	local10, result1
+	sub	local10, #1
+	cmps	local10, #0 wcz
+ if_a	mov	local11, #1
+ if_be	neg	local11, #1
+	add	local10, local11
+	loc	pa,	#(@LR__0059-@LR__0058)
+	call	#FCACHE_LOAD_
+LR__0058
+	add	objptr, ##12169
+	rdbyte	local12, objptr
+	qmul	local12, #100
+	getqx	local13
+	sub	objptr, #1
+	rdbyte	local12, objptr
+	add	local13, local12
+	add	local13, local09
+	shl	local13, #2
+	sub	objptr, ##12000
+	add	local13, objptr
+	rdlong	local14, local13
+	and	local14, ##65535
+	or	local14, local02
+' 
+'   buf[100*cursor_y+cursor_x+iii]:=buf[100*cursor_y+cursor_x+iii] &$FFFF | c
+	wrlong	local14, local13
+	add	local09, local11
+	cmp	local09, local10 wz
+	sub	objptr, #168
+ if_ne	jmp	#LR__0058
+LR__0059
+' 
+' outtextxy(cursor_x,cursor_y,text)
+	add	objptr, ##12168
+	rdbyte	arg01, objptr
+	add	objptr, #1
+	rdbyte	arg02, objptr
+	sub	objptr, ##12169
+	mov	arg03, local01
+	call	#_Hn007_20210302_outtextxy
+' 
+' cursor_x:=ncx
+	add	objptr, ##12168
+	wrbyte	local08, objptr
+' cursor_y:=ncy
+	add	objptr, #1
+	wrbyte	local04, objptr
+	sub	objptr, ##12169
+	mov	ptra, fp
+	call	#popregs_
+_Hn007_20210302_write_ret
+	ret
+
+' 
+' pub writeln(text)
+_Hn007_20210302_writeln
+	mov	COUNT_, #1
+	call	#pushregs_
+' 
+' '--------- Output a string at the cursor position x,y, move the cursor to the next line
+' 
+' write(text)
+	call	#_Hn007_20210302_write
+' cursor_x:=0
+	add	objptr, ##12168
+	wrbyte	#0, objptr
+' cursor_y+=1
+	add	objptr, #1
+	rdbyte	local01, objptr
+	add	local01, #1
+	wrbyte	local01, objptr
+' if (cursor_y>29)
+	rdbyte	local01, objptr
+	sub	objptr, ##12169
+	cmps	local01, #29 wcz
+ if_be	jmp	#LR__0060
+'   scrollup()
+	call	#_Hn007_20210302_scrollup
+'   cursor_y:=29
+	add	objptr, ##12169
+	wrbyte	#29, objptr
+	sub	objptr, ##12169
+LR__0060
+	mov	ptra, fp
+	call	#popregs_
+_Hn007_20210302_writeln_ret
+	ret
+
+' 
+' pub cls(fc,bc)   :c
+_Hn007_20210302_cls
+	mov	COUNT_, #3
+	call	#pushregs_
+	mov	local01, arg01
+	mov	local02, local01
+	shl	local02, #24
+	mov	local03, arg02
+	shl	local03, #16
+	add	local02, local03
+	add	local02, #32
+' 
+' ''---------- Clear the screen, set its foreground/background color
+' 
+' c:=fc<<24+bc<<16+$20
+	add	objptr, #168
+	mov	arg01, objptr
+	sub	objptr, #168
+' longfill(@buf,c,3000)
+	loc	pa,	#(@LR__0063-@LR__0061)
+	call	#FCACHE_LOAD_
+LR__0061
+	rep	@LR__0064, ##3000
+LR__0062
+	wrlong	local02, arg01
+	add	arg01, #4
+LR__0063
+LR__0064
+'  setwritecolors(fc,bc)
+' 
+' ''---------- Set colors for write and writeln
+' 
+' write_color:=ff
+	add	objptr, ##12172
+	wrlong	local01, objptr
+' write_background:=bb
+	add	objptr, #4
+	wrlong	arg02, objptr
+	sub	objptr, ##12176
+	mov	result1, local02
+	mov	ptra, fp
+	call	#popregs_
+_Hn007_20210302_cls_ret
+	ret
+
+' 
+' pub scrollup() | i
+_Hn007_20210302_scrollup
+	mov	COUNT_, #2
+	call	#pushregs_
+	add	objptr, #168
+	mov	arg01, objptr
+	sub	objptr, #168
+	mov	arg02, arg01
+	add	arg02, #400
+' 
+' ''-----------  Scroll the screen one line up
+' 
+' longmove(@buf,@buf+400,2900)
+	mov	arg03, ##2900
+	call	#__system__longmove
+	add	objptr, ##11768
+	mov	local01, objptr
+	sub	objptr, ##11768
+	loc	pa,	#(@LR__0067-@LR__0065)
+	call	#FCACHE_LOAD_
+LR__0065
+	rep	@LR__0068, #100
+LR__0066
+	rdlong	local02, local01
+	and	local02, ##-65536
+	or	local02, #32
+'   buf[i]:=(buf[i] & $FFFF0000) | 32
+	wrlong	local02, local01
+	add	local01, #4
+LR__0067
+LR__0068
+	mov	ptra, fp
+	call	#popregs_
+_Hn007_20210302_scrollup_ret
+	ret
+
+' 
+' 
+' pub inttohex(i,d):result |q,pos,k,j
+_Hn007_20210302_inttohex
+' 
+' ''----------  Convert integer to hex string with d digits, return a pointer
+' 
+' j:=i
+	mov	_var01, arg02
+	sub	_var01, #1
+' pos:=d-1
+	mov	_var02, _var01
+' k:=0
+	add	objptr, ##12200
+	add	arg02, objptr
+' n_string[d]:=0
+	wrbyte	#0, arg02
+' repeat k from 0 to d-1
+	mov	_var03, #0
+	cmps	_var01, #0 wcz
+	sub	objptr, ##12200
+ if_a	mov	_var04, #1
+ if_be	neg	_var04, #1
+	mov	_var05, _var04
+	add	_var01, _var04
+	loc	pa,	#(@LR__0070-@LR__0069)
+	call	#FCACHE_LOAD_
+LR__0069
+	mov	_var06, _var03
+	add	objptr, ##12200
+	add	_var06, objptr
+'   n_string[k]:=48
+	wrbyte	#48, _var06
+	add	_var03, _var05
+	cmp	_var03, _var01 wz
+	sub	objptr, ##12200
+ if_ne	jmp	#LR__0069
+LR__0070
+' 
+' if (j<>0)
+	cmp	arg01, #0 wz
+ if_e	jmp	#LR__0073
+' 
+'   repeat while (pos>-1)
+LR__0071
+	cmps	_var02, ##-1 wcz
+ if_be	jmp	#LR__0072
+	abs	_var04, arg01 wc
+	and	_var04, #15
+ if_b	neg	_var04, _var04
+	mov	_var07, _var04
+'     q:=j//16
+'     if (q>9)
+	cmps	_var07, #9 wcz
+'       q:=q+7
+ if_a	add	_var07, #7
+'     q:=48+q
+	add	_var07, #48
+	mov	_var08, _var02
+	add	objptr, ##12200
+	add	_var08, objptr
+'     n_string[pos]:=q
+	wrbyte	_var07, _var08
+'     j:=j/16
+	abs	_var04, arg01 wc
+	shr	_var04, #4
+	sub	objptr, ##12200
+ if_b	neg	_var04, _var04
+	mov	arg01, _var04
+'     pos-=1
+	sub	_var02, #1
+	jmp	#LR__0071
+LR__0072
+LR__0073
+	add	objptr, ##12200
+	mov	result1, objptr
+	sub	objptr, ##12200
+' 
+' q:=@n_string
+' return q
+_Hn007_20210302_inttohex_ret
+	ret
+
+' 
+' 
+' pub setmode(mode)
+_Hn007_20210302_setmode
+' 
+' if (mode==0)
+	cmp	arg01, #0 wz
+ if_ne	jmp	#LR__0076
+' 
+'   timings[0]:= $70810000 + hdmi_base<<17 + 16          'before sync
+	add	objptr, ##12212
+	wrlong	##1888550928, objptr
+'   timings[1]:= $70810000 + hdmi_base<<17 + 80          'sync
+	add	objptr, #4
+	wrlong	##1888550992, objptr
+'   timings[2]:= $70810000 + hdmi_base<<17 + 20          'before visible
+	add	objptr, #4
+	wrlong	##1888550932, objptr
+'   timings[3]:= $70810000 + hdmi_base<<17 + 1024        'visible 1024
+	add	objptr, #4
+	wrlong	##1888551936, objptr
+'   timings[4]:= $70810000 + hdmi_base<<17 + 112         'immediate 112
+	add	objptr, #4
+	wrlong	##1888551024, objptr
+'   timings[5]:= $20880000 + hdmi_base<<17 + 8           'imm+lut, 1 char
+	add	objptr, #4
+	wrlong	##546832392, objptr
+'   timings[6]:= 48
+	add	objptr, #4
+	wrlong	#48, objptr
+'   timings[7]:= 16
+	add	objptr, #4
+	wrlong	#16, objptr
+'   timings[8]:= 16
+	add	objptr, #4
+	wrlong	#16, objptr
+'   timings[9]:= 16
+	add	objptr, #4
+	wrlong	#16, objptr
+	sub	objptr, ##12248
+' 
+'   clkfreq:=354693878
+	wrlong	##354693878, #20
+'   org
+	loc	pa,	#(@LR__0075-@LR__0074)
+	call	#FCACHE_LOAD_
+LR__0074
+	org	0
+	hubset	##29584635
+LR__0075
+	orgh
+LR__0076
+' 
+' 
+' if (mode==1)   ' 1026 px per line
+	cmp	arg01, #1 wz
+ if_ne	jmp	#LR__0079
+' 
+'   timings[0]:= $70810000 + hdmi_base<<17 + 30          'before sync
+	add	objptr, ##12212
+	wrlong	##1888550942, objptr
+'   timings[1]:= $70810000 + hdmi_base<<17 + 80          'sync
+	add	objptr, #4
+	wrlong	##1888550992, objptr
+'   timings[2]:= $70810000 + hdmi_base<<17 + 20          'before visible
+	add	objptr, #4
+	wrlong	##1888550932, objptr
+'   timings[3]:= $70810000 + hdmi_base<<17 + 896         'visible 896
+	add	objptr, #4
+	wrlong	##1888551808, objptr
+'   timings[4]:= $70810000 + hdmi_base<<17 + 48          'immediate 48
+	add	objptr, #4
+	wrlong	##1888550960, objptr
+'   timings[5]:= $20880000 + hdmi_base<<17 + 8           'imm+lut, 1 char
+	add	objptr, #4
+	wrlong	##546832392, objptr
+'   timings[6]:= 24
+	add	objptr, #4
+	wrlong	#24, objptr
+'   timings[7]:= 32
+	add	objptr, #4
+	wrlong	#32, objptr
+'   timings[8]:= 32
+	add	objptr, #4
+	wrlong	#32, objptr
+'   timings[9]:= 32
+	add	objptr, #4
+	wrlong	#32, objptr
+	sub	objptr, ##12248
+' 
+'   clkfreq:=319215686
+	wrlong	##319215686, #20
+'   org
+	loc	pa,	#(@LR__0078-@LR__0077)
+	call	#FCACHE_LOAD_
+LR__0077
+	org	0
+	hubset	##30092795
+LR__0078
+	orgh
+LR__0079
+' 
+' 
+' if (mode==2) ' 912 pixes per line     ' 283_751_600 80x PAL  - real settings: 64 908 283750000 - 0.9999944
+	cmp	arg01, #2 wz
+ if_ne	jmp	#LR__0082
+' 
+'   timings[0]:= $70810000 + hdmi_base<<17 + 16           'before sync
+	add	objptr, ##12212
+	wrlong	##1888550928, objptr
+'   timings[1]:= $70810000 + hdmi_base<<17 + 64           'sync
+	add	objptr, #4
+	wrlong	##1888550976, objptr
+'   timings[2]:= $70810000 + hdmi_base<<17 + 16           'before visible
+	add	objptr, #4
+	wrlong	##1888550928, objptr
+'   timings[3]:= $70810000 + hdmi_base<<17 + 816          'visible 1024
+	add	objptr, #4
+	wrlong	##1888551728, objptr
+'   timings[4]:= $70810000 + hdmi_base<<17 + 8            'immediate 112
+	add	objptr, #4
+	wrlong	##1888550920, objptr
+'   timings[5]:= $20880000 + hdmi_base<<17 + 8            'imm+lut, 1 char
+	add	objptr, #4
+	wrlong	##546832392, objptr
+'   timings[6]:= 8
+	add	objptr, #4
+	wrlong	#8, objptr
+'   timings[7]:= 32
+	add	objptr, #4
+	wrlong	#32, objptr
+'   timings[8]:= 64
+	add	objptr, #4
+	wrlong	#64, objptr
+' 
+'   timings[9]:= 32
+	add	objptr, #4
+	wrlong	#32, objptr
+	sub	objptr, ##12248
+' 
+'   clkfreq:=283750000
+	wrlong	##283750000, #20
+'   org
+	loc	pa,	#(@LR__0081-@LR__0080)
+	call	#FCACHE_LOAD_
+LR__0080
+	org	0
+	hubset	##33524731
+LR__0081
+	orgh
+LR__0082
+' 
+' if (mode==256)
+	cmp	arg01, #256 wz
+ if_ne	jmp	#LR__0085
+' 
+'   timings[0]:= $70810000 + hdmi_base<<17 + 80          'before sync
+	add	objptr, ##12212
+	wrlong	##1888550992, objptr
+'   timings[1]:= $70810000 + hdmi_base<<17 + 160         'sync
+	add	objptr, #4
+	wrlong	##1888551072, objptr
+'   timings[2]:= $70810000 + hdmi_base<<17 + 84          'before visible
+	add	objptr, #4
+	wrlong	##1888550996, objptr
+'   timings[3]:= $70810000 + hdmi_base<<17 + 816         'visible 816
+	add	objptr, #4
+	wrlong	##1888551728, objptr
+'   timings[4]:= $70810000 + hdmi_base<<17 + 8           'immediate 8
+	add	objptr, #4
+	wrlong	##1888550920, objptr
+'   timings[5]:= $20880000 + hdmi_base<<17 + 8           'imm+lut, 1 char
+	add	objptr, #4
+	wrlong	##546832392, objptr
+'   timings[6]:= 8
+	add	objptr, #4
+	wrlong	#8, objptr
+'   timings[7]:= 8
+	add	objptr, #4
+	wrlong	#8, objptr
+'   timings[8]:= 12
+	add	objptr, #4
+	wrlong	#12, objptr
+'   timings[9]:= 8
+	add	objptr, #4
+	wrlong	#8, objptr
+	sub	objptr, ##12248
+' 
+'   clkfreq:=357959184
+	wrlong	##357959184, #20
+'   org
+	loc	pa,	#(@LR__0084-@LR__0083)
+	call	#FCACHE_LOAD_
+LR__0083
+	org	0
+	hubset	##29582587
+LR__0084
+	orgh
+LR__0085
+' 
+' if (mode==257)  '1026 px
+	cmp	arg01, #257 wz
+ if_ne	jmp	#LR__0088
+' 
+'   timings[0]:= $70810000 + hdmi_base<<17 + 80          'before sync
+	add	objptr, ##12212
+	wrlong	##1888550992, objptr
+'   timings[1]:= $70810000 + hdmi_base<<17 + 50          'sync
+	add	objptr, #4
+	wrlong	##1888550962, objptr
+'   timings[2]:= $70810000 + hdmi_base<<17 + 80          'before visible
+	add	objptr, #4
+	wrlong	##1888550992, objptr
+'   timings[3]:= $70810000 + hdmi_base<<17 + 816         'visible 816
+	add	objptr, #4
+	wrlong	##1888551728, objptr
+'   timings[4]:= $70810000 + hdmi_base<<17 + 8           'immediate 8
+	add	objptr, #4
+	wrlong	##1888550920, objptr
+'   timings[5]:= $20880000 + hdmi_base<<17 + 8           'imm+lut, 1 char
+	add	objptr, #4
+	wrlong	##546832392, objptr
+'   timings[6]:= 8
+	add	objptr, #4
+	wrlong	#8, objptr
+'   timings[7]:= 8
+	add	objptr, #4
+	wrlong	#8, objptr
+'   timings[8]:= 12
+	add	objptr, #4
+	wrlong	#12, objptr
+'   timings[9]:= 8
+	add	objptr, #4
+	wrlong	#8, objptr
+	sub	objptr, ##12248
+' 
+'   clkfreq:=322162162
+	wrlong	##322162162, #20
+'   org
+	loc	pa,	#(@LR__0087-@LR__0086)
+	call	#FCACHE_LOAD_
+LR__0086
+	org	0
+	hubset	##26366971
+LR__0087
+	orgh
+LR__0088
+' 
+' if (mode==258)  '912 px
+	cmp	arg01, #258 wz
+ if_ne	jmp	#LR__0091
+' 
+'   timings[0]:= $70810000 + hdmi_base<<17 + 24          'before sync
+	add	objptr, ##12212
+	wrlong	##1888550936, objptr
+'   timings[1]:= $70810000 + hdmi_base<<17 + 48         'sync
+	add	objptr, #4
+	wrlong	##1888550960, objptr
+'   timings[2]:= $70810000 + hdmi_base<<17 + 24          'before visible
+	add	objptr, #4
+	wrlong	##1888550936, objptr
+'   timings[3]:= $70810000 + hdmi_base<<17 + 816         'visible 816
+	add	objptr, #4
+	wrlong	##1888551728, objptr
+'   timings[4]:= $70810000 + hdmi_base<<17 + 8           'immediate 8
+	add	objptr, #4
+	wrlong	##1888550920, objptr
+'   timings[5]:= $20880000 + hdmi_base<<17 + 8           'imm+lut, 1 char
+	add	objptr, #4
+	wrlong	##546832392, objptr
+'   timings[6]:= 8
+	add	objptr, #4
+	wrlong	#8, objptr
+'   timings[7]:= 8
+	add	objptr, #4
+	wrlong	#8, objptr
+'   timings[8]:= 12
+	add	objptr, #4
+	wrlong	#12, objptr
+'   timings[9]:= 8
+	add	objptr, #4
+	wrlong	#8, objptr
+	sub	objptr, ##12248
+' 
+'   clkfreq:=286363636
+	wrlong	##286363636, #20
+'   org
+	loc	pa,	#(@LR__0090-@LR__0089)
+	call	#FCACHE_LOAD_
+LR__0089
+	org	0
+	hubset	##22362875
+LR__0090
+	orgh
+LR__0091
+_Hn007_20210302_setmode_ret
 	ret
 hubexit
 	jmp	#cogexit
@@ -2027,43 +1977,41 @@ hubexit
 __system__longmove
 	mov	_var01, arg01
 	cmps	arg01, arg02 wcz
- if_ae	jmp	#LR__0092
+ if_ae	jmp	#LR__0096
 	mov	_var02, arg03 wz
- if_e	jmp	#LR__0098
-	loc	pa,	#(@LR__0090-@LR__0088)
+ if_e	jmp	#LR__0102
+	loc	pa,	#(@LR__0094-@LR__0092)
 	call	#FCACHE_LOAD_
-LR__0088
-	rep	@LR__0091, _var02
-LR__0089
+LR__0092
+	rep	@LR__0095, _var02
+LR__0093
 	rdlong	_var03, arg02
 	wrlong	_var03, arg01
 	add	arg01, #4
 	add	arg02, #4
-LR__0090
-LR__0091
-	jmp	#LR__0098
-LR__0092
+LR__0094
+LR__0095
+	jmp	#LR__0102
+LR__0096
 	mov	_var04, arg03
 	shl	_var04, #2
 	add	arg01, _var04
-	mov	_var04, arg03
-	shl	_var04, #2
 	add	arg02, _var04
 	mov	_var05, arg03 wz
- if_e	jmp	#LR__0097
-	loc	pa,	#(@LR__0095-@LR__0093)
+ if_e	jmp	#LR__0101
+	loc	pa,	#(@LR__0099-@LR__0097)
 	call	#FCACHE_LOAD_
-LR__0093
-	rep	@LR__0096, _var05
-LR__0094
+LR__0097
+	rep	@LR__0100, _var05
+LR__0098
 	sub	arg01, #4
 	sub	arg02, #4
 	rdlong	_var03, arg02
 	wrlong	_var03, arg01
-LR__0095
-LR__0096
-LR__0097
-LR__0098
+LR__0099
+LR__0100
+LR__0101
+LR__0102
 	mov	result1, _var01
 __system__longmove_ret
 	ret
@@ -2072,10 +2020,10 @@ __system___pinread
 	test	arg01, #32 wz
  if_ne	mov	_var01, inb
  if_e	mov	_var01, ina
-	shr	_var01, arg01
-	shr	arg01, #6
-	zerox	_var01, arg01
 	mov	result1, _var01
+	shr	result1, arg01
+	shr	arg01, #6
+	zerox	result1, arg01
 __system___pinread_ret
 	ret
 
@@ -2084,42 +2032,30 @@ __system___waitms
 	call	#pushregs_
 	mov	local01, arg01
 	rdlong	local02, #20
-	loc	pa,	#(@LR__0100-@LR__0099)
+	loc	pa,	#(@LR__0104-@LR__0103)
 	call	#FCACHE_LOAD_
-LR__0099
+LR__0103
 	cmps	local01, ##1000 wcz
  if_a	waitx	local02
  if_a	sub	local01, ##1000
- if_a	jmp	#LR__0099
-LR__0100
+ if_a	jmp	#LR__0103
+LR__0104
 	cmps	local01, #0 wcz
- if_be	jmp	#LR__0101
+ if_be	jmp	#LR__0105
 	mov	muldiva_, local02
 	mov	muldivb_, ##1000
 	call	#divide_
 	qmul	local01, muldivb_
 	getqx	arg01
 	waitx	arg01
-LR__0101
+LR__0105
 	mov	ptra, fp
 	call	#popregs_
 __system___waitms_ret
 	ret
 
-LR__0102
-	byte	"P2 started"
-	byte	0
-LR__0103
-	byte	" "
-	byte	0
-LR__0104
-	byte	" "
-	byte	0
-LR__0105
-	byte	" "
-	byte	0
 LR__0106
-	byte	" "
+	byte	"P2 started"
 	byte	0
 LR__0107
 	byte	" "
@@ -2143,6 +2079,18 @@ LR__0113
 	byte	" "
 	byte	0
 LR__0114
+	byte	" "
+	byte	0
+LR__0115
+	byte	" "
+	byte	0
+LR__0116
+	byte	" "
+	byte	0
+LR__0117
+	byte	" "
+	byte	0
+LR__0118
 	byte	" "
 	byte	0
 	alignl
@@ -2931,9 +2879,49 @@ _Hn007_20210302_dat_
 	byte	$00, $00, $00, $00
 '-' fontstart           long        0
 	byte	$00, $00, $00, $00
+'-' 
+'-' framebuf        res     1
+'-' framebuf        res     1
+'-' fontbuf         res     1
+'-' fontbuf         res     1
+'-' borderptr       res     1
+'-' borderptr       res     1
+'-' vblankptr       res     1
+'-' vblankptr       res     1
+'-' cursorptr       res     1
+'-' cursorptr       res     1
+'-' modeptr         res     1
+'-' modeptr         res     1
+'-' paletteptr      res     1
+'-' paletteptr      res     1
+'-' commandptr      res     1
+'-' commandptr      res     1
+'-' fontnumptr      res     1
+'-' fontnumptr      res     1
+'-' borderptr2      res     1
+'-' borderptr2      res     1
+'-' ii              res     1
+'-' ii              res     1
+'-' framebuf2       res     1
+'-' framebuf2       res     1
+'-' hsync0          res     1
+'-' hsync0          res     1
+'-' hsync1          res     1
+'-' hsync1          res     1
+'-' fontline        res     1
+'-' fontline        res     1
+'-' t1              res     1
+'-' t1              res     1
+'-' t2              res     1
+'-' t2              res     1
+'-' char            res     1
+'-' char            res     1
+'-' backcolor       res     1
+'-' backcolor       res     1
+'-' charcolor       res     1
+'-' charcolor       res     1
+'-'                 fit     496                     '
 objmem
-	long	0[3241]
-stackspace
 	long	0[1]
 	org	COG_BSS_START
 _var01
@@ -2949,6 +2937,8 @@ _var05
 _var06
 	res	1
 _var07
+	res	1
+_var08
 	res	1
 arg01
 	res	1
@@ -2993,6 +2983,28 @@ local16
 local17
 	res	1
 local18
+	res	1
+local19
+	res	1
+local20
+	res	1
+local21
+	res	1
+local22
+	res	1
+local23
+	res	1
+local24
+	res	1
+local25
+	res	1
+local26
+	res	1
+local27
+	res	1
+local28
+	res	1
+local29
 	res	1
 muldiva_
 	res	1

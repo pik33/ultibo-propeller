@@ -9,7 +9,7 @@ hdmi_base       = 8            'must be a multiple of 8
 _clkfreq       = 357_954_500   '200x Atari 8-bit NTSC, 50x Amiga NTSC
  rxpin           = 56
  txpin           = 57
-baudrate        = 9600
+baudrate        = 460800
 
 
 obj
