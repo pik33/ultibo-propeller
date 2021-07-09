@@ -1,5 +1,5 @@
 00000                 | 
-00000                 | #line 1 "D:/Programowanie/ultibo-propeller/robuv001/hng025.p2asm"
+00000                 | #line 1 "D:/Programowanie/ultibo-propeller/robuv001/hng025r3.p2asm"
 00000                 | ' 
 00000                 | ' 
 00000                 | ' hdmi_base       = 0             'must be a multiple of 8
@@ -2083,26 +2083,26 @@
 01d4c                 | ' pub putpixel8(x,y,c)
 01d4c                 | _putpixel8
 01d4c                 | ' 
-01d4c                 | ' if ((x>=0) & (x<4*cpl) & (y>=0) & (y<lines))
+01d4c                 | ' if ((y>=0) & (y<4*cpl) & (x>=0) & (x<lines))
 01d4c     00 BA 05 F6 | 	mov	_var01, #0
-01d50     00 18 5E F2 | 	cmps	arg01, #0 wcz
+01d50     00 1A 5E F2 | 	cmps	arg02, #0 wcz
 01d54     01 BA 65 36 |  if_ae	neg	_var01, #1
 01d58     00 BC 05 F6 | 	mov	_var02, #0
 01d5c     90 A6 05 F1 | 	add	objptr, #144
 01d60     D3 BE 01 FB | 	rdlong	_var03, objptr
 01d64     02 BE 65 F0 | 	shl	_var03, #2
-01d68     DF 18 5A F2 | 	cmps	arg01, _var03 wcz
+01d68     DF 1A 5A F2 | 	cmps	arg02, _var03 wcz
 01d6c     01 BC 65 C6 |  if_b	neg	_var02, #1
 01d70     DE BA 01 F5 | 	and	_var01, _var02
 01d74     00 C0 05 F6 | 	mov	_var04, #0
-01d78     00 1A 5E F2 | 	cmps	arg02, #0 wcz
+01d78     00 18 5E F2 | 	cmps	arg01, #0 wcz
 01d7c     01 C0 65 36 |  if_ae	neg	_var04, #1
 01d80     E0 BA 01 F5 | 	and	_var01, _var04
 01d84     00 C2 05 F6 | 	mov	_var05, #0
 01d88     04 A6 05 F1 | 	add	objptr, #4
 01d8c     D3 C4 01 FB | 	rdlong	_var06, objptr
 01d90     94 A6 85 F1 | 	sub	objptr, #148
-01d94     E2 1A 5A F2 | 	cmps	arg02, _var06 wcz
+01d94     E2 18 5A F2 | 	cmps	arg01, _var06 wcz
 01d98     01 C2 65 C6 |  if_b	neg	_var05, #1
 01d9c     E1 BA C9 F7 | 	test	_var01, _var05 wz
 01da0     28 00 90 AD |  if_e	jmp	#LR__0055
@@ -2110,12 +2110,12 @@
 01da8     D3 C6 01 FB | 	rdlong	_var07, objptr
 01dac     90 A6 85 F1 | 	sub	objptr, #144
 01db0     02 C6 65 F0 | 	shl	_var07, #2
-01db4     0D C7 01 FD | 	qmul	_var07, arg02
+01db4     0C C7 01 FD | 	qmul	_var07, arg01
 01db8     18 C8 61 FD | 	getqx	_var08
 01dbc     D3 CA 01 FB | 	rdlong	_var09, objptr
 01dc0     E4 CA 01 F1 | 	add	_var09, _var08
-01dc4     0C CB 01 F1 | 	add	_var09, arg01
-01dc8                 | '     byte[buf_ptr+4*cpl*y+x]:=c
+01dc4     0D CB 01 F1 | 	add	_var09, arg02
+01dc8                 | '     byte[buf_ptr+4*cpl*(x)+y]:=c
 01dc8     E5 1C 42 FC | 	wrbyte	arg03, _var09
 01dcc                 | LR__0055
 01dcc                 | _putpixel8_ret

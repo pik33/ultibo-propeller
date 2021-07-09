@@ -1,0 +1,299 @@
+dat
+	nop
+	cogid	pa
+	coginit	pa,##$404
+	orgh	$10
+	long	0	'reserved
+	long	0 ' clock frequency: will default to 20000000
+	long	0 ' clock mode: will default to $100094b
+	orgh	$400
+ _ret_	mov	result1, #0
+	org	0
+entry
+	cmp	ptra, #0 wz
+ if_ne	jmp	#spininit
+	mov	ptra, objptr
+	add	ptra, #20
+	rdlong	pa, #20 wz
+ if_ne	jmp	#skip_clock_set_
+	hubset	#0
+	hubset	##16779592
+	waitx	##200000
+	mov	pa, ##16779595
+	hubset	pa
+	wrlong	pa, #24
+	wrlong	##20000000, #20
+	jmp	#skip_clock_set_
+	orgf	128
+skip_clock_set_
+	call	#_start
+cogexit
+	waitx	##160000
+	cogid	arg01
+	cogstop	arg01
+spininit
+	rdlong	objptr, ptra
+	add	ptra, #4
+	rdlong	result1, ptra
+	add	ptra, #4
+	rdlong	arg01, ptra
+	add	ptra, #4
+	rdlong	arg02, ptra
+	add	ptra, #4
+	rdlong	arg03, ptra
+	add	ptra, #4
+	rdlong	arg04, ptra
+	sub	ptra, #16
+	call	result1
+	jmp	#cogexit
+FCACHE_LOAD_
+    pop	fcache_tmpb_
+    add	fcache_tmpb_, pa
+    push	fcache_tmpb_
+    sub	fcache_tmpb_, pa
+    shr	pa, #2
+    altd	pa
+    mov	 0-0, ret_instr_
+    sub	pa, #1
+    setq	pa
+    rdlong	$0, fcache_tmpb_
+    jmp	#\$0 ' jmp to cache
+ret_instr_
+    ret
+fcache_tmpb_
+    long 0
+COUNT_
+    long 0
+RETADDR_
+    long 0
+fp
+    long 0
+pushregs_
+    pop  pa
+    pop  RETADDR_
+    tjz  COUNT_, #pushregs_done_
+    sub  COUNT_, #1
+    setq COUNT_
+    wrlong local01, ptra
+    add  COUNT_, #1
+pushregs_done_
+    shl  COUNT_, #2
+    add  ptra, COUNT_
+    shr  COUNT_, #2
+    setq #2 ' push 3 registers starting at COUNT_
+    wrlong COUNT_, ptra
+    add    ptra, #12
+    mov    fp, ptra
+    jmp  pa
+ popregs_
+    pop    pa
+    sub    ptra, #12
+    setq   #2
+    rdlong COUNT_, ptra
+    tjz    COUNT_, #popregs__ret
+    shl    COUNT_, #2
+    sub    ptra, COUNT_
+    shr    COUNT_, #2
+    sub    COUNT_, #1
+    setq   COUNT_
+    rdlong local01, ptra
+popregs__ret
+    push   RETADDR_
+    jmp    pa
+
+unsdivide_
+       setq    #0
+       qdiv    muldiva_, muldivb_
+       getqx   muldivb_
+ _ret_ getqy   muldiva_
+
+divide_
+       abs     muldiva_,muldiva_     wc       'abs(x)
+       muxc    itmp2_,#%11                    'store sign of x
+       abs     muldivb_,muldivb_     wcz      'abs(y)
+ if_c  xor     itmp2_,#%10                    'store sign of y
+ if_z  ret
+       call    #unsdivide_
+       test    itmp2_,#1        wc       'restore sign, remainder
+       negc    muldiva_,muldiva_ 
+       test    itmp2_,#%10      wc       'restore sign, division result
+ _ret_ negc    muldivb_,muldivb_
+
+itmp1_
+	long	0
+itmp2_
+	long	0
+objptr
+	long	@objmem
+ptr__dat__
+	long	@_dat_
+result1
+	long	0
+COG_BSS_START
+	fit	480
+	orgh
+hubentry
+
+' 
+' pub start(apin)     |iii, m, n
+_start
+	mov	COUNT_, #2
+	call	#pushregs_
+' 
+' adcpin:=apin
+	add	objptr, #4
+	wrlong	arg01, objptr
+	sub	objptr, #4
+' coginit(16,@mixer,@aresult)
+	mov	arg02, ptr__dat__
+	mov	arg03, objptr
+	mov	arg01, #16
+	setq	arg03
+	coginit	arg01, arg02 wc
+ if_b	neg	arg01, #1
+	mov	result1, arg01
+' waitms(100)
+	mov	local01, #100
+	rdlong	local02, #20
+	loc	pa,	#(@LR__0002-@LR__0001)
+	call	#FCACHE_LOAD_
+LR__0001
+	cmps	local01, ##1000 wcz
+ if_a	waitx	local02
+ if_a	sub	local01, ##1000
+ if_a	jmp	#LR__0001
+LR__0002
+	cmps	local01, #0 wcz
+ if_be	jmp	#LR__0003
+	mov	muldiva_, local02
+	mov	muldivb_, ##1000
+	call	#divide_
+	qmul	local01, muldivb_
+	getqx	arg01
+	waitx	arg01
+LR__0003
+	mov	ptra, fp
+	call	#popregs_
+_start_ret
+	ret
+hubexit
+	jmp	#cogexit
+	alignl
+_dat_
+'-'               org
+'-' mixer         setq #3
+	byte	$28, $06, $64, $fd
+'-'               rdlong aaresult,ptra
+	byte	$00, $4b, $04, $fb
+'-'               
+'-'               
+'-'               wrpin adc_config1, aapin
+	byte	$26, $42, $00, $fc
+'-'               wxpin  #%00_1101, aapin
+	byte	$26, $1a, $18, $fc
+'-'               dirh   #aapin
+	byte	$41, $4c, $64, $fd
+'-' 
+'-'               setse1  #%001<<6 + aapin
+	byte	$20, $cc, $64, $fd
+'-' 	
+'-' loop          waitse1
+	byte	$24, $28, $60, $fd
+'-'               rdpin x,#aapin
+	byte	$26, $48, $8c, $fa
+'-'               waitse1
+	byte	$24, $28, $60, $fd
+'-'               rdpin x,#aapin   
+	byte	$26, $48, $8c, $fa
+'-'               waitse1
+	byte	$24, $28, $60, $fd
+'-'               rdpin gnd,#aapin 
+	byte	$26, $4e, $8c, $fa
+'-'                      wrlong aaresult,ptra
+	byte	$00, $4b, $64, $fc
+'-'               jmp #loop
+	byte	$e0, $ff, $9f, $fd
+'-'                 
+'-'               wrpin adc_config2, aapin
+	byte	$26, $44, $00, $fc
+'-'               
+'-'               waitse1
+	byte	$24, $28, $60, $fd
+'-'               rdpin x,#aapin
+	byte	$26, $48, $8c, $fa
+'-'               waitse1
+	byte	$24, $28, $60, $fd
+'-'               rdpin x,#aapin   
+	byte	$26, $48, $8c, $fa
+'-'               waitse1
+	byte	$24, $28, $60, $fd
+'-'               rdpin vcc,#aapin  
+	byte	$26, $50, $8c, $fa
+'-'               
+'-'               wrpin adc_config3, aapin
+	byte	$26, $46, $00, $fc
+'-'               
+'-'               waitse1
+	byte	$24, $28, $60, $fd
+'-'               rdpin x,#aapin
+	byte	$26, $48, $8c, $fa
+'-'               waitse1
+	byte	$24, $28, $60, $fd
+'-'               rdpin x,#aapin   
+	byte	$26, $48, $8c, $fa
+'-'               waitse1
+	byte	$24, $28, $60, $fd
+'-'               rdpin aaresult,#aapin  
+	byte	$26, $4a, $8c, $fa
+'-'               
+'-'               mov aaresult,#511
+	byte	$ff, $4b, $04, $f6
+'-'               wrpin adc_config1, aapin 
+	byte	$26, $42, $00, $fc
+'-'               setq #3
+	byte	$28, $06, $64, $fd
+'-'               wrlong aaresult,ptra
+	byte	$00, $4b, $64, $fc
+'-' 
+'-'               jmp     #loop          'loop
+	byte	$94, $ff, $9f, $fd
+'-' 
+'-' 
+'-' adc_config1      long    %0000_0000_000_100000_0000000_00_11000_0 ' 100000 gnd
+	byte	$30, $00, $10, $00
+'-' adc_config2      long    %0000_0000_000_100001_0000000_00_11000_0 ' 100001 3v3
+	byte	$30, $80, $10, $00
+'-' adc_config3      long    %0000_0000_000_100011_0000000_00_11000_0 ' 100011 pin
+	byte	$30, $80, $11, $00
+'-' 
+'-' x               long    0
+	byte	$00, $00, $00, $00
+'-' 
+'-' aaresult long 0
+	byte	$00, $00, $00, $00
+'-' aapin long 0
+	byte	$00, $00, $00, $00
+'-' gnd long 0
+	byte	$00, $00, $00, $00
+'-' vcc long 0
+	byte	$00, $00, $00, $00
+objmem
+	long	0[1]
+	org	COG_BSS_START
+arg01
+	res	1
+arg02
+	res	1
+arg03
+	res	1
+arg04
+	res	1
+local01
+	res	1
+local02
+	res	1
+muldiva_
+	res	1
+muldivb_
+	res	1
+	fit	480

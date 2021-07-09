@@ -505,12 +505,17 @@ if ((x>=0) & (x<16*cpl) & (y>=0) & (y<lines))
     byte[buf_ptr+4*cpl*y+(x>>1)]:=b
 
 
-pub putpixel8(x,y,c)
+pub putpixel8x(x,y,c)
 
 if ((x>=0) & (x<4*cpl) & (y>=0) & (y<lines))
     byte[buf_ptr+4*cpl*y+x]:=c
 
 
+pub putpixel8(x,y,c)
+
+if ((y>=0) & (y<4*cpl) & (x>=0) & (x<lines))
+    byte[buf_ptr+4*cpl*(lines-x-1)+y]:=c
+    
 pub putpixel8fast(x,y,c)
 
    byte[buf_ptr+800*y+x]:=c

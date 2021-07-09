@@ -1,0 +1,80 @@
+{{ ADC example}}
+
+CON
+_clkfreq        = 361_267_200  '  44100x8192
+'_clkfreq       = 393_216_000  '  48000x8192, too high for a P2
+
+bank            = 32    ' accessory board at pin 0,
+
+adcpinl         = bank+0   ' input on cinch 0,1
+adcpinr         = bank+1
+hdmi_pin        = 48
+
+
+obj v : "hng025"
+
+
+pub start()     |iii, m, n
+
+
+v .start(512+48+1,hdmi_pin)
+coginit(16,@mixer,0)
+v.setbordercolor(0,0,0)
+v.cls(154,147)
+v.setfontfamily(4)
+v.waitvbl(100)
+v.outtextxycg(16,16,string("READY"),154,147)
+v.outtextxycg(16,32,string(" "),147,154)
+
+repeat
+  repeat iii from 0 to 15
+    v.outtextxycg(16,64+16*iii,v.inttohex(long[$10000+4*iii],8),154,147)
+
+  v.waitvbl(60)
+
+DAT
+              org
+mixer         wrpin adc_config, #adcpinl addpins 1
+              wxpin  #%01_1101, #adcpinl addpins 1
+              dirh   #adcpinl addpins 1
+
+              setse1  #%001<<6 + adcpinl
+	      wrfast #1,##$10000
+
+
+loop          waitse1
+
+              rdpin x,#adcpinl
+           '  shl x,#2
+                     SUB     x,diff1                                 'compute sample
+       ADD     diff1,x                                 'update diff value
+        SHR     x,#12                                   'justify 8-bit sample
+        ZEROX   x,#13                                   'trim 8-bit sample
+
+                
+     '        and x,##%0000_0111_1111_1111_1111_1111_1111_1111
+          '    rdpin y,#adcpinr
+            '  ones x,x
+          '    shl x,#2
+         '     ones y,y
+         '     mul x2,#255
+         '     add x2,x
+         '     mul y2,#255
+         '     add y2,y
+         '     shr x2,#8
+         '     shr y2,#8
+	      wflong x 
+	  '    wflong y2
+              jmp     #loop          'loop
+
+
+adc_config      long    %0000_0000_000_100000_0000000_00_11000_0 ' 100011 - pin, 100000 gnd
+dac_config      long    %0000_0000_000_10111_00000000_01_00010_0
+x               long    0
+y               long    0
+x2 long 0
+y2 long 0
+diff1 long 0
+diff2 long 0
+x3 long 0
+x4 long 0

@@ -9,12 +9,12 @@ hdmi_base       = 8            'must be a multiple of 8
 _clkfreq       = 357_954_500   '200x Atari 8-bit NTSC, 50x Amiga NTSC
  rxpin           = 56
  txpin           = 57
-baudrate        = 460800
+baudrate        = 4000000' 460800
 
 
 obj
 
-v:    "hn007-20210302"
+v:    "hng025"
 
 var
 
@@ -36,18 +36,22 @@ byte mousekey
 word mousex
 word mousey
 byte dummy
+long xxx
+long yyy
+long qqq
 
-pub start(mode)   |iii,caps
+pub start(mode)   |iii,caps,iiii,jjjj
 
-mode :=256
+mode :=512+48+15+192
+
 caps:=0
 
 waitms(100)
 iii:=0
-vgacog:=v.start(mode)
-
+vgacog:=v.start(mode,hdmi_base)
+v.setfontfamily(4)
 v.cls(154,146)
-v.setbordercolors(0,0,128)
+v.setbordercolor(0,64,96)
 
 serial_start(rxpin, txpin, baudrate)
 rxflush()
@@ -55,7 +59,7 @@ rxflush()
 cogspin(16,serialcog(),@serialstack)
 
 v.setwritecolors(154,146)
-v.writeln(string("P2 started"))
+v.outtextxycg(0,0,v.inttostr(v.buf_ptr),154,146)
 
 'pinwrite(2,1)
 'pinwrite(3,1)
@@ -66,17 +70,25 @@ h11:=$8000
 h12:=$8000
 
 'dacset(h11,h12) 
-
+xxx:=0 'v.bufptr
+yyy:=0
+qqq:=0
+iiii:=0
+jjjj:=0
 repeat
   repeat
-    tx("r")
-    tx("3")
-    tx("#")
-    waitms(1)
     rr:=serialblockingread()
-    v.write(v.inttohex(rr,2))
-    v.write(string(" "))
-    rr2:=(rr2<<8)+rr
+    if rr==255
+      xxx:=0
+      yyy:=0
+    else  
+      byte[v.buf_ptr+(yyy<<7)+xxx]:=rr
+      xxx++
+      if (xxx>79)
+        xxx:=0
+        yyy:=(yyy+1)+//60
+
+
 
 
 

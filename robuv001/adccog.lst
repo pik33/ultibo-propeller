@@ -1,0 +1,276 @@
+00000                 | 
+00000                 | #line 1 "D:/Programowanie/ultibo-propeller/robuv001/adccog.p2asm"
+00000                 | dat
+00000 000 00 00 00 00 | 	nop
+00004 001 01 EC 63 FD | 	cogid	pa
+00008 002 02 00 00 FF 
+0000c 003 04 EC E7 FC | 	coginit	pa,##$404
+00010                 | 	orgh	$10
+00010     00 00 00 00 | 	long	0	'reserved
+00014     00 00 00 00 | 	long	0 ' clock frequency: will default to 20000000
+00018     00 00 00 00 | 	long	0 ' clock mode: will default to $100094b
+0001c     00 00 00 00 
+      ...             
+003f8     00 00 00 00 
+003fc     00 00 00 00 | 	orgh	$400
+00400     00 A2 05 06 |  _ret_	mov	result1, #0
+00404 000             | 	org	0
+00404 000             | entry
+00404 000 00 F0 0F F2 | 	cmp	ptra, #0 wz
+00408 001 0C 02 90 5D |  if_ne	jmp	#spininit
+0040c 002 CF F0 03 F6 | 	mov	ptra, objptr
+00410 003 14 F0 07 F1 | 	add	ptra, #20
+00414 004 14 EC 0F FB | 	rdlong	pa, #20 wz
+00418 005 E8 01 90 5D |  if_ne	jmp	#skip_clock_set_
+0041c 006 00 00 64 FD | 	hubset	#0
+00420 007 04 80 80 FF 
+00424 008 00 90 66 FD | 	hubset	##16779592
+00428 009 86 01 80 FF 
+0042c 00a 1F 80 66 FD | 	waitx	##200000
+00430 00b 04 80 00 FF 
+00434 00c 4B ED 07 F6 | 	mov	pa, ##16779595
+00438 00d 00 EC 63 FD | 	hubset	pa
+0043c 00e 18 EC 67 FC | 	wrlong	pa, #24
+00440 00f 96 98 80 FF 
+00444 010 14 00 6E FC | 	wrlong	##20000000, #20
+00448 011 B8 01 90 FD | 	jmp	#skip_clock_set_
+0044c 012 00 00 00 00 
+      ...             
+005fc 07e 00 00 00 00 
+00600 07f 00 00 00 00 | 	orgf	128
+00604 080             | skip_clock_set_
+00604 080 4C 07 A0 FD | 	call	#_start
+00608 081             | cogexit
+00608 081 38 01 80 FF 
+0060c 082 1F 00 66 FD | 	waitx	##160000
+00610 083 01 A4 61 FD | 	cogid	arg01
+00614 084 03 A4 61 FD | 	cogstop	arg01
+00618 085             | spininit
+00618 085 00 9F 05 FB | 	rdlong	objptr, ptra
+0061c 086 04 F0 07 F1 | 	add	ptra, #4
+00620 087 00 A3 05 FB | 	rdlong	result1, ptra
+00624 088 04 F0 07 F1 | 	add	ptra, #4
+00628 089 00 A5 05 FB | 	rdlong	arg01, ptra
+0062c 08a 04 F0 07 F1 | 	add	ptra, #4
+00630 08b 00 A7 05 FB | 	rdlong	arg02, ptra
+00634 08c 04 F0 07 F1 | 	add	ptra, #4
+00638 08d 00 A9 05 FB | 	rdlong	arg03, ptra
+0063c 08e 04 F0 07 F1 | 	add	ptra, #4
+00640 08f 00 AB 05 FB | 	rdlong	arg04, ptra
+00644 090 10 F0 87 F1 | 	sub	ptra, #16
+00648 091 2D A2 61 FD | 	call	result1
+0064c 092 B8 FF 9F FD | 	jmp	#cogexit
+00650 093             | FCACHE_LOAD_
+00650 093 2B 3E 61 FD |     pop	fcache_tmpb_
+00654 094 F6 3F 01 F1 |     add	fcache_tmpb_, pa
+00658 095 2A 3E 61 FD |     push	fcache_tmpb_
+0065c 096 F6 3F 81 F1 |     sub	fcache_tmpb_, pa
+00660 097 02 EC 47 F0 |     shr	pa, #2
+00664 098 00 EC 8F F9 |     altd	pa
+00668 099 9E 00 00 F6 |     mov	 0-0, ret_instr_
+0066c 09a 01 EC 87 F1 |     sub	pa, #1
+00670 09b 28 EC 63 FD |     setq	pa
+00674 09c 9F 00 00 FB |     rdlong	$0, fcache_tmpb_
+00678 09d 00 00 80 FD |     jmp	#\$0 ' jmp to cache
+0067c 09e             | ret_instr_
+0067c 09e 2D 00 64 FD |     ret
+00680 09f             | fcache_tmpb_
+00680 09f 00 00 00 00 |     long 0
+00684 0a0             | COUNT_
+00684 0a0 00 00 00 00 |     long 0
+00688 0a1             | RETADDR_
+00688 0a1 00 00 00 00 |     long 0
+0068c 0a2             | fp
+0068c 0a2 00 00 00 00 |     long 0
+00690 0a3             | pushregs_
+00690 0a3 2B EC 63 FD |     pop  pa
+00694 0a4 2B 42 61 FD |     pop  RETADDR_
+00698 0a5 04 40 95 FB |     tjz  COUNT_, #pushregs_done_
+0069c 0a6 01 40 85 F1 |     sub  COUNT_, #1
+006a0 0a7 28 40 61 FD |     setq COUNT_
+006a4 0a8 00 AD 65 FC |     wrlong local01, ptra
+006a8 0a9 01 40 05 F1 |     add  COUNT_, #1
+006ac 0aa             | pushregs_done_
+006ac 0aa 02 40 65 F0 |     shl  COUNT_, #2
+006b0 0ab A0 F0 03 F1 |     add  ptra, COUNT_
+006b4 0ac 02 40 45 F0 |     shr  COUNT_, #2
+006b8 0ad 28 04 64 FD |     setq #2 ' push 3 registers starting at COUNT_
+006bc 0ae 00 41 65 FC |     wrlong COUNT_, ptra
+006c0 0af 0C F0 07 F1 |     add    ptra, #12
+006c4 0b0 F8 45 01 F6 |     mov    fp, ptra
+006c8 0b1 2C EC 63 FD |     jmp  pa
+006cc 0b2             |  popregs_
+006cc 0b2 2B EC 63 FD |     pop    pa
+006d0 0b3 0C F0 87 F1 |     sub    ptra, #12
+006d4 0b4 28 04 64 FD |     setq   #2
+006d8 0b5 00 41 05 FB |     rdlong COUNT_, ptra
+006dc 0b6 06 40 95 FB |     tjz    COUNT_, #popregs__ret
+006e0 0b7 02 40 65 F0 |     shl    COUNT_, #2
+006e4 0b8 A0 F0 83 F1 |     sub    ptra, COUNT_
+006e8 0b9 02 40 45 F0 |     shr    COUNT_, #2
+006ec 0ba 01 40 85 F1 |     sub    COUNT_, #1
+006f0 0bb 28 40 61 FD |     setq   COUNT_
+006f4 0bc 00 AD 05 FB |     rdlong local01, ptra
+006f8 0bd             | popregs__ret
+006f8 0bd 2A 42 61 FD |     push   RETADDR_
+006fc 0be 2C EC 63 FD |     jmp    pa
+00700 0bf             | 
+00700 0bf             | unsdivide_
+00700 0bf 28 00 64 FD |        setq    #0
+00704 0c0 D9 B0 11 FD |        qdiv    muldiva_, muldivb_
+00708 0c1 18 B2 61 FD |        getqx   muldivb_
+0070c 0c2 19 B0 61 0D |  _ret_ getqy   muldiva_
+00710 0c3             | 
+00710 0c3             | divide_
+00710 0c3 D8 B0 51 F6 |        abs     muldiva_,muldiva_     wc       'abs(x)
+00714 0c4 03 9C 85 F5 |        muxc    itmp2_,#%11                    'store sign of x
+00718 0c5 D9 B2 59 F6 |        abs     muldivb_,muldivb_     wcz      'abs(y)
+0071c 0c6 02 9C 65 C5 |  if_c  xor     itmp2_,#%10                    'store sign of y
+00720 0c7 2D 00 64 AD |  if_z  ret
+00724 0c8 D8 FF BF FD |        call    #unsdivide_
+00728 0c9 01 9C D5 F7 |        test    itmp2_,#1        wc       'restore sign, remainder
+0072c 0ca D8 B0 81 F6 |        negc    muldiva_,muldiva_ 
+00730 0cb 02 9C D5 F7 |        test    itmp2_,#%10      wc       'restore sign, division result
+00734 0cc D9 B2 81 06 |  _ret_ negc    muldivb_,muldivb_
+00738 0cd             | 
+00738 0cd             | itmp1_
+00738 0cd 00 00 00 00 | 	long	0
+0073c 0ce             | itmp2_
+0073c 0ce 00 00 00 00 | 	long	0
+00740 0cf             | objptr
+00740 0cf 7C 08 00 00 | 	long	@objmem
+00744 0d0             | ptr__dat__
+00744 0d0 D8 07 00 00 | 	long	@_dat_
+00748 0d1             | result1
+00748 0d1 00 00 00 00 | 	long	0
+0074c 0d2             | COG_BSS_START
+0074c 0d2             | 	fit	480
+0074c                 | 	orgh
+0074c                 | hubentry
+0074c                 | 
+0074c                 | ' 
+0074c                 | ' pub start(apin)     |iii, m, n
+0074c                 | _start
+0074c     02 40 05 F6 | 	mov	COUNT_, #2
+00750     A3 00 A0 FD | 	call	#pushregs_
+00754                 | ' 
+00754                 | ' adcpin:=apin
+00754     04 9E 05 F1 | 	add	objptr, #4
+00758     CF A4 61 FC | 	wrlong	arg01, objptr
+0075c     04 9E 85 F1 | 	sub	objptr, #4
+00760                 | ' coginit(16,@mixer,@aresult)
+00760     D0 A6 01 F6 | 	mov	arg02, ptr__dat__
+00764     CF A8 01 F6 | 	mov	arg03, objptr
+00768     10 A4 05 F6 | 	mov	arg01, #16
+0076c     28 A8 61 FD | 	setq	arg03
+00770     D3 A4 F1 FC | 	coginit	arg01, arg02 wc
+00774     01 A4 65 C6 |  if_b	neg	arg01, #1
+00778     D2 A2 01 F6 | 	mov	result1, arg01
+0077c                 | ' waitms(100)
+0077c     64 AC 05 F6 | 	mov	local01, #100
+00780     14 AE 05 FB | 	rdlong	local02, #20
+00784     90 F8 9F FE | 	loc	pa,	#(@LR__0002-@LR__0001)
+00788     93 00 A0 FD | 	call	#FCACHE_LOAD_
+0078c                 | LR__0001
+0078c     01 00 00 FF 
+00790     E8 AD 5D F2 | 	cmps	local01, ##1000 wcz
+00794     1F AE 61 1D |  if_a	waitx	local02
+00798     01 00 00 1F 
+0079c     E8 AD 85 11 |  if_a	sub	local01, ##1000
+007a0     E8 FF 9F 1D |  if_a	jmp	#LR__0001
+007a4                 | LR__0002
+007a4     00 AC 5D F2 | 	cmps	local01, #0 wcz
+007a8     1C 00 90 ED |  if_be	jmp	#LR__0003
+007ac     D7 B0 01 F6 | 	mov	muldiva_, local02
+007b0     01 00 00 FF 
+007b4     E8 B3 05 F6 | 	mov	muldivb_, ##1000
+007b8     C3 00 A0 FD | 	call	#divide_
+007bc     D9 AC 01 FD | 	qmul	local01, muldivb_
+007c0     18 A4 61 FD | 	getqx	arg01
+007c4     1F A4 61 FD | 	waitx	arg01
+007c8                 | LR__0003
+007c8     A2 F0 03 F6 | 	mov	ptra, fp
+007cc     B2 00 A0 FD | 	call	#popregs_
+007d0                 | _start_ret
+007d0     2D 00 64 FD | 	ret
+007d4                 | hubexit
+007d4     81 00 80 FD | 	jmp	#cogexit
+007d8                 | 	alignl
+007d8                 | _dat_
+007d8                 |               org
+007d8 000 28 06 64 FD | mixer         setq #3
+007dc 001 00 4B 04 FB |               rdlong aaresult,ptra
+007e0 002             |               
+007e0 002             |               
+007e0 002 26 42 00 FC |               wrpin adc_config1, aapin
+007e4 003 26 1A 18 FC |               wxpin  #%00_1101, aapin
+007e8 004 41 4C 64 FD |               dirh   #aapin
+007ec 005             | 
+007ec 005 20 CC 64 FD |               setse1  #%001<<6 + aapin
+007f0 006             | 	
+007f0 006 24 28 60 FD | loop          waitse1
+007f4 007 26 48 8C FA |               rdpin x,#aapin
+007f8 008 24 28 60 FD |               waitse1
+007fc 009 26 48 8C FA |               rdpin x,#aapin   
+00800 00a 24 28 60 FD |               waitse1
+00804 00b 26 4E 8C FA |               rdpin gnd,#aapin 
+00808 00c 00 4B 64 FC |                      wrlong aaresult,ptra
+0080c 00d E0 FF 9F FD |               jmp #loop
+00810 00e             |                 
+00810 00e 26 44 00 FC |               wrpin adc_config2, aapin
+00814 00f             |               
+00814 00f 24 28 60 FD |               waitse1
+00818 010 26 48 8C FA |               rdpin x,#aapin
+0081c 011 24 28 60 FD |               waitse1
+00820 012 26 48 8C FA |               rdpin x,#aapin   
+00824 013 24 28 60 FD |               waitse1
+00828 014 26 50 8C FA |               rdpin vcc,#aapin  
+0082c 015             |               
+0082c 015 26 46 00 FC |               wrpin adc_config3, aapin
+00830 016             |               
+00830 016 24 28 60 FD |               waitse1
+00834 017 26 48 8C FA |               rdpin x,#aapin
+00838 018 24 28 60 FD |               waitse1
+0083c 019 26 48 8C FA |               rdpin x,#aapin   
+00840 01a 24 28 60 FD |               waitse1
+00844 01b 26 4A 8C FA |               rdpin aaresult,#aapin  
+00848 01c             |               
+00848 01c FF 4B 04 F6 |               mov aaresult,#511
+0084c 01d 26 42 00 FC |               wrpin adc_config1, aapin 
+00850 01e 28 06 64 FD |               setq #3
+00854 01f 00 4B 64 FC |               wrlong aaresult,ptra
+00858 020             | 
+00858 020 94 FF 9F FD |               jmp     #loop          'loop
+0085c 021             | 
+0085c 021             | 
+0085c 021 30 00 10 00 | adc_config1      long    %0000_0000_000_100000_0000000_00_11000_0 ' 100000 gnd
+00860 022 30 80 10 00 | adc_config2      long    %0000_0000_000_100001_0000000_00_11000_0 ' 100001 3v3
+00864 023 30 80 11 00 | adc_config3      long    %0000_0000_000_100011_0000000_00_11000_0 ' 100011 pin
+00868 024             | 
+00868 024 00 00 00 00 | x               long    0
+0086c 025             | 
+0086c 025 00 00 00 00 | aaresult long 0
+00870 026 00 00 00 00 | aapin long 0
+00874 027 00 00 00 00 | gnd long 0
+00878 028 00 00 00 00 | vcc long 0
+0087c 029             | objmem
+0087c 029 00 00 00 00 | 	long	0[1]
+00880 0d2             | 	org	COG_BSS_START
+00880 0d2             | arg01
+00880 0d2             | 	res	1
+00880 0d3             | arg02
+00880 0d3             | 	res	1
+00880 0d4             | arg03
+00880 0d4             | 	res	1
+00880 0d5             | arg04
+00880 0d5             | 	res	1
+00880 0d6             | local01
+00880 0d6             | 	res	1
+00880 0d7             | local02
+00880 0d7             | 	res	1
+00880 0d8             | muldiva_
+00880 0d8             | 	res	1
+00880 0d9             | muldivb_
+00880 0d9             | 	res	1
+00880 0da             | 	fit	480
+00880 0da             | 

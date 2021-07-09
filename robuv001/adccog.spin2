@@ -1,0 +1,79 @@
+{{ ADC example}}
+
+
+var
+long aresult
+long adcpin
+long agnd
+long avcc
+
+long kwas 
+
+pub start(apin)     |iii, m, n
+
+adcpin:=apin
+coginit(16,@mixer,@aresult)
+waitms(100)
+
+pub measure() :voltage  
+
+
+return 33000*(aresult-agnd)/(avcc-agnd)
+
+
+
+DAT
+              org
+mixer         setq #3
+              rdlong aaresult,ptra
+              
+              
+              wrpin adc_config1, aapin
+              wxpin  #%00_1101, aapin
+              dirh   aapin
+              mov    x, #%001<<6
+              add    x,aapin
+              setse1 x
+	
+loop          waitse1
+              rdpin x,aapin
+              waitse1
+              rdpin x,aapin   
+              waitse1
+              rdpin gnd,aapin 
+              
+              wrpin adc_config2, aapin
+              
+              waitse1
+              rdpin x,aapin
+              waitse1
+              rdpin x,aapin   
+              waitse1
+              rdpin vcc,aapin  
+              
+              wrpin adc_config3, aapin
+              
+              waitse1
+              rdpin x,aapin
+              waitse1
+              rdpin x,aapin   
+              waitse1
+              rdpin aaresult,aapin  
+              
+              wrpin adc_config1, aapin 
+              setq #3
+              wrlong aaresult,ptra
+
+              jmp     #loop          'loop
+
+
+adc_config1      long    %0000_0000_000_100000_0000000_00_11000_0 ' 100000 gnd
+adc_config2      long    %0000_0000_000_100001_0000000_00_11000_0 ' 100001 3v3
+adc_config3      long    %0000_0000_000_100011_0000000_00_11000_0 ' 100011 pin
+
+x               long    0
+
+aaresult long 0
+aapin long 0
+gnd long 0
+vcc long 0

@@ -8,19 +8,25 @@
 
 con
 
-	CLK_FREQ = 354693878                                      	' system freq as a constant
+	CLK_FREQ =354693878 '322162162                                     	' system freq as a constant
+	
 	_clkfreq = CLK_FREQ                                           	' set system clock
-	SBUS_RX  = 7                                                  	' S.BUS serial input
+	SBUS_RX  = 16                                                 	' S.BUS serial input
  
-	SBUS_CFG  = P_ASYNC_RX | P_INVERT_IN                          	' inverted serial input
+	SBUS_CFG  = P_ASYNC_RX' do not invert | P_INVERT_IN                          	' inverted serial input
 	SBUS_BAUD = (CLK_FREQ / 100_000) << 16 | (9-1)                	' 100K baud, 9 bits (8 data + parity)  
 	baudrate        = 4000000
- rxpin           = 56
- txpin           = 57
+ rxpin           = 14
+ txpin           = 12
+ pisleep = 13
+ pipower = 15
+ pipower2 = 8
+ adcpin  = 17  ' battery voltage 
+  
 obj
 
- 	v: "hng025"
-
+ 	v: "hng025r3"
+       adc:"adccog"
 var
 
   	byte  frame[28]						      	' 25 bit sbus buffer, extended to 28 bytes (align)
@@ -33,25 +39,53 @@ long serialbuf[64]
 long serialtail,serialfront
 long serialstack[64]
 long lidarstack[64]
+long voltage
 
-pub main() | t11, i11, h11,h12,h21,h22
 
-v.start(512+48+15+192,8)
+pub main() | t11, i11, h11,h12,h21,h22 ,c,d
+
+v.start(512+48+192+5,0)
 v.cls(154,147)
 v.setfontfamily(4)
 v.waitvbl(100)
-dacinit()
-dacset($8000,$8000)
+v.outtextxycg(8,0,string("Starting RPi 0"),154,147)
+pinh(pipower)
+v.outtextxycg(8,16,string("Starting RPi 1"),154,147)
+pinh(pipower2)
+adc.start(adcpin)
+
+'dacinit()
+'dacset($8000,$8000)
 cogspin(16,display_lidar(),@lidarstack)
+
 repeat
   v.waitvbl(1)
+  voltage:=adc.measure()
+  c:=120
+  if voltage<22200
+    c:=200
+  if voltage<20000
+    c:=252
+  if voltage<19000
+    c:=40
+    
+  v.outtextxycg(8+0,32,string("Voltage: "),c,147)
+  v.outtextxycg(8+72,32,v.inttostr(voltage+/1000),c,147)
+  v.outtextxycg(8+88,32,string("."),c,147)  
+  v.outtextxycg(8+96,32,v.inttostr(voltage+//1000),c,147)
+  v.outtextxycg(8+128,32,string("V"),c,147)
+  v.outtextxycg(8+128,32,string("V"),c,147)
+  
+  v.outtextxycg(8,48,string("SBUS:"),154,147)
+  
+
   if (receive_sbus(SBUS_RX, @frame))                          ' get s.bus frame
+    pintoggle(56)
     decode_sbus(@frame, @channel)                             ' convert to channel values
-'    repeat i11 from 0 to 15                                     ' display channel values
-'      v.outtextxycg(0,16*i11,v.inttostr(i11),154,147)
-'      v.outtextxycg(88,16*i11,string(" "),154,147)      
-'      v.outtextxycg(64,16*i11,v.inttostr(channel[i11]),154,147)
-     
+    repeat i11 from 0 to 15      
+      d:=(8*(channel[i11]/1000))
+      v.outtextxycg(16-d+(i11//4)<<6,16*(i11/4)+64,v.inttostr(channel[i11]),154,147)
+ {{    
     h11:=channel[0] 
     h12:=channel[1]
      
@@ -107,14 +141,14 @@ repeat
       pinwrite(2,1)
       pinwrite(3,1)
 
-  
-  
+  }}
 pub display_lidar()  | xxx,yyy,rr
 
 serial_start(rxpin, txpin, baudrate)
 rxflush()
 
 cogspin(16,serialcog(),@serialstack)
+
 
 xxx:=0 
 yyy:=0
@@ -126,7 +160,10 @@ repeat
       xxx:=0
       yyy:=0
     else  
-      byte[v.buf_ptr+(yyy<<7)+xxx]:=rr
+      byte[256+v.buf_ptr+(xxx<<10)+2*yyy]:=rr
+      byte[256+v.buf_ptr+(xxx<<10)+ 512+2*yyy]:=rr
+      byte[256+v.buf_ptr+(xxx<<10)+2*yyy+1]:=rr
+      byte[256+v.buf_ptr+(xxx<<10)+512+2*yyy+1]:=rr
       xxx++
       if (xxx>79)
         xxx:=0
@@ -139,7 +176,7 @@ pub receive_sbus(p, p_sbus) : success | x, b, byte buffer[25]   ' blocks if no s
 
   x := 0                                                        ' find inter-frame gap
   repeat
-    if (pinread(p) == 0)
+    if (pinread(p) == 1)'0
       if (++x == 250)
         quit
     else
