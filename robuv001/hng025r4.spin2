@@ -137,6 +137,7 @@ long graphmode
 long font_family
 
 long xzoom, yzoom, azoom
+long putpixel
 long p1,p2,p4,p8
 
 
@@ -167,40 +168,37 @@ long p1,p2,p4,p8
 pub dummy()|i,x,y,ntsc,bbb,ccc,zzx,zzy,amode,x1,x2,y1,y2,r
 '' this is not a main program.
 
-start(4096,hdmi_base)
+start(512+0+48,hdmi_base)
 
-cls(11,3)
+cls(147,154)
 setfontfamily(0)
 waitvbl(100)
-outtextxycg(0,0,inttostr(long[0]),11,3)
-waitvbl(100)
+outtextxycg(0,0,inttostr(long[0]),154,147)
+waitvbl(12000)
+repeat i from 0 to 10000
+  ccc:=getrnd()&255
+  x1:=getrnd()+//896
+  x2:=getrnd()+//896
+  y1:=getrnd()+//496
+  y2:=getrnd()+//496
 
-repeat i from 1 to 200
-  putpixel(i,i,14)
-fcircle(200,200,100,14)
-line(300,300,400,200,13)
-waitvbl(100) 
 
-repeat i from 0 to 479
-  ccc:=i&15
-  line(0,i,399,i,ccc)
-  
-
+  line(x1,y1,x2,y2,ccc)
 
 repeat i from 0 to 1000
 
-  x1:=getrnd()+//800
-  y1:=getrnd()+//480
+  x1:=getrnd()+//896
+  y1:=getrnd()+//496
   r:=getrnd()+//100
-  ccc:=getrnd()&15
+  ccc:=getrnd()&255
   fcircle(x1,y1,r,ccc)   
 
 repeat i from 0 to 10000
-  ccc:=getrnd()&15
-  x1:=getrnd()+//800
-  x2:=getrnd()+//800
-  y1:=getrnd()+//480
-  y2:=getrnd()+//480
+  ccc:=getrnd()&255
+  x1:=getrnd()+//896
+  x2:=getrnd()+//896
+  y1:=getrnd()+//496
+  y2:=getrnd()+//496
 
 
   frame(x1,y1,x2,y2,ccc)
@@ -210,11 +208,11 @@ repeat i from 0 to 10000
   x1:=getrnd()+//896
   y1:=getrnd()+//496
   r:=getrnd()+//100
-  ccc:=getrnd()&15
+  ccc:=getrnd()&255
   circle(x1,y1,r,ccc) 
   
 repeat i from 0 to 1000
-  ccc:=getrnd()&15
+  ccc:=getrnd()&255
   x1:=getrnd()+//896
   x2:=getrnd()+//100
   y1:=getrnd()+//496
@@ -474,29 +472,51 @@ repeat iii from 0 to strsize(text)-1
 
 ''---------- putpixel - put a pixel on the screen
 
+pub putpixel1(x,y,c) |byte b
 
 
-pub putpixel0(x,y,c) |byte b
+if ((x>=0) & (x<32*cpl) & (y>=0) & (y<lines))
+    b:=byte[buf_ptr+4*cpl*y+(x>>3)]
+    if (c==0)
+      b:=b & !(1<<(x//8))
+    else
+      b:=b |(1<<(x//8))
+    byte[buf_ptr+4*cpl*y+(x>>3)]:=b
+
+
+pub putpixel2(x,y,c) |byte b
+
+
+if ((x>=0) & (x<16*cpl) & (y>=0) & (y<lines))
+    b:=byte[buf_ptr+4*cpl*y+(x>>2)]
+    b:=b & !(%11<<((x//4)<<1))
+    b:=b |(c<<((x//4)<<1))
+    byte[buf_ptr+4*cpl*y+(x>>2)]:=b
+
+
+pub putpixel4(x,y,c) |byte b
 
 if ((x>=0) & (x<16*cpl) & (y>=0) & (y<lines))
     b:=byte[buf_ptr+4*cpl*y+(x>>1)]
-    
     b:=b & !(%1111<<((x//2)<<2))
-    
     b:=b |(c<<((x//2)<<2))
     byte[buf_ptr+4*cpl*y+(x>>1)]:=b
 
 
-pub putpixel(x,y,c) |byte b
+pub putpixel8x(x,y,c)
 
-x:=lines-x
-if ((y>=0) & (y<16*cpl) & (x>=0) & (x<lines))
-    b:=byte[buf_ptr+4*cpl*x+(y>>1)]
+if ((x>=0) & (x<4*cpl) & (y>=0) & (y<lines))
+    byte[buf_ptr+4*cpl*y+x]:=c
+
+
+pub putpixel8(x,y,c)
+
+if ((y>=0) & (y<4*cpl) & (x>=0) & (x<lines))
+    byte[buf_ptr+4*cpl*(lines-x-1)+y]:=c
     
-    b:=b & !(%1111<<((y//2)<<2))
-    
-    b:=b |(c<<((y//2)<<2))
-    byte[buf_ptr+4*cpl*x+(y>>1)]:=b
+pub putpixel8fast(x,y,c)
+
+   byte[buf_ptr+800*y+x]:=c
 
 
 '**********************************************************************r***
@@ -673,8 +693,22 @@ long[palette_ptr+4*c]:=cc
 
 pub cls(fc,bc)   :c
 
-c:=bc<<4+bc
-bytefill(buf_ptr,c,buflen*4)
+if (graphmode<512)
+  c:=fc<<24+bc<<16+$20
+  longfill(buf_ptr,c,buflen)
+else
+  if (graphmode & 48) ==48
+    c:=bc
+  elseif (graphmode & 48) ==32
+    c:=bc<<4+bc
+  elseif (graphmode & 48) ==16
+    c:=bc<<6+bc<<4+bc<<2+bc
+  else
+    if bc==1
+      c:=255
+    else
+      c:=0
+  bytefill(buf_ptr,c,buflen*4)
 setwritecolors(fc,bc)
 cursor_x:=0
 cursor_y:=0
@@ -882,27 +916,26 @@ return q
 
 pub setmode(mode) | i', 'xzoom, yzoom, azoom
 
-longmove(@timings,@timings4096,16)
-palette_ptr:=@vga16
-  
-  
+
+longmove(@timings,@timings000,16)   'PAL 50 Hz signaling 1140x624, active 800x480, 100x30 text, wide border, 2 colors per pixel, 00_00_00_00_00=0, 354_693_878 Hz
+ 
+timings[5]:=4
+timings[11]:=timings[11]<<1
+putpixel:=p8
+palette_ptr:=@ataripalette
 
 repeat i from 0 to 4
   timings[i]:=timings[i]+hdmibase<<17+ timingsxxt
 timings[5]:=timings[5]+hdmibase<<17
-clkfreq:=timings[13]
-hubset(timings[14])
 waitms(1)
 
-
 xzoom:=2
-
-
 yzoom:=2
 azoom:=xzoom*yzoom
 
 cpl:=timings[11]
-lines:=timings[12]
+lines:=timings[12]/yzoom
+cpl:=cpl/xzoom
 
 buflen:=(cpl*lines)
 
@@ -918,91 +951,14 @@ makedl(mode)
 
 pub makedl (mode) |i, fontline2,charline,bufstart,zoom1,vzoom,lpc,hzoom
 
-''--%aaaa_aaaa_aaaa_aaaa_aazz_nnnn_llll_ll_01 - txt
-  '' aaaa_aaaa_aaaa_aaaa_aazz_rrrr_rrrr_cc_10 - graph
-  '' aaaa_aaaa_aaaa-aaaa_aarr_rrrr_rrrr_rr_11 - extended, next long to read
+dl_ptr:=buf_ptr-4*480
 
-'   0 - display a up/down border line
+vzoom:=1
+repeat i from 0 to timings[12]-1
+  bufstart:=buf_ptr+4*(cpl*(i>>vzoom))
+  long[dl_ptr+4*i]:=(bufstart<<12)+2+(mode &48)>>2
 
-'  ' aaaa_aaaa_aaaa_aaaa_aazz_nnnn_llll_ll_01 - text line
-'    aaaa_aaaa_aaaa_aaaa_aa00 - buffer start, has to be aligned, 1 long for char, ff_bb_rr_cc, foreground, background,reserved, charcode
-'    zz - zoom, 00-x1, 01-x2, 10-x4, 11-blank line
-'    nnnn - font line to display, 0..15
-'    llllll - character line, determines the cursor Y position
-
- 
-if (mode &256==0)
-  dl_ptr:=buf_ptr-4*576
-else
-  dl_ptr:=buf_ptr-4*496
-
-vzoom:=((mode>>2) & 3)
-
-
-if mode<512 '' text modes
-
-  if timings[6]>0 'borders
-    repeat i from 0 to timings[6]-1 '0 to -1
-      long[dl_ptr+4*i]:=$0
-    repeat i from timings[6]+timings[12] to timings[15]-1
-      long[dl_ptr+4*i]:=$0
-  lpc:=16<<vzoom
-  repeat i from timings[6] to timings[6]+timings[12]-1
-    fontline2:=((i-timings[6])+//lpc)>>vzoom
-    charline:=(i-timings[6])+/lpc
-    bufstart:=buf_ptr+4*((cpl)*charline)+(mode&3)
-    long[dl_ptr+4*i]:=(bufstart<<12)+(fontline2<<8)+(charline<<2)+1
-
-
-
-if (mode>=512) and (mode<4096)' and (mode & (%10_00_00_0000))==(%10_00_00_0000) ' graphics -> all modes TODO :mode 560+192=752 = 10_11_11_0000 impossib,e because out of memory
-
-  if timings[6]>0 'borders
-    repeat i from 0 to timings[6]-1 '0 to -1
-      long[dl_ptr+4*i]:=$0
-    repeat i from timings[6]+timings[12] to timings[15]-1
-      long[dl_ptr+4*i]:=$0
-  repeat i from timings[6] to timings[6]+timings[12]-1
-    bufstart:=buf_ptr+4*(cpl*((i-timings[6])>>vzoom))+(mode&3)
-    long[dl_ptr+4*i]:=(bufstart<<12)+2+(mode &48)>>2
-
-
-if (mode==4096) ' graphics -> all modes TODO :mode 560+192=752 = 10_11_11_0000 impossib,e because out of memory
-
-
-
-  if timings[6]>0 'borders
-    repeat i from 0 to timings[6]-1 '0 to -1
-      long[dl_ptr+4*i]:=$0
-    repeat i from timings[6]+timings[12] to timings[15]-1
-      long[dl_ptr+4*i]:=$0
-  repeat i from timings[6] to timings[6]+timings[12]-1
-    bufstart:=buf_ptr+4*(cpl*((i-timings[6])>>vzoom))+(mode&3)
-    long[dl_ptr+4*i]:=(bufstart<<12)+2+(32)>>2
-
-pub maketestdl (mode) |i, fontline2,charline,bufstart,zoom1,vzoom,lpc,hzoom
-
-
-
-
-if (mode &256==0)
-  dl_ptr:=buf_ptr-4*576-100
-else
-  dl_ptr:=buf_ptr-4*496-100
-
-vzoom:=((mode>>2) & 3)
-
-if (mode>=512)' and (mode & (%10_00_00_0000))==(%10_00_00_0000) ' graphics -> all modes TODO :mode 560+192=752 = 10_11_11_0000 impossib,e because out of memory
-
-  if timings[6]>0 'borders
-    repeat i from 0 to timings[6]-1 '0 to -1
-      long[dl_ptr+4*i]:=$0
-    repeat i from timings[6] to timings[15]+20
-      long[dl_ptr+4*i]:=$0
-    i:=timings[6]
-      long[dl_ptr+4*i]:=%0001_1110_0000_0000_0011_0010_0000_0111  
-      long[dl_ptr+4*i+4]:=(buf_ptr<<12)+2+(mode &48)>>2
-      
+     
 '--------- Start the driver with graphics mode 'mode' at pins 'base'
 
 pub start(mode,base):result
@@ -1012,6 +968,11 @@ pub start(mode,base):result
 border_ptr:=@bordercolor
 font_ptr:=@st_font
 hdmibase:=base
+p1:=@putpixel1
+p2:=@putpixel2
+p4:=@putpixel4
+p8:=@putpixel8
+
 
 ' the mode has to be set here to enable computing the buffer length
 
@@ -1067,16 +1028,8 @@ ataripalette   file "ataripalettep2.def"
 
 
 '                     bf.hs, hs,  bf.vis  visible, lr bord, pixel, ud bord,  up p., vsync, down p., mode, cpl, scanlines,  clock,                  hubset                  total vis lines
-timings000      long   16,   80,    20,    1024,    112,     8,     48,      16,      16,    16,      0,  100,   480,     354693878,   %1_110000__11_0110_1100__1111_1011,   576
-timings064      long   18,   48,    16,     944,     24,     8,     24,      24,      32,    24,     64,  112,   496,     319215686,   %1_110010__11_0010_1101__1111_1011,   544
-timings128      long   16,   64,    16,     816,      8,     8,     8,       32,      64,    32,    128,  100,   480,     283750000,   %1_111111__11_1000_1011__1111_1011,   496
-timings192      long   16,   80,    20,    1024,      0,     8,     0,       16,      16,    16,    192,  128,   576,     354693878,   %1_110000__11_0110_1100__1111_1011,   576
-timings256      long   80,  160,    84,     816,      8,     8,     8,        8,      12,     8,    256,  100,   480,     357959184,   %1_110000__11_0110_0100__1111_1011,   496
-timings320      long   80,   50,    80,     816,      8,     8,     8,        8,      12,     8,    320,  100,   480,     322162162,   %1_100100__10_0101_0011__1111_1011,   496
-timings384      long   24,   48,    24,     816,      8,     8,     8,        8,      12,     8,    384,  100,   480,     286363636,   %1_010101__01_0011_1010__1111_1011,   496
-timings448      long   32,   64,    34,     896,      0,     8,     0,        8,      12,     8,    448,  112,   496,     322162162,   %1_100100__10_0101_0011__1111_1011,   496
-timings4096     long   88,   50,    88,     800,      0,     8,     0,        12,     20,    12,   4096,  100,   480,     322162162,   %1_100100__10_0101_0011__1111_1011,   480
-                                 
+timings000      long   48,   32,    80,    800,      0,     8,      0,       6,      7,     3,      0,  100,   480,     354693878,   %1_110000__11_0110_1100__1111_1011,   576
+                                  
 vgacolors       byte   0, 117, 199, 151, 39, 71, 246, 10, 5, 121, 203, 155, 43, 75, 234, 15
 
 
@@ -1096,9 +1049,8 @@ hdmi            setq    #9
                 mov     ii,#448                          '7 << 6          
                 add     ii,hbase
                 drvl    ii                                 '#7<<6 + hdmi_base      ' enable HDMI pins
-       '         wrpin   ##%0000_0000_000_10110_1111_0111_10_00000_0, ii  '#7<<6 + hdmi_base      ' a '123 ohm BITDAC for pins
-                 wrpin   ##%0000_0000_000_00000_0000_0000_00_00000_0, ii  '#7<<6 + hdmi_base      full levels as there is 100 Ohm
-                          'aaaa_bbbb_fff_mmmmm_mmmm_mmmm_tt_sssss_h 
+                wrpin   ##%10110_1111_0111_10_00000_0, ii  '#7<<6 + hdmi_base      ' a '123 ohm BITDAC for pins
+
                 setxfrq ##$0CCCCCCC+1                   'set streamer freq to 1/10th clk
 
 
