@@ -8,7 +8,7 @@
 
 con
 
-	CLK_FREQ =354693878 '322162162                                     	' system freq as a constant
+	CLK_FREQ =285000000 '322162162                                     	' system freq as a constant
 	
 	_clkfreq = CLK_FREQ                                           	' set system clock
 	SBUS_RX  = 16                                                 	' S.BUS serial input
@@ -25,7 +25,7 @@ con
   
 obj
 
- 	v: "hng025r3"
+ 	v: "hng026r"
        adc:"adccog"
 var
 
@@ -40,27 +40,115 @@ long serialtail,serialfront
 long serialstack[64]
 long lidarstack[64]
 long voltage
+long frames
+long sensor
 
-
-pub main() | t11, i11, h11,h12,h21,h22 ,c,d
-
+pub main() | t11, i11, h11,h12,h21,h22 ,c,d,s2
+waitms(200)
 v.start(512+48+192+5,0)
 v.cls(154,147)
-v.setfontfamily(4)
+'v.setfontfamily(4)
 v.waitvbl(100)
 v.outtextxycg(8,0,string("Starting RPi 0"),154,147)
 pinh(pipower)
 v.outtextxycg(8,16,string("Starting RPi 1"),154,147)
+
+
+pinstart(24+6,P_PWM_SAWTOOTH |P_OE |P_INVERT_OUTPUT,$ffFF_0001,100)
+pinstart(34,P_INVERT_IN |p_count_rises,$2b7cd0*10,0)
+
+pinh(25+6)
+pinh(26+6 addpins 1)
+
+' 1068 - start
+
+repeat
+  repeat i11 from $1068 to $F000
+    wypin(24+6,i11)
+    c:=rdpin(34)
+    v.outtextxycg(8,32,v.inttostr(c),154,147)
+    waitus(10)
+  waitms(1000)   
+  repeat i11 from $F000 to $1068 
+    wypin(24+6,i11)
+    waitus(10)
+  
+  pinl(25+6)
+  repeat i11 from  $1068 to $F000
+    wypin(24+6,i11)
+    waitus(10)
+  waitms(1000)   
+  repeat i11 from $F000 to $1068 
+    wypin(24+6,i11)
+    waitus(10)
+   
+  pinh(25+6)
+
+waitms(4000)
+pinl(26 addpins 1)
+
+pinstart(24,P_PWM_SAWTOOTH |P_OE |P_INVERT_OUTPUT,$ffFF_0001,100)
+
+
+pinh(25)
+pinh(26 addpins 1)
+
+' 1068 - start
+
+repeat
+  repeat i11 from $1068 to $F000
+    wypin(24,i11)
+    waitus(10)
+  waitms(1000)   
+  repeat i11 from $F000 to $1068 
+    wypin(24,i11)
+    waitus(10)
+  
+  pinl(25)
+  repeat i11 from  $1068 to $F000
+    wypin(24,i11)
+    waitus(10)
+  waitms(1000)   
+  repeat i11 from $F000 to $1068 
+    wypin(24,i11)
+    waitus(10)
+   
+  pinh(25)
+
+waitms(4000)
+pinl(26 addpins 1)
 pinh(pipower2)
 adc.start(adcpin)
 
 'dacinit()
 'dacset($8000,$8000)
 cogspin(16,display_lidar(),@lidarstack)
-
+voltage:=24000
+frames:=0
+ 
+pinstart (48 addpins 7, P_INVERT_IN | P_COUNT_HIGHS,0,0)
+sensor:=0 
 repeat
   v.waitvbl(1)
-  voltage:=adc.measure()
+  '596.491 nm/clk
+  frames+=1
+  
+  frames:=frames+//64 
+      
+  if (frames+//4)==0
+    sensor+=5
+    sensor:=sensor +// 8
+    c:=rdpin(48+sensor)+/1676
+    v.outtextxycg(8,200+16*sensor,string("     "),154,147)
+    v.outtextxycg(8,200+16*sensor,v.inttostr(c),154,147)    
+    pinclear(48+sensor) 
+    pinl(40+sensor)
+    waitus(40)
+    pinh(40+sensor)
+    pinstart(48+sensor, P_INVERT_IN  | P_COUNT_HIGHS,0,0)
+  
+  
+  voltage:=(31*voltage+adc.measure())>>5
   c:=120
   if voltage<22200
     c:=200
@@ -85,7 +173,7 @@ repeat
     repeat i11 from 0 to 15      
       d:=(8*(channel[i11]/1000))
       v.outtextxycg(16-d+(i11//4)<<6,16*(i11/4)+64,v.inttostr(channel[i11]),154,147)
- {{    
+{{    
     h11:=channel[0] 
     h12:=channel[1]
      

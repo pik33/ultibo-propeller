@@ -10,7 +10,7 @@
 CON
 
 
-hdmi_base       = 48             'must be a multiple of 8
+hdmi_base       = 0             'must be a multiple of 8
 _clkfreq        = 285_000_000    '28.5 MHz pixel clock
 
 ' 354_689_500   200x Atari 8-bit PAL,  50x Amiga PAL  - real settings: 49,869-> 354_693_878  - 1.0000123 - mode 0 and 192
@@ -612,6 +612,8 @@ hdmi            setq    #10
                 rdlong  framebuf,  ptra                  'read pointers
                 setq    #15
                 rdlong  m_bs,modeptr   
+                setq2   #255
+                rdlong  $000, paletteptr 
 
                 wrlong  #aend,#0                         'write driver length to hub#0: DEBUG/demo
                 setcmod #$100                            'enable HDMI mode
