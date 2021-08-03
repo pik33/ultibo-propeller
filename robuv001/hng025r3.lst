@@ -1,5 +1,5 @@
 00000                 | 
-00000                 | #line 1 "D:/programowanie/20210307-ultibo-propeller/ultibo-propeller/robuv001/hng025r3.p2asm"
+00000                 | #line 1 "D:/Programowanie/ultibo-propeller/robuv001/hng025r3.p2asm"
 00000                 | ' 
 00000                 | ' 
 00000                 | ' hdmi_base       = 48             'must be a multiple of 8

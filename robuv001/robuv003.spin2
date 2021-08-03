@@ -1,27 +1,39 @@
 '-------------------------------------------------------------------------------
-'ROBUV driver v. 0.01-20210525
+'ROBUV driver v. 0.03-20210823
 'Piotr Kardasz pik33@o2.pl
 '
-'uses code from 03_jm_sbus_serial_decode.spin2 by Jon "JonnyMac" McPhalen (MIT licensed)
+'uses code from several MIT licensed P2 objects
 '
 '-------------------------------------------------------------------------------
 
 con
 
-	CLK_FREQ =285000000 '322162162                                     	' system freq as a constant
+	CLK_FREQ =285000000                                     	' system freq as a constant
 	
 	_clkfreq = CLK_FREQ                                           	' set system clock
 	SBUS_RX  = 16                                                 	' S.BUS serial input
  
-	SBUS_CFG  = P_ASYNC_RX' do not invert | P_INVERT_IN                          	' inverted serial input
+	SBUS_CFG  = P_ASYNC_RX' do not invert | P_INVERT_IN            	' inverted serial input
 	SBUS_BAUD = (CLK_FREQ / 100_000) << 16 | (9-1)                	' 100K baud, 9 bits (8 data + parity)  
-	baudrate        = 4000000
+	baudrate  = 4000000						' for Raspberry
  rxpin           = 14
  txpin           = 12
  pisleep = 13
  pipower = 15
  pipower2 = 8
  adcpin  = 17  ' battery voltage 
+
+''--------------- Cogs:
+
+''0 - main prg
+''1
+''2
+''3
+''4
+''5
+''6 - SBUS
+''7
+
   
 obj
 
@@ -39,88 +51,99 @@ long serialbuf[64]
 long serialtail,serialfront
 long serialstack[64]
 long lidarstack[64]
+long sbusstack[64]
 long voltage
 long frames
 long sensor
 
-pub main() | t11, i11, h11,h12,h21,h22 ,c,d,s2
-waitms(200)
-v.start(512+48+192+5,0)
+pub main() | t11, i11, h11,h12,h21,h22 ,c,d,s2,s,sd,sd1,cc,cc1
+
+
+v.start(0,0)
 v.cls(154,147)
-'v.setfontfamily(4)
-v.waitvbl(100)
+v.waitvbl(1)
 v.outtextxycg(8,0,string("Starting RPi 0"),154,147)
 pinh(pipower)
 v.outtextxycg(8,16,string("Starting RPi 1"),154,147)
+pinh(pipower2)
+
+'start US sensors
+
+pinstart (48 addpins 7, P_INVERT_IN | P_COUNT_HIGHS,0,0)
+sensor:=0 
+
 adc.start(adcpin)
+cogspin(6,sbus(),@sbusstack)
 
-pinstart(24+6,P_PWM_SAWTOOTH |P_OE |P_INVERT_OUTPUT,$ffFF_0001,100)
-pinstart(34,P_INVERT_IN |p_count_rises,$2b7cd0*10,0)
+'' Start PWMs for motors
 
-pinh(25+6)
-pinh(26+6 addpins 1)
+pinstart(30,P_PWM_SAWTOOTH |P_OE |P_INVERT_OUTPUT,$ffFF_0001,100)
+pinstart(34,P_INVERT_IN |p_count_rises,$2b7cd0*0,0)
+
+pinstart(24,P_PWM_SAWTOOTH |P_OE |P_INVERT_OUTPUT,$ffFF_0001,100)
+pinstart(28,P_INVERT_IN |p_count_rises,$2b7cd0*10,0)
+
+'' Test motors
+
+pinh(31)
+pinh(32 addpins 1)
 
 ' 1068 - start
 
-repeat c from 0 to 1
-  repeat i11 from $1068 to $F000
-    wypin(24+6,i11)
-    c:=rdpin(34)
-    v.outtextxycg(8,32,v.inttostr(c),154,147)
-    waitus(10)
-  waitms(1000)   
-  repeat i11 from $F000 to $1068 
-    wypin(24+6,i11)
-    waitus(10)
-  
-  pinl(25+6)
-  repeat i11 from  $1068 to $F000
-    wypin(24+6,i11)
-    waitus(10)
-  waitms(1000)   
-  repeat i11 from $F000 to $1068 
-    wypin(24+6,i11)
-    waitus(10)
-   
-  pinh(25+6)
-  
-  repeat i11 from 0 to 127
-    voltage:=(31*voltage+adc.measure())>>5
-    c:=120
-    if voltage<22200
-      c:=200
-    if voltage<20000
-      c:=252
-    if voltage<19000
+sd1:=1
+sd:=sd1
+s:=$1000
+
+repeat 
+  v.waitvbl(1)
+  frames++
+'' set a motor speed
+  s+=sd
+  if s>$f000
+    sd:=-sd1
+  if s<$1000
+    sd:=sd1
+    pintoggle(31)
+  wypin(30,s)     
+  if frames//60==0
+    cc:=rqpin(34)
+    v.outtextxycg(8,48,string("            "),154,147)
+    v.outtextxycg(8,48,v.inttostr(cc-cc1),154,147)
+    cc1:=cc
+  voltage:=(31*voltage+adc.measure())>>5
+  c:=120
+  if voltage<22200
+    c:=200
+  if voltage<20000
+    c:=252
+  if voltage<19000
       c:=40
     
-  v.outtextxycg(8+0,64,string("Voltage: "),c,147)
-  v.outtextxycg(8+72,64,v.inttostr(voltage+/1000),c,147)
-  v.outtextxycg(8+88,64,string("."),c,147)  
-  v.outtextxycg(8+96,64,v.inttostr(voltage+//1000),c,147)
-  v.outtextxycg(8+128,64,string("V"),c,147)
-  v.outtextxycg(8+128,64,string("V"),c,147)
+  v.outtextxycg(8+0,32,string("Voltage: "),c,147)
+  v.outtextxycg(8+72,32,v.inttostr(voltage+/1000),c,147)
+  v.outtextxycg(8+88,32,string("."),c,147)  
+  v.outtextxycg(8+96,32,v.inttostr(voltage+//1000),c,147)
+  v.outtextxycg(8+128,32,string("V"),c,147)
+  v.outtextxycg(8+128,32,string("V"),c,147)
   
+  repeat i11 from 0 to 15      
+    d:=(8*(channel[i11]/1000))
+    if d==0
+      v.outtextxycg(8+(i11//4)<<6,16*(i11/4)+80,string(" "),154,147)
+    v.outtextxycg(16-d+(i11//4)<<6,16*(i11/4)+80,v.inttostr(channel[i11]),154,147)  
 
-pinl(26+6 addpins 1)
 
-pinh(pipower2)
-adc.start(adcpin)
 
-'dacinit()
-'dacset($8000,$8000)
-cogspin(16,display_lidar(),@lidarstack)
-voltage:=24000
-frames:=0
- 
-pinstart (48 addpins 7, P_INVERT_IN | P_COUNT_HIGHS,0,0)
-sensor:=0 
+{{
+
 repeat
   v.waitvbl(1)
   '596.491 nm/clk
   frames+=1
   
   frames:=frames+//64 
+
+
       
   if (frames+//4)==0
     sensor+=5
@@ -154,12 +177,8 @@ repeat
   v.outtextxycg(8,48,string("SBUS:"),154,147)
   
 
-  if (receive_sbus(SBUS_RX, @frame))                          ' get s.bus frame
-    pintoggle(56)
-    decode_sbus(@frame, @channel)                             ' convert to channel values
-    repeat i11 from 0 to 15      
-      d:=(8*(channel[i11]/1000))
-      v.outtextxycg(16-d+(i11//4)<<6,16*(i11/4)+64,v.inttostr(channel[i11]),154,147)
+
+
 {{    
     h11:=channel[0] 
     h12:=channel[1]
@@ -217,6 +236,11 @@ repeat
       pinwrite(3,1)
 
   }}
+
+
+
+{{ RPi serial test code
+
 pub display_lidar()  | xxx,yyy,rr
 
 serial_start(rxpin, txpin, baudrate)
@@ -227,6 +251,8 @@ cogspin(16,serialcog(),@serialstack)
 
 xxx:=0 
 yyy:=0
+
+
 
 repeat
   repeat
@@ -243,8 +269,26 @@ repeat
       if (xxx>79)
         xxx:=0
         yyy:=(yyy+1)+//60
-        
+ 
+}}        
   
+
+''-----------------------------------------------------------------------------------------------
+''---------------------- SBUS stuff for COGSPIN ------------------------------------------------- 
+''-----------------------------------------------------------------------------------------------
+
+pub sbus()
+
+repeat
+  v.waitvbl(1)
+  if (receive_sbus(SBUS_RX, @frame))                          ' get s.bus frame
+    pintoggle(56)
+    decode_sbus(@frame, @channel)                             ' convert to channel values
+    
+    
+      
+''---------------------- SBUS receiver/decoder       
+      
 pub receive_sbus(p, p_sbus) : success | x, b, byte buffer[25]   ' blocks if no signal!!!
 
   pinclear(p)                                                   ' force to tri-state mode
@@ -294,32 +338,10 @@ pub decode_sbus(p_sbus, p_chans) | ch, work, bc, flags
   word[p_chans][16] := (flags & %0001) ? $07FF : 0              ' convert ch17 bit
   word[p_chans][17] := (flags & %0010) ? $07FF : 0              ' convert ch18 bit
  
-pub dacinit() | dac
-
-dac:=%10110_00000000_01_00011_0  
-
-
-org
-
-        wrpin   dac,#0
-        wxpin   #256,#0
-
-        wrpin   dac,#1
-        wxpin   #256,#1
-
-        dirh    #0 addpins 1
-        
-end    
-
-   
-pub dacset(lll,rrr)
-   
-org   
-        wypin   lll,#0
-        wypin   rrr,#1
-end  
-
-
+''-----------------------------------------------------------------------------------------------
+''---------------------- SBUS end ---------------------------------------------------------------
+''-----------------------------------------------------------------------------------------------      
+      
 ''---------------------- Serial functions from jm_serial.spin2
 
 pub serial_start(rxpin2, txpin2, baud) | bitmode
