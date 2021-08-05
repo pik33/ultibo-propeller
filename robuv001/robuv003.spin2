@@ -56,9 +56,10 @@ long voltage
 long frames
 long sensor
 
-pub main() | t11, i11, h11,h12,h21,h22 ,c,d,s2,s,sd,sd1,cc,cc1
+pub main() | t11, i11, h11,h12,h21,h22 ,c,d,s2,s,sd,sd1,cc,cc1,i
 
-
+repeat i from 0 to 17
+  channel[i]:=0
 v.start(0,0)
 v.cls(154,147)
 v.waitvbl(1)
@@ -66,6 +67,9 @@ v.outtextxycg(8,0,string("Starting RPi 0"),154,147)
 pinh(pipower)
 v.outtextxycg(8,16,string("Starting RPi 1"),154,147)
 pinh(pipower2)
+pinl(20)
+
+
 
 'start US sensors
 
@@ -82,6 +86,8 @@ pinstart(34,P_INVERT_IN |p_count_rises,$2b7cd0*0,0)
 
 pinstart(24,P_PWM_SAWTOOTH |P_OE |P_INVERT_OUTPUT,$ffFF_0001,100)
 pinstart(28,P_INVERT_IN |p_count_rises,$2b7cd0*10,0)
+pinstart(21,P_PWM_SAWTOOTH |P_OE , $ffFF_0001,100)
+pinstart(22,P_PWM_SAWTOOTH |P_OE , $ffFF_0001,100)
 
 '' Test motors
 
@@ -90,13 +96,17 @@ pinh(32 addpins 1)
 
 ' 1068 - start
 
-sd1:=1
+sd1:=100
 sd:=sd1
 s:=$1000
+
 
 repeat 
   v.waitvbl(1)
   frames++
+  
+  
+  
 '' set a motor speed
   s+=sd
   if s>$f000
@@ -104,6 +114,10 @@ repeat
   if s<$1000
     sd:=sd1
     pintoggle(31)
+    pintoggle(20)
+    pintoggle(23)
+  wypin(21,s)  
+  wypin(22,s)  
   wypin(30,s)     
   if frames//60==0
     cc:=rqpin(34)
@@ -132,22 +146,12 @@ repeat
       v.outtextxycg(8+(i11//4)<<6,16*(i11/4)+80,string(" "),154,147)
     v.outtextxycg(16-d+(i11//4)<<6,16*(i11/4)+80,v.inttostr(channel[i11]),154,147)  
 
-
-
-{{
-
-repeat
-  v.waitvbl(1)
   '596.491 nm/clk
-  frames+=1
   
-  frames:=frames+//64 
 
-
-      
-  if (frames+//4)==0
-    sensor+=5
-    sensor:=sensor +// 8
+  if (frames+//3)==0
+    sensor+=3
+    sensor +//= 8
     c:=rdpin(48+sensor)+/1676
     v.outtextxycg(8,200+16*sensor,string("     "),154,147)
     v.outtextxycg(8,200+16*sensor,v.inttostr(c),154,147)    
@@ -156,121 +160,14 @@ repeat
     waitus(40)
     pinh(40+sensor)
     pinstart(48+sensor, P_INVERT_IN  | P_COUNT_HIGHS,0,0)
-  
-  
-  voltage:=(31*voltage+adc.measure())>>5
-  c:=120
-  if voltage<22200
-    c:=200
-  if voltage<20000
-    c:=252
-  if voltage<19000
-    c:=40
-    
-  v.outtextxycg(8+0,32,string("Voltage: "),c,147)
-  v.outtextxycg(8+72,32,v.inttostr(voltage+/1000),c,147)
-  v.outtextxycg(8+88,32,string("."),c,147)  
-  v.outtextxycg(8+96,32,v.inttostr(voltage+//1000),c,147)
-  v.outtextxycg(8+128,32,string("V"),c,147)
-  v.outtextxycg(8+128,32,string("V"),c,147)
-  
-  v.outtextxycg(8,48,string("SBUS:"),154,147)
-  
 
 
 
-{{    
-    h11:=channel[0] 
-    h12:=channel[1]
-     
- ' 1 joy do przodu, robot jedzie, 0203= h11=0   
-    
-    if (h11>1500) & (h12>300) & (h12<1500)
-      h21:=$2800
-      h22:=$2800
-
-' 2. joy do tyłu, robot do tyłu
-
-    elseif (h11<300) & (h12>300) & (h12<1500)
-      h21:=$D800
-      h22:=$D800
-
-  '3,4  joy w bok
-  
-    elseif (h12>1500) & (h11<1500) & (h11>300)  ''lewo
-      h21:=$2800
-      h22:=$D800
-    
-    
-    elseif (h12<300) & (h11<1500) & (h11>300)   ''prawo
-      h21:=$D800
-      h22:=$2800
-    
-    elseif (h12>1500) & (h11>1500) '' lewo góra   
-      h21:=$2800
-      h22:=$4000
-    
-    elseif (h12>1500) & (h11<300) ''  lewo dół
-      h21:=$c000
-      h22:=$D800  
-    
-    elseif (h12<300) & (h11>1500)    '' prawo góra
-      h21:=$4000
-      h22:=$2800
-
-    elseif (h12<300) & (h11<300)  '' prawo dół
-      h21:=$d800
-      h22:=$c000  
-      
-    else
-      h21:=$8000
-      h22:=$8000  
- 
-    dacset(h21,h22)    
-  
-    if (channel[7]>1000)
-      pinwrite(2,0)
-      pinwrite(3,0)
-    else
-      pinwrite(2,1)
-      pinwrite(3,1)
-
-  }}
 
 
 
-{{ RPi serial test code
 
-pub display_lidar()  | xxx,yyy,rr
-
-serial_start(rxpin, txpin, baudrate)
-rxflush()
-
-cogspin(16,serialcog(),@serialstack)
-
-
-xxx:=0 
-yyy:=0
-
-
-
-repeat
-  repeat
-    rr:=serialblockingread()
-    if rr==255
-      xxx:=0
-      yyy:=0
-    else  
-      byte[256+v.buf_ptr+(xxx<<10)+2*yyy]:=rr
-      byte[256+v.buf_ptr+(xxx<<10)+ 512+2*yyy]:=rr
-      byte[256+v.buf_ptr+(xxx<<10)+2*yyy+1]:=rr
-      byte[256+v.buf_ptr+(xxx<<10)+512+2*yyy+1]:=rr
-      xxx++
-      if (xxx>79)
-        xxx:=0
-        yyy:=(yyy+1)+//60
- 
-}}        
+       
   
 
 ''-----------------------------------------------------------------------------------------------
@@ -280,7 +177,7 @@ repeat
 pub sbus()
 
 repeat
-  v.waitvbl(1)
+  waitms(20)
   if (receive_sbus(SBUS_RX, @frame))                          ' get s.bus frame
     pintoggle(56)
     decode_sbus(@frame, @channel)                             ' convert to channel values

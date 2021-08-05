@@ -384,6 +384,11 @@ cursor_y:=y
 '                                                                        *
 '*************************************************************************
 
+pub waitvbl1() 'reentrant
+
+repeat until vblank==0
+repeat until vblank==1
+
 pub waitvbl(amount) | i
 
 ''---------- Wait for start of vblank. Amount=delay in frames
