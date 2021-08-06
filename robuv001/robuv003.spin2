@@ -93,7 +93,7 @@ pinstart(22,P_PWM_SAWTOOTH |P_OE , $ffFF_0001,100)
 
 pinh(31)
 pinh(32 addpins 1)
-
+pinstart(38,P_NCO_FREQ | P_OE, $FFFF,$400000 )
 ' 1068 - start
 
 sd1:=100

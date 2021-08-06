@@ -534,7 +534,6 @@ LR__0016
 	wypin	#0, #28
 	dirh	#28
 ' pinstart(21,P_PWM_SAWTOOTH |P_OE , $ffFF_0001,100)
-	mov	arg02, #82
 	mov	arg03, ##-65535
 	mov	arg04, #100
 	dirl	#21
@@ -554,9 +553,17 @@ LR__0016
 ' pinh(31)
 	drvh	#31
 ' pinh(32 addpins 1)
-	mov	arg01, #96
 	drvh	#96
-' 
+' pinstart(38,P_NCO_FREQ | P_OE, $FFFF,$400000 )
+	mov	arg01, #38
+	mov	arg02, #76
+	bmask	arg03, #15
+	decod	arg04, #22
+	dirl	#38
+	wrpin	#76, #38
+	wxpin	arg03, #38
+	wypin	arg04, #38
+	dirh	#38
 ' ' 1068 - start
 ' 
 ' sd1:=100
