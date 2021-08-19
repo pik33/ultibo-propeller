@@ -23,6 +23,53 @@ con
  pipower2 = 8
  adcpin  = 17  ' battery voltage 
 
+{{ Pins:
+
+0..7 - HDMI
+ 8 - RPi2 Power
+ 9 - RPi2 TxD
+10 - RPi2 sleep
+11 - RPi2 RxD 
+
+12 - RPi1 TxD
+13 - RPi1 Sleep
+14 - RPi1 RxD
+15 - RPi1 Power
+
+16 - remote control
+17 - U Acc
+18..19 reserved
+ 
+20..23 fan1..4
+
+24 - PWM R
+25 - REV R
+26 - Enable R
+27 - Break R
+28 - Speed R
+29 - Alarm R
+
+30 - PWM L
+31 - REV L
+32 - Enable L
+33 - Break L
+34 - Speed L
+35 - Alarm L
+
+36 Stop In 1
+37 Stop In 2
+
+38 Light on
+39 Accu LED
+
+40..47 trig
+48..55 echo
+
+56..61 reserved
+62..63 - prop plug
+
+}}
+
 ''--------------- Cogs:
 
 ''0 - main prg
@@ -56,7 +103,7 @@ long voltage
 long frames
 long sensor
 
-pub main() | t11, i11, h11,h12,h21,h22 ,c,d,s2,s,sd,sd1,cc,cc1,i
+pub main() | t11, i11, h11,h12,h21,h22 ,c,d,s2,s,sd,sd1,cc,cc1,cc2,cc3,i
 
 repeat i from 0 to 17
   channel[i]:=0
@@ -69,8 +116,6 @@ v.outtextxycg(8,16,string("Starting RPi 1"),154,147)
 pinh(pipower2)
 pinl(20)
 
-
-
 'start US sensors
 
 pinstart (48 addpins 7, P_INVERT_IN | P_COUNT_HIGHS,0,0)
@@ -81,49 +126,40 @@ cogspin(6,sbus(),@sbusstack)
 
 '' Start PWMs for motors
 
-pinstart(30,P_PWM_SAWTOOTH |P_OE |P_INVERT_OUTPUT,$ffFF_0001,100)
+pinstart(30,P_PWM_SAWTOOTH |P_OE |P_INVERT_OUTPUT,$ffFF_0001,100)' pwm l
 pinstart(34,P_INVERT_IN |p_count_rises,$2b7cd0*0,0)
 
-pinstart(24,P_PWM_SAWTOOTH |P_OE |P_INVERT_OUTPUT,$ffFF_0001,100)
+pinstart(24,P_PWM_SAWTOOTH |P_OE |P_INVERT_OUTPUT,$ffFF_0001,100)' pwm r
 pinstart(28,P_INVERT_IN |p_count_rises,$2b7cd0*10,0)
-pinstart(21,P_PWM_SAWTOOTH |P_OE , $ffFF_0001,100)
-pinstart(22,P_PWM_SAWTOOTH |P_OE , $ffFF_0001,100)
+
+
+pinh(38)' lamps
+waitms(2000)
+pinh(20 addpins 3)
 
 '' Test motors
 
 pinh(31)
 pinh(32 addpins 1)
-pinstart(38,P_NCO_FREQ | P_OE, $FFFF,$400000 )
-' 1068 - start
 
-sd1:=100
-sd:=sd1
-s:=$1000
+pinh(25)
+pinh(26 addpins 1)
+
+' 1068 - start
 
 
 repeat 
   v.waitvbl(1)
   frames++
-  
-  
-  
-'' set a motor speed
-  s+=sd
-  if s>$f000
-    sd:=-sd1
-  if s<$1000
-    sd:=sd1
-    pintoggle(31)
-    pintoggle(20)
-    pintoggle(23)
-  wypin(21,s)  
-  wypin(22,s)  
-  wypin(30,s)     
   if frames//60==0
-    cc:=rqpin(34)
+    cc:=rqpin(34) 'speed l
     v.outtextxycg(8,48,string("            "),154,147)
     v.outtextxycg(8,48,v.inttostr(cc-cc1),154,147)
     cc1:=cc
+    cc2:=rqpin(28) 'speed r 
+    v.outtextxycg(8,48,string("            "),154,147)
+    v.outtextxycg(8,48,v.inttostr(cc2-cc3),154,147)
+    cc3:=cc2
   voltage:=(31*voltage+adc.measure())>>5
   c:=120
   if voltage<22200
@@ -161,13 +197,7 @@ repeat
     pinh(40+sensor)
     pinstart(48+sensor, P_INVERT_IN  | P_COUNT_HIGHS,0,0)
 
-
-
-
-
-
-
-       
+     
   
 
 ''-----------------------------------------------------------------------------------------------
