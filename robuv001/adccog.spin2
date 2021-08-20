@@ -7,7 +7,7 @@ long adcpin
 long agnd
 long avcc
 
-long kwas 
+
 
 pub start(apin)     |iii, m, n
 
@@ -71,7 +71,7 @@ adc_config1      long    %0000_0000_000_100000_0000000_00_11000_0 ' 100000 gnd
 adc_config2      long    %0000_0000_000_100001_0000000_00_11000_0 ' 100001 3v3
 adc_config3      long    %0000_0000_000_100011_0000000_00_11000_0 ' 100011 pin
 
-x               long    0
+x                long    0
 
 aaresult long 0
 aapin long 0

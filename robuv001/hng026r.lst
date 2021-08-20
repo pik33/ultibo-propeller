@@ -1,10 +1,10 @@
 00000                 | 
-00000                 | #line 1 "D:/Programowanie/ultibo-propeller/robuv001/hng025r3.p2asm"
+00000                 | #line 1 "D:/Programowanie/ultibo-propeller/robuv001/hng026r.p2asm"
 00000                 | ' 
 00000                 | ' 
-00000                 | ' hdmi_base       = 48             'must be a multiple of 8
+00000                 | ' hdmi_base       = 0             'must be a multiple of 8
 00000                 | con
-00000                 | 	hdmi_base = 48
+00000                 | 	hdmi_base = 0
 00000                 | ' _clkfreq        = 285_000_000    '28.5 MHz pixel clock
 00000                 | 	_clkfreq = 285000000
 00000                 | ' 
@@ -192,7 +192,7 @@
 0073c 0ce             | itmp2_
 0073c 0ce 00 00 00 00 | 	long	0
 00740 0cf             | objptr
-00740 0cf 10 23 00 00 | 	long	@objmem
+00740 0cf 18 23 00 00 | 	long	@objmem
 00744 0d0             | ptr__dat__
 00744 0d0 50 15 00 00 | 	long	@_dat_
 00748 0d1             | result1
@@ -240,7 +240,7 @@
 00754                 | ' 
 00754                 | ' hdmibase:=base
 00754     18 9E 05 F1 | 	add	objptr, #24
-00758     CF 60 68 FC | 	wrlong	#48, objptr
+00758     CF 00 68 FC | 	wrlong	#0, objptr
 0075c                 | ' 
 0075c                 | ' ' the mode has to be set here to enable computing the buffer length
 0075c                 | ' 
@@ -2344,308 +2344,310 @@
 0219c     2B 4B EA 0F | vgacolors       byte   0, 117, 199, 151, 39, 71, 246, 10, 5, 121, 203, 155, 43, 75, 234, 15
 021a0                 | 
 021a0     28 14 64 FD | hdmi            setq    #10
-021a4     00 AD 04 FB |                 rdlong  framebuf,  ptra                  'read pointers
+021a4     00 B1 04 FB |                 rdlong  framebuf,  ptra                  'read pointers
 021a8     28 1E 64 FD |                 setq    #15
-021ac     58 68 00 FB |                 rdlong  m_bs,modeptr   
-021b0                 | 
-021b0     00 CA 6C FC |                 wrlong  #aend,#0                         'write driver length to hub#0: DEBUG/demo
-021b4     3C 00 66 FD |                 setcmod #$100                            'enable HDMI mode
-021b8     C0 BF 04 F6 |                 mov     ii,#448                          '7 << 6          
-021bc     5C BE 00 F1 |                 add     ii,hbase
-021c0     58 BE 60 FD |                 drvl    ii                                 '#7<<6 + hdmi_base      ' enable HDMI pins
-021c4     7B 0B 80 FF 
-021c8     5F 00 0B FC |                 wrpin   ##%10110_1111_0111_10_00000_0, ii  '#7<<6 + hdmi_base      ' a '123 ohm BITDAC for pins
-021cc                 | 
-021cc     66 66 86 FF 
-021d0     1D 9A 65 FD |                 setxfrq ##$0CCCCCCC+1                   'set streamer freq to 1/10th clk
+021ac     5A 6C 00 FB |                 rdlong  m_bs,modeptr   
+021b0     29 FE 65 FD |                 setq2   #255
+021b4     5B 00 00 FB |                 rdlong  $000, paletteptr 
+021b8                 | 
+021b8     00 CE 6C FC |                 wrlong  #aend,#0                         'write driver length to hub#0: DEBUG/demo
+021bc     3C 00 66 FD |                 setcmod #$100                            'enable HDMI mode
+021c0     C0 C3 04 F6 |                 mov     ii,#448                          '7 << 6          
+021c4     5E C2 00 F1 |                 add     ii,hbase
+021c8     58 C2 60 FD |                 drvl    ii                                 '#7<<6 + hdmi_base      ' enable HDMI pins
+021cc     7B 0B 80 FF 
+021d0     61 00 0B FC |                 wrpin   ##%10110_1111_0111_10_00000_0, ii  '#7<<6 + hdmi_base      ' a '123 ohm BITDAC for pins
 021d4                 | 
-021d4                 | 
-021d4                 | ''--------  frame rendering main loop  ---------------------------------------------------
-021d4                 | 
-021d4     01 92 04 F1 | p101            add     frames,#1
-021d8     56 C0 00 F6 |                 mov     framebuf2,framebuf
-021dc     30 C2 00 F6 |                 mov     hsync0,sync_000                  '
-021e0     31 C4 00 F6 |                 mov     hsync1,sync_001
-021e4     18 76 44 FB |                 callpa  i_upporch ,#blank
-021e8     57 00 68 FC |                 wrlong  #0,vblankptr
-021ec     00 BE 04 F6 |                 mov     ii,#0
-021f0                 |                 
-021f0     00 8C 04 F6 |                 mov linenum,#0
-021f4     5C 00 B0 FD | p301            call    #hsync                          ' now call hsync to gain some time between xconts
-021f8     01 BE 14 F7 |                 incmod  ii,#1 wc
-021fc     90 C1 84 C1 |            if_c sub framebuf2,#400     
-02200                 | 
-02200                 | 
-02200                 | '----------------------------------------- display pixels
-02200                 | 
-02200     39 88 00 F6 |                 mov     m_lut2,m_lut1                   ' m_lut1 loaded from hub timing block, pixel per long
-02204     3F C6 00 F6 |                 mov     cpl2,i_cpl                      ' i_cpl in graphic modes is longs per line
-02208     55 88 00 F1 |                 add     m_lut2,lutg8                    ' 8 bpp modes
-0220c                 |  
-0220c                 |                 
-0220c     C8 08 DC FC |                 rep #4,#200 
-02210     60 C8 00 FB |                 rdlong  char,framebuf2
-02214     02 C0 04 F1 |                 add     framebuf2,#2              
-02218     50 C8 FC F9 |                 movbyts char,#%01010000          
-0221c     64 88 C0 FC |                 xcont   m_lut2,char              
-02220                 | 
-02220     01 8C 04 F1 | p302            add     linenum,#1
-02224     04 BC 04 F1 |                 add     dlptr2,#4
-02228     43 8C 08 F2 |                 cmp     linenum,i_totalvis  wz
-0222c     C4 FF 9F 5D |          if_nz  jmp     #p301
-02230                 | 
-02230     57 02 68 FC | p112            wrlong  #1,vblankptr
-02234     04 7A 44 FB |                 callpa  i_downporch ,#blank             'bottom blanks
+021d4     66 66 86 FF 
+021d8     1D 9A 65 FD |                 setxfrq ##$0CCCCCCC+1                   'set streamer freq to 1/10th clk
+021dc                 | 
+021dc                 | 
+021dc                 | ''--------  frame rendering main loop  ---------------------------------------------------
+021dc                 | 
+021dc     01 96 04 F1 | p101            add     frames,#1
+021e0     58 C4 00 F6 |                 mov     framebuf2,framebuf
+021e4     32 C6 00 F6 |                 mov     hsync0,sync_000                  '
+021e8     33 C8 00 F6 |                 mov     hsync1,sync_001
+021ec     18 7A 44 FB |                 callpa  i_upporch ,#blank
+021f0     59 00 68 FC |                 wrlong  #0,vblankptr
+021f4     00 C2 04 F6 |                 mov     ii,#0
+021f8                 |                 
+021f8     00 90 04 F6 |                 mov linenum,#0
+021fc     5C 00 B0 FD | p301            call    #hsync                          ' now call hsync to gain some time between xconts
+02200     01 C2 14 F7 |                 incmod  ii,#1 wc
+02204     90 C5 84 C1 |            if_c sub framebuf2,#400     
+02208                 | 
+02208                 | 
+02208                 | '----------------------------------------- display pixels
+02208                 | 
+02208     3B 8C 00 F6 |                 mov     m_lut2,m_lut1                   ' m_lut1 loaded from hub timing block, pixel per long
+0220c     41 CA 00 F6 |                 mov     cpl2,i_cpl                      ' i_cpl in graphic modes is longs per line
+02210     57 8C 00 F1 |                 add     m_lut2,lutg8                    ' 8 bpp modes
+02214                 |  
+02214                 |                 
+02214     C8 08 DC FC |                 rep #4,#200 
+02218     62 CC 00 FB |                 rdlong  char,framebuf2
+0221c     02 C4 04 F1 |                 add     framebuf2,#2              
+02220     50 CC FC F9 |                 movbyts char,#%01010000          
+02224     66 8C C0 FC |                 xcont   m_lut2,char              
+02228                 | 
+02228     01 90 04 F1 | p302            add     linenum,#1
+0222c     04 C0 04 F1 |                 add     dlptr2,#4
+02230     45 90 08 F2 |                 cmp     linenum,i_totalvis  wz
+02234     C4 FF 9F 5D |          if_nz  jmp     #p301
 02238                 | 
-02238     32 C2 00 F6 |                 mov     hsync0,sync_222                 'vsync on
-0223c     33 C4 00 F6 |                 mov     hsync1,sync_223
-02240     01 78 44 FB |                 callpa  i_vsync,#blank                  'vertical sync blanks
-02244     8C FF 9F FD |                 jmp     #p101
-02248                 | 
-02248                 | '' -------------------------------------- END of graph  line ---------------------------------
-02248                 | 
-02248                 | 
-02248     08 00 B0 FD | blank           call    #hsync                          'blank lines
-0224c     61 6E C0 FC |                 xcont   m_vi,hsync0
-02250     FD ED 6F 0B |         _ret_   djnz    pa,#blank
-02254                 | 
-02254     61 68 C0 FC | hsync           xcont   m_bs,hsync0                     'horizontal sync
-02258     62 6A B0 FC |                 xzero   m_sn,hsync1
-0225c     61 6C C0 0C |         _ret_   xcont   m_bv,hsync0
-02260                 | 
-02260                 | '' consts and vars
-02260                 | 
-02260     52 4D 35 D5 | sync_000        long    %1101010100_1101010100_1101010100_10    '
-02264     AE 42 35 D5 | sync_001        long    %1101010100_1101010100_0010101011_10    '        hsync
-02268     52 45 15 55 | sync_222        long    %0101010100_0101010100_0101010100_10    'vsync
-0226c     AE 4A 15 55 | sync_223        long    %0101010100_0101010100_1010101011_10    'vsync + hsync
-02270                 | 
-02270                 | 'border          long    %00000000_00011010_00101100_00000000
-02270                 | 
-02270                 | '------ these longs will be set by setmode function
-02270                 | 
-02270     00 00 00 00 | m_bs            long    0        'blanks before sync
-02274     00 00 00 00 | m_sn            long    0        'sync
-02278     00 00 00 00 | m_bv            long    0        'blanks before visible
-0227c     00 00 00 00 | m_vi            long    0        'visible pixels #
-02280     00 00 00 00 | m_border        long    0        'left/right borders
-02284     00 00 00 00 | m_lut1          long    0        'characters
-02288     00 00 00 00 | i_vborder       long    0        'up/down borders
-0228c     00 00 00 00 | i_upporch       long    0        'up porch lines
-02290     00 00 00 00 | i_vsync         long    0        'vsync lines
-02294     00 00 00 00 | i_downporch     long    0        'down porch lines
-02298     00 00 00 00 | i_modenum       long    0        'mode #
-0229c     00 00 00 00 | i_cpl           long    0        'chars/longs per line
-022a0     00 00 00 00 | i_lines         long    0        'scanlines #
-022a4     00 00 00 00 | i_clock         long    0
-022a8     00 00 00 00 | i_hubset        long    0
-022ac     00 00 00 00 | i_totalvis      long    0
-022b0                 | 
-022b0                 | '-------------------------------------
-022b0                 | 
-022b0     00 00 00 00 | m_lut2          long    0
-022b4                 | 
-022b4                 | colordepth
-022b4     00 00 00 00 | linestart       long    0
-022b8     00 00 00 00 | linenum         long    0
-022bc     00 01 00 00 | lutaddr         long    256
-022c0                 | 
-022c0     0E 00 00 00 | cursorsh        long    14
-022c4     00 00 00 00 | frames          long    0
-022c8     00 00 00 00 | cursorx         long    0
-022cc     00 00 00 00 | cursory         long    0
-022d0     00 00 00 00 | cursorpos       long    0
-022d4     00 00 00 00 | cursorpos2      long    0
-022d8     00 00 00 00 | fontstart       long    0
-022dc     00 00 00 00 | border2         long 0
-022e0     00 00 81 70 | lutiv           long $70810000
-022e4     00 00 88 00 | lutt1           long $00880000
-022e8     00 00 80 00 | lutg1           long $00800000
-022ec     00 00 80 10 | lutg2           long $10800000
-022f0     00 00 80 20 | lutg4           long $20800000
-022f4     00 00 80 30 | lutg8           long $30800000
-022f8     00 00 00 00 | framebuf        long 0
-022fc                 | 'fontbuf         long 0
-022fc                 | 'borderptr       long 0
-022fc     00 00 00 00 | vblankptr       long 0
-02300                 | 'cursorptr       long 0
-02300     00 00 00 00 | modeptr         long 0
-02304     00 00 00 00 | paletteptr      long 0
-02308     00 00 00 00 | dlptr           long 0
-0230c                 | fontnumptr      res     1
-0230c                 | fontnumptr      res     1
-0230c                 | hbase           res     1
-0230c                 | hbase           res     1
-0230c                 | borderptr2      res     1
-0230c                 | borderptr2      res     1
-0230c                 | dlptr2 res 1
-0230c                 | dlptr2 res 1
-0230c                 | 
-0230c                 | ii              res     1
-0230c                 | ii              res     1
-0230c                 | framebuf2       res     1
-0230c                 | framebuf2       res     1
-0230c                 | hsync0          res     1
-0230c                 | hsync0          res     1
-0230c                 | hsync1          res     1
-0230c                 | hsync1          res     1
-0230c                 | 
-0230c                 | cpl2 res 1
-0230c                 | cpl2 res 1
-0230c                 | char            res     1
-0230c                 | char            res     1
-0230c                 | 
-0230c     00 00 00 00 | aend             long 0
-02310                 |                 fit     496                     '
-02310     00 00 00 00 | 	long	0[1]
-02314 0d2             | 	org	COG_BSS_START
-02314 0d2             | _var01
-02314 0d2             | 	res	1
-02314 0d3             | _var02
-02314 0d3             | 	res	1
-02314 0d4             | _var03
-02314 0d4             | 	res	1
-02314 0d5             | _var04
-02314 0d5             | 	res	1
-02314 0d6             | _var05
-02314 0d6             | 	res	1
-02314 0d7             | _var06
-02314 0d7             | 	res	1
-02314 0d8             | _var07
-02314 0d8             | 	res	1
-02314 0d9             | _var08
-02314 0d9             | 	res	1
-02314 0da             | _var09
-02314 0da             | 	res	1
-02314 0db             | _var10
-02314 0db             | 	res	1
-02314 0dc             | arg01
-02314 0dc             | 	res	1
-02314 0dd             | arg02
-02314 0dd             | 	res	1
-02314 0de             | arg03
-02314 0de             | 	res	1
-02314 0df             | arg04
-02314 0df             | 	res	1
-02314 0e0             | arg05
-02314 0e0             | 	res	1
-02314 0e1             | local01
-02314 0e1             | 	res	1
-02314 0e2             | local02
-02314 0e2             | 	res	1
-02314 0e3             | local03
-02314 0e3             | 	res	1
-02314 0e4             | local04
-02314 0e4             | 	res	1
-02314 0e5             | local05
-02314 0e5             | 	res	1
-02314 0e6             | local06
-02314 0e6             | 	res	1
-02314 0e7             | local07
-02314 0e7             | 	res	1
-02314 0e8             | local08
-02314 0e8             | 	res	1
-02314 0e9             | local09
-02314 0e9             | 	res	1
-02314 0ea             | local10
-02314 0ea             | 	res	1
-02314 0eb             | local11
-02314 0eb             | 	res	1
-02314 0ec             | local12
-02314 0ec             | 	res	1
-02314 0ed             | local13
-02314 0ed             | 	res	1
-02314 0ee             | local14
-02314 0ee             | 	res	1
-02314 0ef             | local15
-02314 0ef             | 	res	1
-02314 0f0             | local16
-02314 0f0             | 	res	1
-02314 0f1             | local17
-02314 0f1             | 	res	1
-02314 0f2             | local18
-02314 0f2             | 	res	1
-02314 0f3             | local19
-02314 0f3             | 	res	1
-02314 0f4             | local20
-02314 0f4             | 	res	1
-02314 0f5             | local21
-02314 0f5             | 	res	1
-02314 0f6             | local22
-02314 0f6             | 	res	1
-02314 0f7             | local23
-02314 0f7             | 	res	1
-02314 0f8             | local24
-02314 0f8             | 	res	1
-02314 0f9             | local25
-02314 0f9             | 	res	1
-02314 0fa             | local26
-02314 0fa             | 	res	1
-02314 0fb             | local27
-02314 0fb             | 	res	1
-02314 0fc             | local28
-02314 0fc             | 	res	1
-02314 0fd             | local29
-02314 0fd             | 	res	1
-02314 0fe             | local30
-02314 0fe             | 	res	1
-02314 0ff             | local31
-02314 0ff             | 	res	1
-02314 100             | local32
-02314 100             | 	res	1
-02314 101             | local33
-02314 101             | 	res	1
-02314 102             | local34
-02314 102             | 	res	1
-02314 103             | local35
-02314 103             | 	res	1
-02314 104             | local36
-02314 104             | 	res	1
-02314 105             | local37
-02314 105             | 	res	1
-02314 106             | local38
-02314 106             | 	res	1
-02314 107             | local39
-02314 107             | 	res	1
-02314 108             | local40
-02314 108             | 	res	1
-02314 109             | local41
-02314 109             | 	res	1
-02314 10a             | local42
-02314 10a             | 	res	1
-02314 10b             | local43
-02314 10b             | 	res	1
-02314 10c             | local44
-02314 10c             | 	res	1
-02314 10d             | local45
-02314 10d             | 	res	1
-02314 10e             | local46
-02314 10e             | 	res	1
-02314 10f             | local47
-02314 10f             | 	res	1
-02314 110             | local48
-02314 110             | 	res	1
-02314 111             | local49
-02314 111             | 	res	1
-02314 112             | local50
-02314 112             | 	res	1
-02314 113             | local51
-02314 113             | 	res	1
-02314 114             | local52
-02314 114             | 	res	1
-02314 115             | local53
-02314 115             | 	res	1
-02314 116             | local54
-02314 116             | 	res	1
-02314 117             | local55
-02314 117             | 	res	1
-02314 118             | local56
-02314 118             | 	res	1
-02314 119             | local57
-02314 119             | 	res	1
-02314 11a             | muldiva_
-02314 11a             | 	res	1
-02314 11b             | muldivb_
-02314 11b             | 	res	1
-02314 11c             | 	fit	480
-02314 11c             | 
+02238     59 02 68 FC | p112            wrlong  #1,vblankptr
+0223c     04 7E 44 FB |                 callpa  i_downporch ,#blank             'bottom blanks
+02240                 | 
+02240     34 C6 00 F6 |                 mov     hsync0,sync_222                 'vsync on
+02244     35 C8 00 F6 |                 mov     hsync1,sync_223
+02248     01 7C 44 FB |                 callpa  i_vsync,#blank                  'vertical sync blanks
+0224c     8C FF 9F FD |                 jmp     #p101
+02250                 | 
+02250                 | '' -------------------------------------- END of graph  line ---------------------------------
+02250                 | 
+02250                 | 
+02250     08 00 B0 FD | blank           call    #hsync                          'blank lines
+02254     63 72 C0 FC |                 xcont   m_vi,hsync0
+02258     FD ED 6F 0B |         _ret_   djnz    pa,#blank
+0225c                 | 
+0225c     63 6C C0 FC | hsync           xcont   m_bs,hsync0                     'horizontal sync
+02260     64 6E B0 FC |                 xzero   m_sn,hsync1
+02264     63 70 C0 0C |         _ret_   xcont   m_bv,hsync0
+02268                 | 
+02268                 | '' consts and vars
+02268                 | 
+02268     52 4D 35 D5 | sync_000        long    %1101010100_1101010100_1101010100_10    '
+0226c     AE 42 35 D5 | sync_001        long    %1101010100_1101010100_0010101011_10    '        hsync
+02270     52 45 15 55 | sync_222        long    %0101010100_0101010100_0101010100_10    'vsync
+02274     AE 4A 15 55 | sync_223        long    %0101010100_0101010100_1010101011_10    'vsync + hsync
+02278                 | 
+02278                 | 'border          long    %00000000_00011010_00101100_00000000
+02278                 | 
+02278                 | '------ these longs will be set by setmode function
+02278                 | 
+02278     00 00 00 00 | m_bs            long    0        'blanks before sync
+0227c     00 00 00 00 | m_sn            long    0        'sync
+02280     00 00 00 00 | m_bv            long    0        'blanks before visible
+02284     00 00 00 00 | m_vi            long    0        'visible pixels #
+02288     00 00 00 00 | m_border        long    0        'left/right borders
+0228c     00 00 00 00 | m_lut1          long    0        'characters
+02290     00 00 00 00 | i_vborder       long    0        'up/down borders
+02294     00 00 00 00 | i_upporch       long    0        'up porch lines
+02298     00 00 00 00 | i_vsync         long    0        'vsync lines
+0229c     00 00 00 00 | i_downporch     long    0        'down porch lines
+022a0     00 00 00 00 | i_modenum       long    0        'mode #
+022a4     00 00 00 00 | i_cpl           long    0        'chars/longs per line
+022a8     00 00 00 00 | i_lines         long    0        'scanlines #
+022ac     00 00 00 00 | i_clock         long    0
+022b0     00 00 00 00 | i_hubset        long    0
+022b4     00 00 00 00 | i_totalvis      long    0
+022b8                 | 
+022b8                 | '-------------------------------------
+022b8                 | 
+022b8     00 00 00 00 | m_lut2          long    0
+022bc                 | 
+022bc                 | colordepth
+022bc     00 00 00 00 | linestart       long    0
+022c0     00 00 00 00 | linenum         long    0
+022c4     00 01 00 00 | lutaddr         long    256
+022c8                 | 
+022c8     0E 00 00 00 | cursorsh        long    14
+022cc     00 00 00 00 | frames          long    0
+022d0     00 00 00 00 | cursorx         long    0
+022d4     00 00 00 00 | cursory         long    0
+022d8     00 00 00 00 | cursorpos       long    0
+022dc     00 00 00 00 | cursorpos2      long    0
+022e0     00 00 00 00 | fontstart       long    0
+022e4     00 00 00 00 | border2         long 0
+022e8     00 00 81 70 | lutiv           long $70810000
+022ec     00 00 88 00 | lutt1           long $00880000
+022f0     00 00 80 00 | lutg1           long $00800000
+022f4     00 00 80 10 | lutg2           long $10800000
+022f8     00 00 80 20 | lutg4           long $20800000
+022fc     00 00 80 30 | lutg8           long $30800000
+02300     00 00 00 00 | framebuf        long 0
+02304                 | 'fontbuf         long 0
+02304                 | 'borderptr       long 0
+02304     00 00 00 00 | vblankptr       long 0
+02308                 | 'cursorptr       long 0
+02308     00 00 00 00 | modeptr         long 0
+0230c     00 00 00 00 | paletteptr      long 0
+02310     00 00 00 00 | dlptr           long 0
+02314                 | fontnumptr      res     1
+02314                 | fontnumptr      res     1
+02314                 | hbase           res     1
+02314                 | hbase           res     1
+02314                 | borderptr2      res     1
+02314                 | borderptr2      res     1
+02314                 | dlptr2 res 1
+02314                 | dlptr2 res 1
+02314                 | 
+02314                 | ii              res     1
+02314                 | ii              res     1
+02314                 | framebuf2       res     1
+02314                 | framebuf2       res     1
+02314                 | hsync0          res     1
+02314                 | hsync0          res     1
+02314                 | hsync1          res     1
+02314                 | hsync1          res     1
+02314                 | 
+02314                 | cpl2 res 1
+02314                 | cpl2 res 1
+02314                 | char            res     1
+02314                 | char            res     1
+02314                 | 
+02314     00 00 00 00 | aend             long 0
+02318                 |                 fit     496                     '
+02318     00 00 00 00 | 	long	0[1]
+0231c 0d2             | 	org	COG_BSS_START
+0231c 0d2             | _var01
+0231c 0d2             | 	res	1
+0231c 0d3             | _var02
+0231c 0d3             | 	res	1
+0231c 0d4             | _var03
+0231c 0d4             | 	res	1
+0231c 0d5             | _var04
+0231c 0d5             | 	res	1
+0231c 0d6             | _var05
+0231c 0d6             | 	res	1
+0231c 0d7             | _var06
+0231c 0d7             | 	res	1
+0231c 0d8             | _var07
+0231c 0d8             | 	res	1
+0231c 0d9             | _var08
+0231c 0d9             | 	res	1
+0231c 0da             | _var09
+0231c 0da             | 	res	1
+0231c 0db             | _var10
+0231c 0db             | 	res	1
+0231c 0dc             | arg01
+0231c 0dc             | 	res	1
+0231c 0dd             | arg02
+0231c 0dd             | 	res	1
+0231c 0de             | arg03
+0231c 0de             | 	res	1
+0231c 0df             | arg04
+0231c 0df             | 	res	1
+0231c 0e0             | arg05
+0231c 0e0             | 	res	1
+0231c 0e1             | local01
+0231c 0e1             | 	res	1
+0231c 0e2             | local02
+0231c 0e2             | 	res	1
+0231c 0e3             | local03
+0231c 0e3             | 	res	1
+0231c 0e4             | local04
+0231c 0e4             | 	res	1
+0231c 0e5             | local05
+0231c 0e5             | 	res	1
+0231c 0e6             | local06
+0231c 0e6             | 	res	1
+0231c 0e7             | local07
+0231c 0e7             | 	res	1
+0231c 0e8             | local08
+0231c 0e8             | 	res	1
+0231c 0e9             | local09
+0231c 0e9             | 	res	1
+0231c 0ea             | local10
+0231c 0ea             | 	res	1
+0231c 0eb             | local11
+0231c 0eb             | 	res	1
+0231c 0ec             | local12
+0231c 0ec             | 	res	1
+0231c 0ed             | local13
+0231c 0ed             | 	res	1
+0231c 0ee             | local14
+0231c 0ee             | 	res	1
+0231c 0ef             | local15
+0231c 0ef             | 	res	1
+0231c 0f0             | local16
+0231c 0f0             | 	res	1
+0231c 0f1             | local17
+0231c 0f1             | 	res	1
+0231c 0f2             | local18
+0231c 0f2             | 	res	1
+0231c 0f3             | local19
+0231c 0f3             | 	res	1
+0231c 0f4             | local20
+0231c 0f4             | 	res	1
+0231c 0f5             | local21
+0231c 0f5             | 	res	1
+0231c 0f6             | local22
+0231c 0f6             | 	res	1
+0231c 0f7             | local23
+0231c 0f7             | 	res	1
+0231c 0f8             | local24
+0231c 0f8             | 	res	1
+0231c 0f9             | local25
+0231c 0f9             | 	res	1
+0231c 0fa             | local26
+0231c 0fa             | 	res	1
+0231c 0fb             | local27
+0231c 0fb             | 	res	1
+0231c 0fc             | local28
+0231c 0fc             | 	res	1
+0231c 0fd             | local29
+0231c 0fd             | 	res	1
+0231c 0fe             | local30
+0231c 0fe             | 	res	1
+0231c 0ff             | local31
+0231c 0ff             | 	res	1
+0231c 100             | local32
+0231c 100             | 	res	1
+0231c 101             | local33
+0231c 101             | 	res	1
+0231c 102             | local34
+0231c 102             | 	res	1
+0231c 103             | local35
+0231c 103             | 	res	1
+0231c 104             | local36
+0231c 104             | 	res	1
+0231c 105             | local37
+0231c 105             | 	res	1
+0231c 106             | local38
+0231c 106             | 	res	1
+0231c 107             | local39
+0231c 107             | 	res	1
+0231c 108             | local40
+0231c 108             | 	res	1
+0231c 109             | local41
+0231c 109             | 	res	1
+0231c 10a             | local42
+0231c 10a             | 	res	1
+0231c 10b             | local43
+0231c 10b             | 	res	1
+0231c 10c             | local44
+0231c 10c             | 	res	1
+0231c 10d             | local45
+0231c 10d             | 	res	1
+0231c 10e             | local46
+0231c 10e             | 	res	1
+0231c 10f             | local47
+0231c 10f             | 	res	1
+0231c 110             | local48
+0231c 110             | 	res	1
+0231c 111             | local49
+0231c 111             | 	res	1
+0231c 112             | local50
+0231c 112             | 	res	1
+0231c 113             | local51
+0231c 113             | 	res	1
+0231c 114             | local52
+0231c 114             | 	res	1
+0231c 115             | local53
+0231c 115             | 	res	1
+0231c 116             | local54
+0231c 116             | 	res	1
+0231c 117             | local55
+0231c 117             | 	res	1
+0231c 118             | local56
+0231c 118             | 	res	1
+0231c 119             | local57
+0231c 119             | 	res	1
+0231c 11a             | muldiva_
+0231c 11a             | 	res	1
+0231c 11b             | muldivb_
+0231c 11b             | 	res	1
+0231c 11c             | 	fit	480
+0231c 11c             | 

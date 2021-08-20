@@ -1540,73 +1540,73 @@ _outtextxycg_ret
 
 ' 
 ' 
-' ''---------- putpixel - put a pixel on the screen
-' 
-' 
-' 
 ' pub putpixel(x,y,c) |byte b
 _putpixel
 ' 
-' if ((x>=0) & (x<16*cpl) & (y>=0) & (y<lines))
-	mov	_var01, #0
-	cmps	arg01, #0 wcz
- if_ae	neg	_var01, #1
+' x:=lines-x
+	add	objptr, #148
+	rdlong	_var01, objptr
+	sub	_var01, arg01
+' if ((y>=0) & (y<16*cpl) & (x>=0) & (x<lines))
 	mov	_var02, #0
-	add	objptr, #144
-	rdlong	_var03, objptr
-	shl	_var03, #4
-	cmps	arg01, _var03 wcz
- if_b	neg	_var02, #1
-	and	_var01, _var02
-	mov	_var04, #0
 	cmps	arg02, #0 wcz
- if_ae	neg	_var04, #1
-	and	_var01, _var04
+ if_ae	neg	_var02, #1
+	mov	_var03, #0
+	sub	objptr, #4
+	rdlong	_var04, objptr
+	shl	_var04, #4
+	cmps	arg02, _var04 wcz
+ if_b	neg	_var03, #1
+	and	_var02, _var03
 	mov	_var05, #0
+	cmps	_var01, #0 wcz
+ if_ae	neg	_var05, #1
+	and	_var02, _var05
+	mov	_var06, #0
 	add	objptr, #4
-	rdlong	_var06, objptr
+	rdlong	_var07, objptr
 	sub	objptr, #148
-	cmps	arg02, _var06 wcz
- if_b	neg	_var05, #1
-	test	_var01, _var05 wz
+	cmps	_var01, _var07 wcz
+ if_b	neg	_var06, #1
+	test	_var02, _var06 wz
  if_e	jmp	#LR__0043
 	add	objptr, #144
-	rdlong	_var07, objptr
+	rdlong	_var08, objptr
 	sub	objptr, #144
-	shl	_var07, #2
-	qmul	_var07, arg02
-	getqx	_var08
-	rdlong	_var09, objptr
-	add	_var09, _var08
-	mov	_var10, arg01
-	shr	_var10, #1
-	add	_var09, _var10
-'     b:=byte[buf_ptr+4*cpl*y+(x>>1)]
-	rdbyte	_var11, _var09
-	abs	_var01, arg01 wc
-	and	_var01, #1
- if_b	neg	_var01, _var01
-	shl	_var01, #2
-	mov	_var12, #15
-	shl	_var12, _var01
+	shl	_var08, #2
+	qmul	_var08, _var01
+	getqx	_var09
+	rdlong	_var10, objptr
+	add	_var10, _var09
+	mov	_var11, arg02
+	shr	_var11, #1
+	add	_var10, _var11
+'     b:=byte[buf_ptr+4*cpl*x+(y>>1)]
+	rdbyte	_var12, _var10
+	abs	_var02, arg02 wc
+	and	_var02, #1
+ if_b	neg	_var02, _var02
+	shl	_var02, #2
+	mov	_var13, #15
+	shl	_var13, _var02
 '     
-'     b:=b & !(%1111<<((x//2)<<2))
-	andn	_var11, _var12
-	shl	arg03, _var01
+'     b:=b & !(%1111<<((y//2)<<2))
+	andn	_var12, _var13
+	shl	arg03, _var02
 '     
-'     b:=b |(c<<((x//2)<<2))
-	or	_var11, arg03
+'     b:=b |(c<<((y//2)<<2))
+	or	_var12, arg03
 	add	objptr, #144
-	rdlong	_var13, objptr
+	rdlong	_var14, objptr
 	sub	objptr, #144
-	shl	_var13, #2
-	qmul	_var13, arg02
-	getqx	_var14
-	rdlong	_var15, objptr
-	add	_var15, _var14
-	add	_var15, _var10
-'     byte[buf_ptr+4*cpl*y+(x>>1)]:=b
-	wrbyte	_var11, _var15
+	shl	_var14, #2
+	qmul	_var14, _var01
+	getqx	_var15
+	rdlong	_var16, objptr
+	add	_var16, _var15
+	add	_var16, _var11
+'     byte[buf_ptr+4*cpl*x+(y>>1)]:=b
+	wrbyte	_var12, _var16
 LR__0043
 _putpixel_ret
 	ret
@@ -1909,14 +1909,14 @@ LR__0060
 	call	#__system___waitms
 ' 
 ' 
-' xzoom:=1
+' xzoom:=2
 	add	objptr, #204
-	wrlong	#1, objptr
+	wrlong	#2, objptr
 ' 
 ' 
-' yzoom:=1
+' yzoom:=2
 	add	objptr, #4
-	wrlong	#1, objptr
+	wrlong	#2, objptr
 	sub	objptr, #4
 	rdlong	local08, objptr
 	add	objptr, #4
@@ -1993,7 +1993,7 @@ _makedl
 ' '    nnnn - font line to display, 0..15
 ' '    llllll - character line, determines the cursor Y position
 ' 
-' 
+'  
 ' if (mode &256==0)
 	test	_var01, #256 wz
  if_ne	jmp	#LR__0061
@@ -2340,6 +2340,8 @@ LR__0078
 ' if (mode==4096) ' graphics -> all modes TODO :mode 560+192=752 = 10_11_11_0000 impossib,e because out of memory
 	cmp	_var01, ##4096 wz
  if_ne	jmp	#LR__0086
+' 
+' 
 ' 
 '   if timings[6]>0 'borders
 	add	objptr, #104
